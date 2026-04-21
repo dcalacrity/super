@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#05060e" />
+  <title>D.C. Alacrity — Architecture for the Next Era of Storytelling</title>
+  <meta name="description" content="D.C. Alacrity is an AI-augmented, zero-trust virtual production studio and media-tech consultancy. Cinematic storytelling built on enterprise-grade infrastructure." />
+  <meta property="og:title" content="D.C. Alacrity — Architecture for the Next Era of Storytelling" />
+  <meta property="og:description" content="AI-augmented, zero-trust virtual production studio. The Alacrity Hub, the Alacrity Player, and the four-layer defense model that powers them." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="assets/og.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Telemetry progress bar -->
+  <div class="telemetry" aria-hidden="true">
+    <span class="telemetry__fill"></span>
+  </div>
+
+  <!-- Ambient grid + noise + aurora -->
+  <div class="ambient" aria-hidden="true">
+    <div class="ambient__grid"></div>
+    <div class="ambient__aurora a1"></div>
+    <div class="ambient__aurora a2"></div>
+    <div class="ambient__aurora a3"></div>
+    <div class="ambient__noise"></div>
+    <div class="ambient__scanline"></div>
+  </div>
+
+  <!-- Custom cursor halo -->
+  <div class="halo" aria-hidden="true"></div>
+
+  <!-- NAV -->
+  <header class="nav" data-reveal>
+    <a class="nav__brand" href="#top" aria-label="D.C. Alacrity — home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 40 40" width="30" height="30">
+          <defs>
+            <linearGradient id="bolt" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#59f0ff"/>
+              <stop offset="60%" stop-color="#7a5cff"/>
+              <stop offset="100%" stop-color="#ff3cf0"/>
+            </linearGradient>
+          </defs>
+          <path d="M23 2 L8 22 H18 L15 38 L32 16 H22 Z" fill="url(#bolt)" />
+        </svg>
+      </span>
+      <span class="brand-wordmark">
+        <span class="brand-wordmark__dc">D.C.</span>
+        <span class="brand-wordmark__alacrity" data-scramble="ALACRITY">ALACRITY</span>
+      </span>
+    </a>
+
+    <nav class="nav__links" aria-label="Primary">
+      <a href="#ecosystem">Ecosystem</a>
+      <a href="#storygraph">Story Graph</a>
+      <a href="#security">Security</a>
+      <a href="#ventures">Ventures</a>
+      <a href="#markets">Markets</a>
+      <a href="#founder">Founder</a>
+    </nav>
+
+    <a class="btn btn--ghost nav__cta" href="#contact" data-magnetic>
+      <span>Open Comm</span>
+      <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+
+    <button class="nav__menu" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span>
+    </button>
+  </header>
+
+  <main id="top">
+    <!-- HERO -->
+    <section class="hero">
+      <canvas class="hero__bolt" aria-hidden="true"></canvas>
+
+      <div class="hero__inner">
+        <div class="hero__pill" data-reveal>
+          <span class="dot"></span>
+          <span>SYSTEMS NOMINAL · ZERO CRITICAL · ZERO HIGH</span>
+        </div>
+
+        <h1 class="hero__title" data-reveal>
+          <span class="line">The architecture</span>
+          <span class="line">of <em data-scramble="tomorrow's">tomorrow's</em></span>
+          <span class="line gradient">media landscape.</span>
+        </h1>
+
+        <p class="hero__sub" data-reveal>
+          An AI-augmented, zero-trust virtual production studio &amp; media-tech consultancy.
+          We build the bridge between creative directors who struggle with server architecture
+          and IT engineers who struggle with narrative resonance.
+        </p>
+
+        <div class="hero__ctas" data-reveal>
+          <a class="btn btn--primary" href="#ecosystem" data-magnetic>
+            <span>Enter the ecosystem</span>
+            <svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 12h14M13 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a class="btn btn--ghost" href="#security" data-magnetic>
+            <span>Read security posture</span>
+          </a>
+        </div>
+
+        <ul class="hero__stats" data-reveal>
+          <li><b>4</b><span>layer defense</span></li>
+          <li><b>0 / 0</b><span>critical · high vulns</span></li>
+          <li><b>∞</b><span>narrative branches</span></li>
+          <li><b>APK</b><span>one-click interactive export</span></li>
+        </ul>
+      </div>
+
+      <div class="hero__hud" aria-hidden="true">
+        <div class="hud-row"><span>node://</span><span class="mono">alacrity.hub</span></div>
+        <div class="hud-row"><span>tls://</span><span class="mono">1.3 · enforced</span></div>
+        <div class="hud-row"><span>gateway://</span><span class="mono">cloudflare.worker</span></div>
+        <div class="hud-row"><span>auth://</span><span class="mono">firebase · RBAC</span></div>
+        <div class="hud-bar"><span></span></div>
+      </div>
+
+      <div class="hero__scroll" aria-hidden="true">
+        <span>SCROLL</span>
+        <span class="hero__scroll-line"></span>
+      </div>
+    </section>
+
+    <!-- MARQUEE MANIFESTO -->
+    <section class="marquee" aria-label="Manifesto">
+      <div class="marquee__track">
+        <div class="marquee__group">
+          <span>Zero-Trust Cinema</span><i>◇</i>
+          <span>AI-Augmented Production</span><i>◇</i>
+          <span>Interactive Narrative Engines</span><i>◇</i>
+          <span>Aerospace-Grade Project Management</span><i>◇</i>
+          <span>Cloudflare + Unity + n8n + ComfyUI</span><i>◇</i>
+          <span>Wilmington · Azure · Edge</span><i>◇</i>
+        </div>
+        <div class="marquee__group" aria-hidden="true">
+          <span>Zero-Trust Cinema</span><i>◇</i>
+          <span>AI-Augmented Production</span><i>◇</i>
+          <span>Interactive Narrative Engines</span><i>◇</i>
+          <span>Aerospace-Grade Project Management</span><i>◇</i>
+          <span>Cloudflare + Unity + n8n + ComfyUI</span><i>◇</i>
+          <span>Wilmington · Azure · Edge</span><i>◇</i>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHILOSOPHY -->
+    <section class="philosophy" id="philosophy">
+      <div class="section__head" data-reveal>
+        <span class="eyebrow">01 · Philosophy</span>
+        <h2 class="section__title">Refuses to choose between <em>creative</em> and <em>technical</em>.</h2>
+        <p class="section__sub">
+          For decades the film industry has relied on disjointed, archaic software — duct-taped
+          Google Sheets, Slack, Dropbox. D.C. Alacrity is the opposite: one unified, secure digital
+          roof, where color science and computer science sit at the same table.
+        </p>
+      </div>
+
+      <div class="philosophy__grid">
+        <article class="tilt" data-tilt data-reveal>
+          <header>
+            <span class="num">I</span>
+            <h3>Emotion meets rigor.</h3>
+          </header>
+          <p>A profound understanding of storytelling matched by an equally rigorous command of computer science, automation, and digital infrastructure.</p>
+        </article>
+        <article class="tilt" data-tilt data-reveal>
+          <header>
+            <span class="num">II</span>
+            <h3>The middle is the moat.</h3>
+          </header>
+          <p>The lucrative bridge between directors who can't read logs and engineers who can't read scripts — occupied and owned.</p>
+        </article>
+        <article class="tilt" data-tilt data-reveal>
+          <header>
+            <span class="num">III</span>
+            <h3>Security is an architecture, not a patch.</h3>
+          </header>
+          <p>Ironclad protection is laid at foundation, not bolted on in post. Enterprise-grade from the first script breakdown.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ECOSYSTEM -->
+    <section class="ecosystem" id="ecosystem">
+      <div class="section__head" data-reveal>
+        <span class="eyebrow">02 · Ecosystem</span>
+        <h2 class="section__title">One continuous pipeline. <em>Page to APK.</em></h2>
+        <p class="section__sub">
+          The Hub maps the story. The Player compiles it. The zero-trust spine guarantees it arrives
+          untouched. Nothing falls between tools, because there are no tools between.
+        </p>
+      </div>
+
+      <div class="eco-grid">
+        <article class="eco-card" data-tilt data-reveal>
+          <div class="eco-card__glyph" aria-hidden="true">
+            <svg viewBox="0 0 80 80">
+              <defs>
+                <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#59f0ff"/><stop offset="100%" stop-color="#7a5cff"/>
+                </linearGradient>
+              </defs>
+              <circle cx="40" cy="40" r="30" fill="none" stroke="url(#g1)" stroke-width="1.2" opacity=".5"/>
+              <circle cx="40" cy="40" r="18" fill="none" stroke="url(#g1)" stroke-width="1.2"/>
+              <circle cx="40" cy="40" r="4" fill="url(#g1)"/>
+              <g stroke="url(#g1)" stroke-width="1.2" fill="none">
+                <path d="M10 40 L26 40"/><path d="M54 40 L70 40"/>
+                <path d="M40 10 L40 26"/><path d="M40 54 L40 70"/>
+              </g>
+            </svg>
+          </div>
+          <div class="eco-card__tag mono">01 · HUB</div>
+          <h3>The Alacrity Hub</h3>
+          <p>
+            A production CRM and project management central nervous system. Stripboards, ledgers,
+            contracts, storyboards, and branching story-maps — one secure digital roof.
+          </p>
+          <ul class="chips mono">
+            <li>n8n</li><li>ComfyUI</li><li>OpenClaw</li><li>Firebase</li><li>Azure</li>
+          </ul>
+          <a class="card-arrow" href="#storygraph" aria-label="See story graph">→</a>
+        </article>
+
+        <article class="eco-card eco-card--accent" data-tilt data-reveal>
+          <div class="eco-card__glyph" aria-hidden="true">
+            <svg viewBox="0 0 80 80">
+              <defs>
+                <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#7a5cff"/><stop offset="100%" stop-color="#ff3cf0"/>
+                </linearGradient>
+              </defs>
+              <polygon points="20,15 65,40 20,65" fill="none" stroke="url(#g2)" stroke-width="1.5"/>
+              <polygon points="28,26 54,40 28,54" fill="url(#g2)" opacity=".85"/>
+            </svg>
+          </div>
+          <div class="eco-card__tag mono">02 · PLAYER</div>
+          <h3>The Alacrity Player</h3>
+          <p>
+            Built inside Unity. Ingests node-trees exported from the Hub, auto-constructs
+            interactive video nodes, and ships the whole branching experience as a single APK.
+          </p>
+          <ul class="chips mono">
+            <li>Unity</li><li>Interactive Video</li><li>VR-ready</li><li>APK Export</li>
+          </ul>
+          <a class="card-arrow" href="#ventures" aria-label="See ventures">→</a>
+        </article>
+
+        <article class="eco-card" data-tilt data-reveal>
+          <div class="eco-card__glyph" aria-hidden="true">
+            <svg viewBox="0 0 80 80">
+              <defs>
+                <linearGradient id="g3" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#59f0ff"/><stop offset="100%" stop-color="#ff3cf0"/>
+                </linearGradient>
+              </defs>
+              <path d="M40 8 L68 20 V42 C68 58 55 68 40 74 C25 68 12 58 12 42 V20 Z"
+                    fill="none" stroke="url(#g3)" stroke-width="1.5"/>
+              <path d="M40 22 L58 30 V44 C58 54 50 62 40 66 C30 62 22 54 22 44 V30 Z"
+                    fill="none" stroke="url(#g3)" stroke-width="1.2" opacity=".6"/>
+              <path d="M33 44 L38 49 L49 36" fill="none" stroke="url(#g3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="eco-card__tag mono">03 · SPINE</div>
+          <h3>Zero-Trust Spine</h3>
+          <p>
+            A four-layer defense model — Cloudflare Worker gateway, strict TLS, Firebase Auth,
+            and granular Realtime DB rules — independently scanned. Zero critical, zero high.
+          </p>
+          <ul class="chips mono">
+            <li>CF Worker</li><li>TLS 1.3</li><li>RBAC</li><li>RTDB Rules</li>
+          </ul>
+          <a class="card-arrow" href="#security" aria-label="See security">→</a>
+        </article>
+      </div>
+    </section>
+
+    <!-- STORY GRAPH -->
+    <section class="storygraph" id="storygraph">
+      <div class="section__head" data-reveal>
+        <span class="eyebrow">03 · Hub · Story Graph</span>
+        <h2 class="section__title">Map the branches <em>before</em> cameras roll.</h2>
+        <p class="section__sub">
+          A live demonstration of the Hub's node-based story visualizer — the same logic that carries,
+          uncorrupted, into the Alacrity Player.
+        </p>
+      </div>
+
+      <div class="storygraph__frame" data-reveal>
+        <div class="frame__chrome">
+          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+          <span class="frame__title mono">hub.alacrity / projects / sidequest / ep03.map</span>
+          <span class="frame__status mono">◉ LIVE · auto-saved</span>
+        </div>
+        <canvas class="storygraph__canvas"></canvas>
+        <div class="frame__legend mono">
+          <span><i class="dot b"></i> decision</span>
+          <span><i class="dot c"></i> scene</span>
+          <span><i class="dot m"></i> terminal</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECURITY -->
+    <section class="security" id="security">
+      <div class="section__head" data-reveal>
+        <span class="eyebrow">04 · Zero-Trust Architecture</span>
+        <h2 class="section__title">Four layers. <em>Zero</em> critical. <em>Zero</em> high.</h2>
+        <p class="section__sub">
+          When pitching Fortune 500, our documentation is the Trojan Horse: proof that your IP is
+          handled with enterprise-grade compliance, every hop of the way.
+        </p>
+      </div>
+
+      <div class="security__grid">
+        <div class="terminal" data-reveal>
+          <div class="terminal__head">
+            <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+            <span class="mono">~/alacrity/security · scan.log</span>
+          </div>
+          <pre class="terminal__body mono" data-typer>
+$ alacrity scan --full --external
+▸ probing gateway.alacrity.app ............. OK
+▸ enforcing TLS 1.3 ........................ OK
+▸ testing path traversal (64 vectors) ...... 0 hits
+▸ testing SQL injection  (128 vectors) ..... 0 hits
+▸ fuzzing firebase rules (482 cases) ....... 0 hits
+▸ automated scanner probe .................. blocked
+▸ egress verification ...................... clean
+
+▸ CVSS summary:
+    critical ....... 0
+    high ........... 0
+    medium ......... 0
+    low ............ 0
+
+▸ posture: <span class="ok">ZERO-TRUST · NOMINAL</span>
+$ _</pre>
+        </div>
+
+        <ul class="shields">
+          <li data-reveal>
+            <div class="shield" data-layer="1">
+              <svg viewBox="0 0 40 48" aria-hidden="true"><path d="M20 2 L38 10 V24 C38 36 30 44 20 46 C10 44 2 36 2 24 V10 Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+              <b>01</b>
+            </div>
+            <div>
+              <h4>Cloudflare Worker Gateway</h4>
+              <p>Edge-terminated. Every request is inspected, rate-limited, and geo-audited before it ever sniffs an origin.</p>
+            </div>
+          </li>
+          <li data-reveal>
+            <div class="shield" data-layer="2">
+              <svg viewBox="0 0 40 48" aria-hidden="true"><path d="M20 2 L38 10 V24 C38 36 30 44 20 46 C10 44 2 36 2 24 V10 Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+              <b>02</b>
+            </div>
+            <div>
+              <h4>Strict TLS Enforcement</h4>
+              <p>TLS 1.3 only, HSTS preloaded, modern cipher suites. Downgrades and plaintext fallbacks are non-options.</p>
+            </div>
+          </li>
+          <li data-reveal>
+            <div class="shield" data-layer="3">
+              <svg viewBox="0 0 40 48" aria-hidden="true"><path d="M20 2 L38 10 V24 C38 36 30 44 20 46 C10 44 2 36 2 24 V10 Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+              <b>03</b>
+            </div>
+            <div>
+              <h4>Firebase Auth · RBAC</h4>
+              <p>Identity-bound tokens, short TTLs, role-aware routing. Freelancers see their shot list — nothing adjacent.</p>
+            </div>
+          </li>
+          <li data-reveal>
+            <div class="shield" data-layer="4">
+              <svg viewBox="0 0 40 48" aria-hidden="true"><path d="M20 2 L38 10 V24 C38 36 30 44 20 46 C10 44 2 36 2 24 V10 Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+              <b>04</b>
+            </div>
+            <div>
+              <h4>Realtime DB Security Rules</h4>
+              <p>Granular, path-aware, independently-scanned. Data writes are proven safe before the write ever lands.</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- VENTURES -->
+    <section class="ventures" id="ventures">
+      <div class="section__head" data-reveal>
+        <span class="eyebrow">05 · Proving grounds</span>
+        <h2 class="section__title">Original cinema as <em>stress-test</em>.</h2>
+        <p class="section__sub">
+          We run our proprietary stack through our own narratives first. Our films are both art and QA.
+        </p>
+      </div>
+
+      <div class="ventures__grid">
+        <article class="venture" data-reveal>
+          <div class="venture__poster">
+            <div class="poster-art poster-art--sq" aria-hidden="true">
+              <span class="glitch" data-text="SIDE/QUEST">SIDE/QUEST</span>
+            </div>
+          </div>
+          <div class="venture__meta">
+            <span class="eyebrow mono">EPISODIC · CRIME · SCI-FI</span>
+            <h3>Sidequest</h3>
+            <p>A recurring proving ground for AI-driven storyboarding, autonomous continuity logging, and branching dialogue rendered through the Alacrity Player.</p>
+          </div>
+        </article>
+
+        <article class="venture" data-reveal>
+          <div class="venture__poster">
+            <div class="poster-art poster-art--ofn" aria-hidden="true">
+              <span class="glitch" data-text="ONE FRIDAY NIGHT">ONE FRIDAY NIGHT</span>
+            </div>
+          </div>
+          <div class="venture__meta">
+            <span class="eyebrow mono">FEATURE · DRAMA</span>
+            <h3>One Friday Night</h3>
+            <p>A tight, character-driven film built on an AI-augmented workflow — proving high-end entertainment at a fraction of legacy Hollywood overhead.</p>
+          </div>
+        </article>
+
+        <article class="venture" data-reveal>
+          <div class="venture__poster">
+            <div class="poster-art poster-art--vr" aria-hidden="true">
+              <span class="glitch" data-text="VR · SPATIAL">VR · SPATIAL</span>
+            </div>
+          </div>
+          <div class="venture__meta">
+            <span class="eyebrow mono">PIPELINE · RESEARCH</span>
+            <h3>Spatial Cinema R&amp;D</h3>
+            <p>Ambisonic ProTools mixes, diegetic lighting, high-end rigs, and Unity-compiled interactive nodes — closing the gap between film and real-time engines.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- MARKETS -->
+    <section class="markets" id="markets">
+      <div class="section__head" data-reveal>
+        <span class="eyebrow">06 · Markets</span>
+        <h2 class="section__title">Where zero-trust cinema <em>prints</em>.</h2>
+        <p class="section__sub">
+          Our niche is not "video." Our niche is regulated, high-stakes industries that traditional
+          agencies cannot enter because they cannot pass the IT gate.
+        </p>
+      </div>
+
+      <div class="markets__grid">
+        <article class="market" data-reveal>
+          <header><span class="mono">01</span><h3>B2B Tech &amp; Cybersecurity</h3></header>
+          <p>We speak the CISO's exact language — then deliver premium cinematic visuals for training videos, edge-computing commercials, and launch films.</p>
+        </article>
+        <article class="market" data-reveal>
+          <header><span class="mono">02</span><h3>Enterprise HR &amp; Compliance</h3></header>
+          <p>Immersive, branching VR onboarding modules that handle proprietary corporate data inside a zero-trust perimeter.</p>
+        </article>
+        <article class="market" data-reveal>
+          <header><span class="mono">03</span><h3>Defense &amp; Government</h3></header>
+          <p>Aerospace-grade proposal rigor + secure media delivery. Technical breakdowns and simulations produced with strict data hygiene.</p>
+        </article>
+        <article class="market" data-reveal>
+          <header><span class="mono">04</span><h3>Healthcare &amp; Legal</h3></header>
+          <p>High-fidelity medical-device demos and litigation presentations, operated safely under regulated data constraints.</p>
+        </article>
+        <article class="market" data-reveal>
+          <header><span class="mono">05</span><h3>SaaS Flip</h3></header>
+          <p>Once battle-tested on internal productions, the Alacrity Hub licenses to forward-thinking virtual production studios — recurring revenue on proven rails.</p>
+        </article>
+        <article class="market" data-reveal>
+          <header><span class="mono">06</span><h3>VR &amp; Immersive Entertainment</h3></header>
+          <p>Interactive cinema where the audience has agency — built today for the shift already underway.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- FOUNDER -->
+    <section class="founder" id="founder">
+      <div class="section__head" data-reveal>
+        <span class="eyebrow">07 · Founder</span>
+        <h2 class="section__title">David-Chuku Agwu — <em>Experience Architect.</em></h2>
+      </div>
+
+      <div class="founder__grid">
+        <div class="founder__card" data-reveal>
+          <div class="founder__portrait" aria-hidden="true">
+            <div class="portrait__ring"></div>
+            <div class="portrait__mono">D.C.</div>
+            <div class="portrait__scan"></div>
+          </div>
+          <div class="founder__stat">
+            <span class="mono">Origin</span>
+            <b>Wilmington, NC</b>
+          </div>
+          <div class="founder__stat">
+            <span class="mono">Discipline</span>
+            <b>Film × Cybersecurity</b>
+          </div>
+          <div class="founder__stat">
+            <span class="mono">Battle-tested</span>
+            <b>NASA L'SPACE · Aerospace Scholar</b>
+          </div>
+        </div>
+
+        <div class="founder__body" data-reveal>
+          <p>
+            A final-semester college student simultaneously mastering film and cybersecurity — the
+            exact hybrid required to pioneer this industry space. He understands both the nuanced art
+            of color grading on a Flanders monitor and the rigid logic of deploying secure Azure
+            container apps and Cloudflare edge gateways.
+          </p>
+          <p>
+            As a middle child, "figuring out the middle" is instinctive. At D.C. Alacrity, the middle
+            is the high-value bridge between creative directors and IT engineers — and he is the
+            translator between two distinct worlds.
+          </p>
+          <p>
+            At NASA L'SPACE Academy he led metrics, mapped cost models, and designed multi-faceted
+            proposals for hypothetical lunar missions. That aerospace-grade project-management rigor
+            is now pointed directly at the notoriously chaotic world of independent film.
+          </p>
+
+          <div class="meters">
+            <div class="meter">
+              <div class="meter__head"><span>Cinematic storytelling</span><span class="mono">96</span></div>
+              <div class="meter__bar"><i style="--v:96%"></i></div>
+            </div>
+            <div class="meter">
+              <div class="meter__head"><span>Cybersecurity architecture</span><span class="mono">94</span></div>
+              <div class="meter__bar"><i style="--v:94%"></i></div>
+            </div>
+            <div class="meter">
+              <div class="meter__head"><span>AI / automation orchestration</span><span class="mono">92</span></div>
+              <div class="meter__bar"><i style="--v:92%"></i></div>
+            </div>
+            <div class="meter">
+              <div class="meter__head"><span>Aerospace-grade project mgmt</span><span class="mono">90</span></div>
+              <div class="meter__bar"><i style="--v:90%"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section class="contact" id="contact">
+      <div class="contact__inner" data-reveal>
+        <span class="eyebrow">08 · Signal</span>
+        <h2 class="section__title">Open a comm channel.</h2>
+        <p class="section__sub">
+          Enterprise productions, secure interactive pilots, or a B2B licensing conversation around
+          the Alacrity Hub — start the thread below.
+        </p>
+
+        <form class="comm" onsubmit="event.preventDefault(); this.classList.add('comm--sent');">
+          <label>
+            <span class="mono">// name</span>
+            <input type="text" name="name" required placeholder="who's broadcasting?" autocomplete="name"/>
+          </label>
+          <label>
+            <span class="mono">// signal</span>
+            <input type="email" name="email" required placeholder="you@channel.com" autocomplete="email"/>
+          </label>
+          <label class="comm__full">
+            <span class="mono">// transmission</span>
+            <textarea name="message" rows="4" required placeholder="project scope, industry, timeline..."></textarea>
+          </label>
+          <button class="btn btn--primary" type="submit" data-magnetic>
+            <span>Transmit</span>
+            <svg viewBox="0 0 24 24" width="16" height="16"><path d="M4 12l16-8-5 18-3-8-8-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="comm__sent mono">◉ TRANSMISSION RECEIVED · expect reply within 48h</div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="foot__row">
+      <div class="foot__brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 40 40" width="22" height="22">
+            <path d="M23 2 L8 22 H18 L15 38 L32 16 H22 Z" fill="url(#bolt)"/>
+          </svg>
+        </span>
+        <span class="mono">D.C. ALACRITY · EST. 2025 · WILMINGTON, NC</span>
+      </div>
+      <div class="foot__links mono">
+        <a href="#ecosystem">Ecosystem</a>
+        <a href="#security">Security</a>
+        <a href="#markets">Markets</a>
+        <a href="#contact">Contact</a>
+      </div>
+    </div>
+    <div class="foot__fine mono">
+      <span>// zero-trust · AI-augmented · narrative-first</span>
+      <span>© <span id="year"></span> D.C. Alacrity. All transmissions encrypted.</span>
+    </div>
+  </footer>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
