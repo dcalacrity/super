@@ -3224,6 +3224,10 @@ html[data-theme="light"] .board-strip__cell { background: #ffffff; }
     { id: 'documents',           label: 'Documents',         group: 'PRODUCTION',  icon: 'doc',     crumb: 'MODULE · 21', img: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1800&q=80' },
     { id: 'notes',               label: 'Notes',             group: 'PRODUCTION',  icon: 'chat',    crumb: 'MODULE · 22', img: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1800&q=80' },
     { id: 'hotsheet',            label: 'Hot Sheet',         group: 'PRODUCTION',  icon: 'bolt',    crumb: 'MODULE · 23', img: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'storyboard',          label: 'Storyboard',        group: 'PRODUCTION',  icon: 'camera',  crumb: 'MODULE · 24', img: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'days',                label: 'Shoot Days',        group: 'PRODUCTION',  icon: 'calendar',crumb: 'MODULE · 25', img: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'music',               label: 'Music',             group: 'PRODUCTION',  icon: 'bolt',    crumb: 'MODULE · 26', img: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'post',                label: 'Post-Prod',         group: 'PRODUCTION',  icon: 'film',    crumb: 'MODULE · 27', img: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?auto=format&fit=crop&w=1800&q=80' },
     { id: 'crm-prod',            label: 'Production CRM',    group: 'GLOBAL',      icon: 'target',  crumb: 'GLOBAL · 01', img: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1800&q=80' },
     { id: 'crm-biz',             label: 'Business CRM',      group: 'GLOBAL',      icon: 'target',  crumb: 'GLOBAL · 02', img: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1800&q=80' },
     { id: 'dialer',              label: 'Dialer',            group: 'GLOBAL',      icon: 'phone',   crumb: 'GLOBAL · 03', img: 'https://images.unsplash.com/photo-1565374394096-35dbb58cdfc9?auto=format&fit=crop&w=1800&q=80' },
@@ -4610,8 +4614,8 @@ html[data-theme="light"] .board-strip__cell { background: #ffffff; }
 
     // ───── Search / Replace ─────
     _searchResults: [], _searchCursor: -1,
-    openSearch: function () { $('#se-search').classList.add('is-open'); setTimeout(function () { $('#se-search-inp').focus(); }, 40); },
-    closeSearch: function () { $('#se-search').classList.remove('is-open'); Editor._clearHighlights(); },
+    openSearch: function () { var s = $('#se-search'); if (!s) return; s.classList.add('is-open'); setTimeout(function () { var i = $('#se-search-inp'); if (i) i.focus(); }, 40); },
+    closeSearch: function () { var s = $('#se-search'); if (s) s.classList.remove('is-open'); Editor._clearHighlights(); },
     toggleReplace: function () { var r = $('#se-search-replace-row'); r.style.display = r.style.display === 'flex' ? 'none' : 'flex'; },
     doSearch: function (q) {
       Editor._clearHighlights();
@@ -6613,6 +6617,87 @@ html[data-theme="light"] .board-strip__cell { background: #ffffff; }
         layers.map(function (l) {
           return '<div class="feed__item"><div class="feed__avatar" style="background:linear-gradient(135deg,var(--mint),var(--aqua));">' + ICONS.shield + '</div><div class="feed__text"><strong>' + l.n + '</strong></div><div class="feed__time">' + l.v + '</div></div>';
         }).join('') +
+      '</div></div>'
+    );
+  });
+
+  // ══════════════════════════════════════════════════════════════════════════
+  //  STORYBOARD · DAYS · MUSIC · POST-PROD
+  // ══════════════════════════════════════════════════════════════════════════
+  AH.register('storyboard', function (m) {
+    var frames = [
+      { k: 'EST', t: 'Yard 4 wide · dolly R→L', src: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=800&q=80' },
+      { k: 'CU',  t: 'Burner phone on whiteboard', src: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=800&q=80' },
+      { k: 'OTS', t: 'Alex over Mira · handoff', src: 'https://images.unsplash.com/photo-1540329957110-b87b0a2e3e72?auto=format&fit=crop&w=800&q=80' },
+      { k: 'WIDE',t: 'Rooftop · crane up', src: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80' },
+      { k: 'ECU', t: 'USB insert · finger to port', src: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80' },
+      { k: 'HAND',t: 'Foot chase · shoulder', src: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=800&q=80' }
+    ];
+    return (
+      AH.Views.renderHero(m, { primary: 'NEW FRAME', primaryFn: "toast('Storyboard frame uploader')" }) +
+      '<div class="section"><div class="grid grid--3">' +
+        frames.map(function (f) {
+          return '<div class="card" style="padding:0;overflow:hidden;">' +
+            '<div style="aspect-ratio:16/9;background:url(\'' + f.src + '\') center/cover;position:relative;"><span class="chip chip--mint" style="position:absolute;top:12px;left:12px;">' + f.k + '</span></div>' +
+            '<div style="padding:14px 16px;">' + clean(f.t) + '</div>' +
+          '</div>';
+        }).join('') +
+      '</div></div>'
+    );
+  });
+
+  AH.register('days', function (m) {
+    var scs = loadScenes();
+    var byDay = {};
+    scs.forEach(function (s) { (byDay[s.day] = byDay[s.day] || []).push(s); });
+    var days = Object.keys(byDay).sort();
+    return (
+      AH.Views.renderHero(m, { primary: 'NEW DAY', primaryFn: "AH.Schedule.autoDay()" }) +
+      '<div class="section">' +
+        days.map(function (d, di) {
+          return '<div class="card" style="margin-bottom:14px;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><div class="section__title">' + d + ' · ' + (byDay[d][0].loc || '').toUpperCase() + '</div><div class="section__sub">' + byDay[d].length + ' SCENES</div></div>' +
+            byDay[d].map(AH.Views.stripRow).join('') +
+          '</div>';
+        }).join('') +
+      '</div>'
+    );
+  });
+
+  AH.register('music', function (m) {
+    var cues = [
+      { n: 'M-001 · Threshold', pl: 'Alex drops USB', st: 'CLEARED', cls: 'chip--lime' },
+      { n: 'M-002 · Rain on glass', pl: 'Safe house open', st: 'IN NEGOTIATION', cls: 'chip--amber' },
+      { n: 'M-003 · Yard hum', pl: 'Trainyard handoff', st: 'ORIGINAL · STAFF', cls: 'chip--mint' },
+      { n: 'M-004 · The room', pl: 'Room 0 score', st: 'DEMO LOCKED', cls: 'chip--aqua' }
+    ];
+    return (
+      AH.Views.renderHero(m, { primary: 'NEW CUE', primaryFn: "toast('Music cue created')" }) +
+      '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
+        '<table class="table"><thead><tr><th>Cue</th><th>Scene context</th><th>Rights</th></tr></thead><tbody>' +
+          cues.map(function (c) { return '<tr><td><strong>' + c.n + '</strong></td><td>' + c.pl + '</td><td><span class="chip ' + c.cls + '">' + c.st + '</span></td></tr>'; }).join('') +
+        '</tbody></table>' +
+      '</div></div>'
+    );
+  });
+
+  AH.register('post', function (m) {
+    var phases = [
+      gantt('Assembly',    22, 'COMPLETE'),
+      gantt('Rough cut',   18, 'IN PROG · 68%'),
+      gantt('Picture lock', 8, 'QUEUED'),
+      gantt('Sound design',12, 'QUEUED'),
+      gantt('Score record',10, 'QUEUED'),
+      gantt('Mix',          7, 'QUEUED'),
+      gantt('Color',        6, 'QUEUED'),
+      gantt('Conform',      4, 'QUEUED'),
+      gantt('Delivery',     3, 'QUEUED')
+    ];
+    return (
+      AH.Views.renderHero(m, { primary: 'OPEN EDIT', primaryFn: "toast('Edit session launching · Resolve bridge')" }) +
+      '<div class="section"><div class="card">' +
+        '<div class="section__title" style="margin-bottom:14px;">Post phases</div>' +
+        '<div class="gantt">' + phases.join('') + '</div>' +
       '</div></div>'
     );
   });
