@@ -9,7 +9,9 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js" defer></script>
 
 <style>
 /* ════════════════════════════════════════════════════════════════════════════
@@ -2048,8 +2050,11 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
       </button>
 
       <div class="topbar__actions">
-        <div class="pill" title="Zero-trust uplink"><span class="dot"></span><span>Uplink Stable</span></div>
-        <div class="pill"><span>Budget</span><span id="pill-budget">On Track</span></div>
+        <button class="prod-switcher" id="prod-switcher" title="Switch production">
+          <span>🎬</span>
+          <span class="prod-switcher__label" id="prod-switcher-label">—</span>
+        </button>
+        <div class="pill" id="pill-mode" title="Data mode"><span class="dot"></span><span id="pill-mode-label">—</span></div>
         <button class="icon-btn" id="btn-notify" aria-label="Notifications">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
         </button>
@@ -2948,19 +2953,23 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
     var ctas =
       '<div class="hero__cta-row">' +
         '<button class="btn btn--primary" data-action="add-strip">ADD SCENE ' + ICONS.arrow + '</button>' +
+        '<button class="btn btn--ghost-light" data-action="export-stripboard-pdf">EXPORT PDF</button>' +
         '<button class="btn btn--ghost-light" data-view="shotlist">SHOT LIST</button>' +
       '</div>';
     return (
-      hero(m, { title: 'Stripboard', lede: 'Shooting order, call sheets, day-by-day load. Drag to reorder (desktop).', ctas: ctas, stat: { n: String(strips.length), l: 'strips' } }) +
+      hero(m, { title: 'Stripboard', lede: 'Shooting order, call sheets, day-by-day load.', ctas: ctas, stat: { n: String(strips.length), l: 'strips' } }) +
       '<div class="section"><div class="card" style="padding:22px 22px 14px;" id="stripboard-list">' +
         (strips.length ? strips.map(function(s, i){
-          return '<div class="strip ' + (s.int ? 'strip--int':'strip--ext') + '" data-strip-idx="' + i + '">' +
+          return '<div class="strip ' + (s.int ? 'strip--int':'strip--ext') + '" data-strip-idx="' + i + '" style="position:relative;">' +
             '<div class="strip__cell strip__num">' + esc(s.n || (i+1)) + '</div>' +
             '<div class="strip__cell strip__title">' + esc(s.title || 'Untitled scene') + '</div>' +
             '<div class="strip__cell strip__type">' + (s.int ? 'INT' : 'EXT') + '</div>' +
             '<div class="strip__cell strip__loc">' + esc(s.loc || '—') + '</div>' +
             '<div class="strip__cell strip__pages">' + esc(s.pages || '0') + '</div>' +
-            '<div class="strip__cell strip__day">' + esc(s.day || '') + '</div>' +
+            '<div class="strip__cell strip__day" style="justify-content:space-between;gap:6px;">' +
+              '<span>' + esc(s.day || '') + '</span>' +
+              '<button class="icon-btn" style="width:24px;height:24px;" data-del-path="schedule.strips" data-del-idx="' + i + '" title="Remove">' + ICONS.trash + '</button>' +
+            '</div>' +
           '</div>';
         }).join('') : emptyState('Stripboard is empty', 'Add your first scene.', '<button class="btn btn--primary" data-action="add-strip">ADD SCENE ' + ICONS.arrow + '</button>')) +
       '</div></div>'
@@ -2970,31 +2979,33 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
   // ── Shot List ──────────────────────────────────────────────────────────
   function V_shotlist(m) {
     var shots = Core.data.shotlist || [];
-    var ctas = '<div class="hero__cta-row"><button class="btn btn--primary" data-action="add-shot">ADD SHOT ' + ICONS.arrow + '</button></div>';
+    var ctas = '<div class="hero__cta-row"><button class="btn btn--primary" data-action="add-shot">ADD SHOT ' + ICONS.arrow + '</button><button class="btn btn--ghost-light" data-action="export-shots-pdf">EXPORT PDF</button></div>';
     return (
       hero(m, { title: 'Shot <em>list.</em>', lede: 'Shots · lenses · coverage. Blocking-ready for the DP.', ctas: ctas, stat: { n: String(shots.length), l: 'shots' } }) +
       '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
-        (shots.length ? ('<table class="table"><thead><tr><th>#</th><th>Type</th><th>Lens</th><th>Description</th><th>Scene</th><th>Dur</th></tr></thead><tbody>' +
+        (shots.length ? ('<table class="table"><thead><tr><th>#</th><th>Type</th><th>Lens</th><th>Description</th><th>Scene</th><th>Dur</th><th></th></tr></thead><tbody>' +
           shots.map(function(s, i){
             return '<tr><td class="num"><strong>' + esc(s.n || String(i+1).padStart(3,'0')) + '</strong></td>' +
               '<td>' + chipFor('mint', s.kind || s.type || 'MASTER') + '</td>' +
               '<td class="num">' + esc(s.lens || '—') + '</td>' +
               '<td>' + esc(s.desc || '') + '</td>' +
               '<td class="num">' + esc(s.scene || '') + '</td>' +
-              '<td class="num">' + esc(s.dur || '—') + '</td></tr>';
+              '<td class="num">' + esc(s.dur || '—') + '</td>' +
+              '<td><button class="icon-btn" style="width:28px;height:28px;" data-del-path="shotlist" data-del-idx="' + i + '">' + ICONS.trash + '</button></td></tr>';
           }).join('') + '</tbody></table>') : emptyState('No shots yet', 'Add shots to build your list.', '<button class="btn btn--primary" data-action="add-shot">ADD SHOT ' + ICONS.arrow + '</button>')) +
       '</div></div>'
     );
   }
 
   // ── Cast & Crew / Contacts ────────────────────────────────────────────
-  function teamGrid(map) {
+  function teamGrid(map, kind) {
     var arr = Object.keys(map).map(function(k){ var v = map[k]; v._id = k; return v; });
     if (!arr.length) return '';
     return '<div class="grid grid--3">' + arr.map(function(p){
       var initials = (p.name || p.id || '??').split(/\s+/).map(function(w){ return w[0]; }).filter(Boolean).slice(0,2).join('').toUpperCase();
       return (
-        '<div class="card team-card">' +
+        '<div class="card team-card" style="position:relative;">' +
+          '<button class="icon-btn" style="position:absolute;top:10px;right:10px;width:28px;height:28px;" data-del-path="' + esc(kind) + '" data-del-key="' + esc(p._id) + '">' + ICONS.trash + '</button>' +
           '<div class="team-card__avatar">' + esc(initials) + '</div>' +
           '<div><div class="team-card__name">' + esc(p.name || 'Unnamed') + '</div>' +
           '<div class="team-card__role">' + esc(p.role || '') + '</div></div>' +
@@ -3016,8 +3027,8 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
     var crewCount = Object.keys(crew).length;
     return (
       hero(m, { title: 'Cast & <em>Crew.</em>', lede: 'Directory, roles, contact details, availability.', ctas: ctas, stat: { n: String(castCount+crewCount), l: 'people' } }) +
-      '<div class="section"><div>' + sectionHead('Cast', castCount + ' MEMBERS') + (castCount ? teamGrid(cast) : emptyState('No cast yet','Add your first cast member.','<button class="btn btn--primary" data-action="add-cast">ADD CAST ' + ICONS.plus + '</button>')) + '</div></div>' +
-      '<div class="section"><div>' + sectionHead('Crew', crewCount + ' MEMBERS') + (crewCount ? teamGrid(crew) : emptyState('No crew yet','Add your first crew member.','<button class="btn btn--primary" data-action="add-crew">ADD CREW ' + ICONS.plus + '</button>')) + '</div></div>'
+      '<div class="section"><div>' + sectionHead('Cast', castCount + ' MEMBERS') + (castCount ? teamGrid(cast, 'cast') : emptyState('No cast yet','Add your first cast member.','<button class="btn btn--primary" data-action="add-cast">ADD CAST ' + ICONS.plus + '</button>')) + '</div></div>' +
+      '<div class="section"><div>' + sectionHead('Crew', crewCount + ' MEMBERS') + (crewCount ? teamGrid(crew, 'crew') : emptyState('No crew yet','Add your first crew member.','<button class="btn btn--primary" data-action="add-crew">ADD CREW ' + ICONS.plus + '</button>')) + '</div></div>'
     );
   }
   function V_contacts(m) {
@@ -3027,13 +3038,14 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
       hero(m, { title: 'Contacts', lede: 'Your general directory — vendors, agents, unions, execs.', ctas: ctas, stat: { n: String(cs.length), l: 'contacts' } }) +
       '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
         (cs.length ? ('<table class="table"><thead><tr><th>Name</th><th>Role</th><th>Org</th><th>Phone</th><th>Email</th></tr></thead><tbody>' +
-          cs.map(function(c){
+          cs.map(function(c, i){
             return '<tr><td><strong>' + esc(c.name||'') + '</strong></td>' +
                    '<td>' + esc(c.role||'') + '</td>' +
                    '<td>' + esc(c.org||'') + '</td>' +
                    '<td class="num">' + esc(c.phone||'') + '</td>' +
-                   '<td>' + esc(c.email||'') + '</td></tr>';
-          }).join('') + '</tbody></table>') : emptyState('No contacts yet','Add your first contact.','<button class="btn btn--primary" data-action="add-contact">ADD CONTACT ' + ICONS.plus + '</button>')) +
+                   '<td>' + esc(c.email||'') + '</td>' +
+                   '<td><button class="icon-btn" style="width:28px;height:28px;" data-del-path="contacts" data-del-idx="' + i + '">' + ICONS.trash + '</button></td></tr>';
+          }).join('') + '</tbody></table>').replace('<th>Email</th></tr>', '<th>Email</th><th></th></tr>') : emptyState('No contacts yet','Add your first contact.','<button class="btn btn--primary" data-action="add-contact">ADD CONTACT ' + ICONS.plus + '</button>')) +
       '</div></div>'
     );
   }
@@ -3045,14 +3057,15 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
     return (
       hero(m, { title: 'Shoot <em>days.</em>', lede: 'Every day on your schedule, with call time, wrap, and scenes.', ctas: ctas, stat: { n: String(days.length), l: 'days' } }) +
       '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
-        (days.length ? ('<table class="table"><thead><tr><th>Day</th><th>Date</th><th>Location</th><th>Call</th><th>Wrap</th><th>Scenes</th></tr></thead><tbody>' +
+        (days.length ? ('<table class="table"><thead><tr><th>Day</th><th>Date</th><th>Location</th><th>Call</th><th>Wrap</th><th>Scenes</th><th></th></tr></thead><tbody>' +
           days.map(function(d, i){
             return '<tr><td class="num"><strong>D' + String(i+1).padStart(2,'0') + '</strong></td>' +
                    '<td class="num">' + esc(d.date||'') + '</td>' +
                    '<td>' + esc(d.location||'') + '</td>' +
                    '<td class="num">' + esc(d.callTime || '—') + '</td>' +
                    '<td class="num">' + esc(d.wrap || '—') + '</td>' +
-                   '<td class="num">' + esc((d.scenes||[]).join(', ')) + '</td></tr>';
+                   '<td class="num">' + esc((d.scenes||[]).join(', ')) + '</td>' +
+                   '<td><button class="icon-btn" style="width:28px;height:28px;" data-del-path="days" data-del-idx="' + i + '">' + ICONS.trash + '</button></td></tr>';
           }).join('') + '</tbody></table>') : emptyState('No shoot days yet','Map out your production days.','<button class="btn btn--primary" data-action="add-day">ADD DAY ' + ICONS.plus + '</button>')) +
       '</div></div>'
     );
@@ -3065,11 +3078,12 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
     return (
       hero(m, { title: 'Locations', lede: 'Every address · contact · notes · release status in one place.', ctas: ctas, stat: { n: String(locs.length), l: 'locations' } }) +
       '<div class="section"><div class="grid grid--3">' +
-        (locs.length ? locs.map(function(l){
+        (locs.length ? locs.map(function(l, i){
           return '<div class="card"><div class="card-header" style="border-bottom:1px solid var(--edge);padding-bottom:10px;margin-bottom:10px;display:flex;align-items:center;gap:10px;">' +
             '<div style="width:36px;height:36px;border-radius:999px;background:linear-gradient(135deg,var(--mint),var(--aqua));display:flex;align-items:center;justify-content:center;">' + ICONS.location + '</div>' +
-            '<div><div class="team-card__name">' + esc(l.name||'Unnamed') + '</div>' +
-            '<div class="team-card__role">' + esc(l.address||'') + '</div></div></div>' +
+            '<div style="flex:1;"><div class="team-card__name">' + esc(l.name||'Unnamed') + '</div>' +
+            '<div class="team-card__role">' + esc(l.address||'') + '</div></div>' +
+            '<button class="icon-btn" style="width:28px;height:28px;" data-del-path="locations" data-del-idx="' + i + '">' + ICONS.trash + '</button></div>' +
             '<div style="font-size:13px;color:var(--fg-80);line-height:1.5;">' + esc(l.notes||'') + '</div>' +
             (l.release ? '<div style="margin-top:10px;">' + chipFor(l.release==='signed'?'mint':'amber', l.release) + '</div>' : '') +
           '</div>';
@@ -3085,13 +3099,14 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
     return (
       hero(m, { title: 'Equipment', lede: 'Gear inventory, checkouts, insurance value, service history.', ctas: ctas, stat: { n: String(items.length), l: 'assets' } }) +
       '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
-        (items.length ? ('<table class="table"><thead><tr><th>Asset</th><th>Detail</th><th>Status</th><th>Value</th></tr></thead><tbody>' +
-          items.map(function(r){
+        (items.length ? ('<table class="table"><thead><tr><th>Asset</th><th>Detail</th><th>Status</th><th>Value</th><th></th></tr></thead><tbody>' +
+          items.map(function(r, i){
             var statusChip = r.checkedOut ? chipFor('mint', 'CHECKED OUT') : chipFor('lime', 'AVAILABLE');
             return '<tr><td><strong>' + esc(r.name||r.t||'Asset') + '</strong></td>' +
                    '<td>' + esc(r.detail||r.s||'') + '</td>' +
                    '<td>' + statusChip + '</td>' +
-                   '<td class="num">' + (r.value ? fmtMoney(r.value) : '—') + '</td></tr>';
+                   '<td class="num">' + (r.value ? fmtMoney(r.value) : '—') + '</td>' +
+                   '<td><button class="icon-btn" style="width:28px;height:28px;" data-del-path="tech" data-del-idx="' + i + '">' + ICONS.trash + '</button></td></tr>';
           }).join('') + '</tbody></table>') : emptyState('No equipment tracked','Add your first asset.','<button class="btn btn--primary" data-action="add-tech">ADD ITEM ' + ICONS.plus + '</button>')) +
       '</div></div>'
     );
@@ -3104,13 +3119,14 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
     return (
       hero(m, { title: 'Shopping <em>list.</em>', lede: 'Purchase orders, rentals, reimbursements — one rolling list.', ctas: ctas, stat: { n: String(items.length), l: 'items' } }) +
       '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
-        (items.length ? ('<table class="table"><thead><tr><th>Item</th><th>Category</th><th>Qty</th><th>Est. Cost</th><th>Status</th></tr></thead><tbody>' +
-          items.map(function(r){
+        (items.length ? ('<table class="table"><thead><tr><th>Item</th><th>Category</th><th>Qty</th><th>Est. Cost</th><th>Status</th><th></th></tr></thead><tbody>' +
+          items.map(function(r, i){
             return '<tr><td>' + esc(r.name||'') + '</td>' +
                    '<td>' + esc(r.category||'') + '</td>' +
                    '<td class="num">' + esc(r.qty||1) + '</td>' +
                    '<td class="num">' + (r.cost ? fmtMoney(r.cost) : '—') + '</td>' +
-                   '<td>' + chipFor(r.bought ? 'mint':'amber', r.bought ? 'BOUGHT':'TO BUY') + '</td></tr>';
+                   '<td><button class="chip ' + (r.bought?'chip--mint':'chip--amber') + '" data-shop-toggle="' + i + '" style="border:0;cursor:pointer;">' + (r.bought?'BOUGHT':'TO BUY') + '</button></td>' +
+                   '<td><button class="icon-btn" style="width:28px;height:28px;" data-del-path="shopping" data-del-idx="' + i + '">' + ICONS.trash + '</button></td></tr>';
           }).join('') + '</tbody></table>') : emptyState('Shopping list empty','Add items to buy or rent.','<button class="btn btn--primary" data-action="add-shop">ADD ITEM ' + ICONS.plus + '</button>')) +
       '</div></div>'
     );
@@ -3123,14 +3139,15 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
     return (
       hero(m, { title: 'Continuity <em>log.</em>', lede: 'Wardrobe, blocking, props, weather and clock state per scene.', ctas: ctas, stat: { n: String(log.length), l: 'entries' } }) +
       '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
-        (log.length ? ('<table class="table"><thead><tr><th>Scn</th><th>Wardrobe</th><th>Props</th><th>Weather</th><th>Clock</th><th>Notes</th></tr></thead><tbody>' +
-          log.map(function(r){
+        (log.length ? ('<table class="table"><thead><tr><th>Scn</th><th>Wardrobe</th><th>Props</th><th>Weather</th><th>Clock</th><th>Notes</th><th></th></tr></thead><tbody>' +
+          log.map(function(r, i){
             return '<tr><td class="num"><strong>' + esc(r.scene||'') + '</strong></td>' +
                    '<td>' + esc(r.wardrobe||'—') + '</td>' +
                    '<td>' + esc(r.props||'—') + '</td>' +
                    '<td>' + esc(r.weather||'—') + '</td>' +
                    '<td class="num">' + esc(r.clock||'—') + '</td>' +
-                   '<td>' + esc(r.notes||'') + '</td></tr>';
+                   '<td>' + esc(r.notes||'') + '</td>' +
+                   '<td><button class="icon-btn" style="width:28px;height:28px;" data-del-path="continuity" data-del-idx="' + i + '">' + ICONS.trash + '</button></td></tr>';
           }).join('') + '</tbody></table>') : emptyState('No continuity entries','Log a continuity detail.','<button class="btn btn--primary" data-action="add-continuity">LOG NOTE ' + ICONS.plus + '</button>')) +
       '</div></div>'
     );
@@ -3193,12 +3210,12 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
     return (
       hero(m, { title: 'Documents', lede: 'Contracts, call sheets, releases, vendor MSAs — signed, timestamped, auditable.', ctas: ctas, stat: { n: String(docs.length), l: 'docs' } }) +
       '<div class="section"><div class="card">' +
-        (docs.length ? docs.map(function(doc){
+        (docs.length ? docs.map(function(doc, i){
           return '<div class="doc-row"><div class="doc-row__icon">' + ICONS.doc + '</div>' +
             '<div><div class="doc-row__title">' + esc(doc.title||doc.name||'Untitled') + '</div>' +
             '<div class="doc-row__sub">' + esc(doc.type||doc.sub||'') + '</div></div>' +
             '<div class="doc-row__size">' + esc(doc.size||'') + '</div>' +
-            '<div class="doc-row__arrow">' + ICONS.arrow + '</div></div>';
+            '<button class="icon-btn" style="width:28px;height:28px;" data-del-path="documents" data-del-idx="' + i + '">' + ICONS.trash + '</button></div>';
         }).join('') : emptyState('No documents yet','Upload or track your first document.','<button class="btn btn--primary" data-action="add-doc">NEW DOCUMENT ' + ICONS.plus + '</button>')) +
       '</div></div>'
     );
@@ -3228,7 +3245,7 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
         statCard('Categories', String(lines.length), 'line items', 'up', true)
       ].join('') + '</div>' +
       '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
-        '<table class="table" id="fin-table"><thead><tr><th>Code</th><th>Category</th><th>Estimate</th><th>Actual</th><th>Variance</th></tr></thead><tbody>' +
+        '<table class="table" id="fin-table"><thead><tr><th>Code</th><th>Category</th><th>Estimate</th><th>Actual</th><th>Variance</th><th></th></tr></thead><tbody>' +
           lines.map(function(l, i){
             var v = (+l.est||0) - (+l.act||0);
             var chipCls = v < 0 ? 'chip--rose' : 'chip--mint';
@@ -3237,7 +3254,8 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
               '<td>' + esc(l.name||'') + '</td>' +
               '<td class="num"><input class="form-input" data-fin-est="' + i + '" type="number" value="' + (l.est||0) + '" style="width:120px;padding:6px 10px;"/></td>' +
               '<td class="num"><input class="form-input" data-fin-act="' + i + '" type="number" value="' + (l.act||0) + '" style="width:120px;padding:6px 10px;"/></td>' +
-              '<td><span class="chip ' + chipCls + '">' + fmtMoney(v) + '</span></td></tr>';
+              '<td><span class="chip ' + chipCls + '">' + fmtMoney(v) + '</span></td>' +
+              '<td><button class="icon-btn" style="width:28px;height:28px;" data-del-path="financials.lines" data-del-idx="' + i + '">' + ICONS.trash + '</button></td></tr>';
           }).join('') +
         '</tbody></table></div></div>'
     );
@@ -3278,12 +3296,13 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
     return (
       hero(m, { title: 'Milestones', lede: 'Key dates · deliveries · anchors.', ctas: ctas, stat: { n: String(items.length), l: 'milestones' } }) +
       '<div class="section"><div class="grid grid--3">' +
-        (items.length ? items.map(function(x){
-          return '<div class="card"><div class="card-header" style="border-bottom:1px solid var(--edge);padding-bottom:10px;margin-bottom:10px;">' +
-            '<div class="card-title">' + esc(x.name||'') + '</div>' +
+        (items.length ? items.map(function(x, i){
+          return '<div class="card"><div class="card-header" style="border-bottom:1px solid var(--edge);padding-bottom:10px;margin-bottom:10px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">' +
+            '<div><div class="card-title">' + esc(x.name||'') + '</div>' +
             '<div class="stat__lbl">' + esc(x.date||'') + '</div></div>' +
+            '<button class="icon-btn" style="width:28px;height:28px;" data-del-path="milestones" data-del-idx="' + i + '">' + ICONS.trash + '</button></div>' +
             '<div style="color:var(--fg-80);">' + esc(x.notes||'') + '</div>' +
-            '<div style="margin-top:10px;">' + chipFor(x.complete?'mint':'amber', x.complete?'COMPLETE':'PENDING') + '</div>' +
+            '<div style="margin-top:10px;"><button class="chip ' + (x.complete?'chip--mint':'chip--amber') + '" data-ms-toggle="' + i + '" style="border:0;cursor:pointer;">' + (x.complete?'COMPLETE':'PENDING') + '</button></div>' +
           '</div>';
         }).join('') : emptyState('No milestones yet','Set your first key date.','<button class="btn btn--primary" data-action="add-milestone">ADD MILESTONE ' + ICONS.plus + '</button>')) +
       '</div></div>'
@@ -3297,14 +3316,15 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
     return (
       hero(m, { title: 'Risk <em>assessment.</em>', lede: 'Every risk, its impact, and its mitigation.', ctas: ctas, stat: { n: String(rs.length), l: 'risks' } }) +
       '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
-        (rs.length ? ('<table class="table"><thead><tr><th>Risk</th><th>Category</th><th>Impact</th><th>Prob</th><th>Mitigation</th></tr></thead><tbody>' +
-          rs.map(function(r){
+        (rs.length ? ('<table class="table"><thead><tr><th>Risk</th><th>Category</th><th>Impact</th><th>Prob</th><th>Mitigation</th><th></th></tr></thead><tbody>' +
+          rs.map(function(r, i){
             var chip = r.level==='high' ? 'chip--rose' : (r.level==='medium' ? 'chip--amber' : 'chip--mint');
             return '<tr><td><strong>' + esc(r.title||'') + '</strong></td>' +
                    '<td>' + esc(r.category||'') + '</td>' +
-                   '<td><span class="chip ' + chip + '">' + esc(r.level || 'low').toUpperCase() + '</span></td>' +
+                   '<td><span class="chip ' + chip + '">' + esc((r.level || 'low').toUpperCase()) + '</span></td>' +
                    '<td class="num">' + esc(r.probability||'—') + '</td>' +
-                   '<td>' + esc(r.mitigation||'—') + '</td></tr>';
+                   '<td>' + esc(r.mitigation||'—') + '</td>' +
+                   '<td><button class="icon-btn" style="width:28px;height:28px;" data-del-path="risks" data-del-idx="' + i + '">' + ICONS.trash + '</button></td></tr>';
           }).join('') + '</tbody></table>') : emptyState('No risks logged','Log your first risk.','<button class="btn btn--primary" data-action="add-risk">ADD RISK ' + ICONS.plus + '</button>')) +
       '</div></div>'
     );
@@ -3324,13 +3344,14 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
         statCard('Access', 'ZTA L4', '', 'up', true)
       ].join('') + '</div>' +
       '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
-        (v.length ? ('<table class="table"><thead><tr><th>Title</th><th>Type</th><th>Size</th><th>Location</th><th>Status</th></tr></thead><tbody>' +
-          v.map(function(x){
+        (v.length ? ('<table class="table"><thead><tr><th>Title</th><th>Type</th><th>Size</th><th>Location</th><th>Status</th><th></th></tr></thead><tbody>' +
+          v.map(function(x, i){
             return '<tr><td><strong>' + esc(x.title||'') + '</strong></td>' +
                    '<td>' + esc(x.type||'') + '</td>' +
                    '<td class="num">' + esc(x.size||'') + '</td>' +
                    '<td>' + esc(x.location||'') + '</td>' +
-                   '<td>' + chipFor('mint', x.sealed ? 'SEALED' : 'DRAFT') + '</td></tr>';
+                   '<td>' + chipFor('mint', x.sealed ? 'SEALED' : 'DRAFT') + '</td>' +
+                   '<td><button class="icon-btn" style="width:28px;height:28px;" data-del-path="vault" data-del-idx="' + i + '">' + ICONS.trash + '</button></td></tr>';
           }).join('') + '</tbody></table>') : emptyState('Vault is empty','Log your first asset.','<button class="btn btn--primary" data-action="add-vault">ADD ASSET ' + ICONS.plus + '</button>')) +
       '</div></div>'
     );
@@ -3343,8 +3364,9 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
       try { return new Date(x.date).toDateString() === new Date().toDateString(); } catch(_) { return false; }
     }) || d.days && d.days[0];
     var todayScenes = today ? (today.scenes||[]) : [];
+    var ctas = '<div class="hero__cta-row"><button class="btn btn--primary" data-action="export-callsheet-pdf">EXPORT CALL SHEET</button><button class="btn btn--ghost-light" data-view="schedule">OPEN STRIPBOARD</button></div>';
     return (
-      hero(m, { title: 'On-set <em>HUD.</em>', lede: (today ? (today.location || 'Location TBD') : 'Nothing scheduled today.') + ' · Live status board.', stat: { n: today ? 'D' + ((d.days||[]).indexOf(today) + 1) : '—', l: 'today' } }) +
+      hero(m, { title: 'On-set <em>HUD.</em>', lede: (today ? (today.location || 'Location TBD') : 'Nothing scheduled today.') + ' · Live status board.', ctas: ctas, stat: { n: today ? 'D' + ((d.days||[]).indexOf(today) + 1) : '—', l: 'today' } }) +
       '<div class="grid grid--stats section">' + [
         statCard('Call time',   (today && today.callTime) || '—',  '', 'up', true),
         statCard('Wrap target', (today && today.wrap) || '—',     '', 'up', true),
@@ -3460,8 +3482,13 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
       return '<span class="sx__line sx__line--' + esc(l.t||'action') + '" contenteditable="true" data-sx-idx="' + i + '" data-placeholder="' + placeholderFor(l.t) + '">' + esc(l.text) + '</span>';
     }).join('\n');
 
+    var ctas = '<div class="hero__cta-row">' +
+      '<button class="btn btn--primary" data-action="export-script-pdf">EXPORT PDF</button>' +
+      '<button class="btn btn--ghost-light" data-view="script-import">RE-IMPORT</button>' +
+      '<button class="btn btn--ghost-light" data-view="breakdown">BREAKDOWN</button>' +
+    '</div>';
     return (
-      hero(m, { title:'Script <em>editor.</em>', lede:'Industry-standard screenplay layout. Cmd/Ctrl + 1..8 to change line type. Enter to go to next line with auto-type.', stat:{ n: String(lines.length), l:'lines' } }) +
+      hero(m, { title:'Script <em>editor.</em>', lede:'Industry-standard screenplay layout. Cmd/Ctrl + 1..8 to change line type. Enter to go to next line with auto-type.', ctas: ctas, stat:{ n: String(lines.length), l:'lines' } }) +
       '<div class="section sx">' +
         '<div class="sx__sidebar" id="sx-sidebar">' + sidebar + '</div>' +
         '<div class="sx__page-wrap">' + toolbar + '<div class="sx__page" id="sx-page">' + page + '</div></div>' +
@@ -3655,8 +3682,11 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
           return '<div class="prod-card"><div class="prod-card__poster" style="background:' + (f.img ? 'url(\''+esc(f.img)+'\')' : 'linear-gradient(135deg,#0a0f17,#141b2a)') + ';background-size:cover;background-position:center;">' +
             '<span class="chip chip--mint">#' + (i+1) + '</span></div>' +
             '<div class="prod-card__body">' +
-              '<div class="prod-card__title" style="font-size:16px;">' + esc(f.title || 'Frame ' + (i+1)) + '</div>' +
-              '<div class="prod-card__meta">' + esc(f.scene || '') + ' · ' + esc(f.lens || '—') + '</div>' +
+              '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">' +
+                '<div><div class="prod-card__title" style="font-size:16px;">' + esc(f.title || 'Frame ' + (i+1)) + '</div>' +
+                '<div class="prod-card__meta">' + esc(f.scene || '') + ' · ' + esc(f.lens || '—') + '</div></div>' +
+                '<button class="icon-btn" style="width:28px;height:28px;" data-del-path="storyboard" data-del-idx="' + i + '">' + ICONS.trash + '</button>' +
+              '</div>' +
               '<div style="font-size:13px;color:var(--fg-80);margin-top:10px;">' + esc(f.notes || '') + '</div>' +
             '</div></div>';
         }).join('') : emptyState('Storyboard empty','Add your first frame.','<button class="btn btn--primary" data-action="add-frame">ADD FRAME ' + ICONS.plus + '</button>')) +
@@ -3670,7 +3700,10 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
       hero(m, { title: 'Export & <em>backup.</em>', lede: 'Download JSON, print PDFs, back up the whole production.' }) +
       '<div class="section"><div class="grid grid--3">' +
         '<div class="card"><div class="card-title" style="margin-bottom:10px;">Production JSON</div><div style="color:var(--fg-80);margin-bottom:14px;">A machine-readable snapshot of everything on this production.</div><button class="btn btn--primary" id="btn-export-json">DOWNLOAD JSON ' + ICONS.download + '</button></div>' +
-        '<div class="card"><div class="card-title" style="margin-bottom:10px;">Call sheet</div><div style="color:var(--fg-80);margin-bottom:14px;">Printable call sheet for today\'s shoot.</div><button class="btn btn--ghost" data-view="onset">OPEN ON-SET</button></div>' +
+        '<div class="card"><div class="card-title" style="margin-bottom:10px;">Call sheet PDF</div><div style="color:var(--fg-80);margin-bottom:14px;">Printable call sheet for today\'s shoot.</div><button class="btn btn--primary" data-action="export-callsheet-pdf">DOWNLOAD PDF</button></div>' +
+        '<div class="card"><div class="card-title" style="margin-bottom:10px;">Stripboard PDF</div><div style="color:var(--fg-80);margin-bottom:14px;">Every scene, order of shoot.</div><button class="btn btn--primary" data-action="export-stripboard-pdf">DOWNLOAD PDF</button></div>' +
+        '<div class="card"><div class="card-title" style="margin-bottom:10px;">Shot list PDF</div><div style="color:var(--fg-80);margin-bottom:14px;">Every shot with lens & description.</div><button class="btn btn--primary" data-action="export-shots-pdf">DOWNLOAD PDF</button></div>' +
+        '<div class="card"><div class="card-title" style="margin-bottom:10px;">Script PDF</div><div style="color:var(--fg-80);margin-bottom:14px;">Industry-format screenplay, letter.</div><button class="btn btn--primary" data-action="export-script-pdf">DOWNLOAD PDF</button></div>' +
         '<div class="card"><div class="card-title" style="margin-bottom:10px;">Cloud backup</div><div style="color:var(--fg-80);margin-bottom:14px;">' + (Auth.user && !Auth.isDemoMode ? 'Signed into Firebase. Realtime sync is ON.' : 'Demo mode — enable cloud by signing in.') + '</div><button class="btn btn--ghost" data-action="logout">SIGN OUT / SWITCH</button></div>' +
       '</div></div>'
     );
@@ -3946,9 +3979,48 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
     $('#topbar-title').textContent = m.label;
     $('#topbar-mobile-title').textContent = m.label;
     $('#topbar-crumb').textContent = m.crumb;
+    updateTopbarMeta();
     try { history.replaceState(null,'','#' + m.id); } catch(_){}
     wireView(m.id);
     try { console.log('[AlacrityHub] view →', m.id); } catch(_){}
+  }
+
+  function updateTopbarMeta() {
+    var lbl = $('#prod-switcher-label');
+    if (lbl) lbl.textContent = Core.currentProduction || '—';
+    var mode = $('#pill-mode-label');
+    var pill = $('#pill-mode');
+    if (mode && pill) {
+      if (!Auth.user) { mode.textContent = 'Offline'; }
+      else if (Auth.isDemoMode) { mode.textContent = 'Demo · Local'; pill.classList.remove('is-warn'); }
+      else { mode.textContent = 'Cloud · Synced'; pill.classList.remove('is-warn'); }
+    }
+  }
+  var switcherBtn = $('#prod-switcher');
+  if (switcherBtn) switcherBtn.addEventListener('click', function(){ openProductionSwitcher(); });
+
+  function openProductionSwitcher() {
+    var list = Core.productions || [];
+    openModal('Switch production', (
+      '<div style="display:flex;flex-direction:column;gap:10px;">' +
+        list.map(function(p){
+          var active = p === Core.currentProduction;
+          return '<button class="doc-row" data-switch-to="' + esc(p) + '" style="text-align:left;width:100%;cursor:pointer;' + (active ? 'border-color:var(--edge-mint);' : '') + '">' +
+            '<div class="doc-row__icon">' + ICONS.film + '</div>' +
+            '<div><div class="doc-row__title">' + esc(p) + '</div><div class="doc-row__sub">' + (active ? 'Active' : 'Open') + '</div></div>' +
+            '<div class="doc-row__size"></div>' +
+            '<div class="doc-row__arrow">' + ICONS.arrow + '</div>' +
+          '</button>';
+        }).join('') +
+        '<button class="btn btn--primary" data-action-new style="margin-top:10px;">NEW PRODUCTION ' + ICONS.plus + '</button>' +
+      '</div>'
+    ), function(m, close){
+      $$('[data-switch-to]', m).forEach(function(b){
+        b.onclick = function(){ Core.switchProduction(b.getAttribute('data-switch-to')); close(); };
+      });
+      var nb = $('[data-action-new]', m);
+      if (nb) nb.onclick = function(){ close(); handleAction('new-production'); };
+    });
   }
   function rerender() { if (currentView) go(currentView); }
   window.rerender = rerender;
@@ -4028,6 +4100,42 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
       };
     }
 
+    // Shopping list toggle
+    $$('#workspace [data-shop-toggle]').forEach(function(el){
+      el.addEventListener('click', function(){
+        var i = +el.getAttribute('data-shop-toggle');
+        Core.data.shopping[i].bought = !Core.data.shopping[i].bought;
+        Core.save(); rerender();
+      });
+    });
+
+    // Milestone toggle
+    $$('#workspace [data-ms-toggle]').forEach(function(el){
+      el.addEventListener('click', function(){
+        var i = +el.getAttribute('data-ms-toggle');
+        Core.data.milestones[i].complete = !Core.data.milestones[i].complete;
+        Core.save(); rerender();
+      });
+    });
+
+    // Inline delete for list rows (set data-del-path="path.to.array" data-del-idx="n" OR data-del-path="key.sub" data-del-key="id")
+    $$('#workspace [data-del-path]').forEach(function(el){
+      el.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        var path = el.getAttribute('data-del-path');
+        var idx = el.getAttribute('data-del-idx');
+        var key = el.getAttribute('data-del-key');
+        var obj = Core.data;
+        var parts = path.split('.');
+        for (var i=0; i<parts.length-1; i++) { obj = obj[parts[i]] = obj[parts[i]] || {}; }
+        var last = parts[parts.length-1];
+        if (idx != null && Array.isArray(obj[last])) obj[last].splice(+idx, 1);
+        else if (key != null && typeof obj[last] === 'object' && obj[last] !== null) delete obj[last][key];
+        Core.save();
+        rerender();
+      });
+    });
+
     // CRM per-which handlers
     var crmBtnAct = ['prod','biz'].forEach(function(w){
       var call = $('[data-crm-call="' + w + '"]');
@@ -4059,6 +4167,10 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
   }
 
   function handleAction(a) {
+    if (a === 'export-stripboard-pdf') { exportStripboardPDF(); return; }
+    if (a === 'export-shots-pdf')      { exportShotlistPDF(); return; }
+    if (a === 'export-callsheet-pdf')  { exportCallSheetPDF(); return; }
+    if (a === 'export-script-pdf')     { exportScriptPDF(); return; }
     if (a === 'new-production') {
       openModal('New production', (
         '<div class="form-field"><label class="form-label">Name</label><input class="form-input" id="np-name" placeholder="e.g. Sidequest"/></div>' +
@@ -4266,6 +4378,89 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
   renderRail();
   renderBottom();
   Auth.bindSplash();
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // PDF EXPORT HELPERS (jsPDF + autotable)
+  // ══════════════════════════════════════════════════════════════════════════
+  function pdfDoc() {
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      toast('PDF engine still loading — try again in a second.');
+      return null;
+    }
+    var doc = new window.jspdf.jsPDF({ unit:'pt', format:'a4' });
+    doc.setFont('helvetica','bold'); doc.setFontSize(16);
+    doc.text(Core.currentProduction || 'Alacrity Hub', 40, 48);
+    doc.setFont('helvetica','normal'); doc.setFontSize(10);
+    doc.text(new Date().toLocaleString(), 40, 64);
+    return doc;
+  }
+  function exportStripboardPDF() {
+    var doc = pdfDoc(); if (!doc) return;
+    var rows = ((Core.data.schedule && Core.data.schedule.strips) || []).map(function(s, i){
+      return [ s.n || (i+1), s.title || '', s.int ? 'INT' : 'EXT', s.loc || '', s.pages || '', s.day || '' ];
+    });
+    doc.autoTable({ head: [['#','Scene','Type','Location','Pages','Day']], body: rows, startY: 80 });
+    doc.save((Core.currentProduction || 'production') + '-stripboard.pdf');
+  }
+  function exportShotlistPDF() {
+    var doc = pdfDoc(); if (!doc) return;
+    var rows = (Core.data.shotlist || []).map(function(s, i){
+      return [ s.n || (i+1), s.kind || '', s.lens || '', s.desc || '', s.scene || '', s.dur || '' ];
+    });
+    doc.autoTable({ head: [['#','Type','Lens','Description','Scene','Dur']], body: rows, startY: 80 });
+    doc.save((Core.currentProduction || 'production') + '-shotlist.pdf');
+  }
+  function exportCallSheetPDF() {
+    var doc = pdfDoc(); if (!doc) return;
+    var d = Core.data;
+    var today = (d.days||[]).find(function(x){ try { return new Date(x.date).toDateString() === new Date().toDateString(); } catch(_) { return false; } }) || (d.days||[])[0];
+    doc.setFontSize(14); doc.text('Call Sheet', 40, 90);
+    doc.setFontSize(10);
+    var y = 110;
+    if (today) {
+      doc.text('Date: ' + (today.date || '—'), 40, y); y += 14;
+      doc.text('Location: ' + (today.location || '—'), 40, y); y += 14;
+      doc.text('Call time: ' + (today.callTime || '—'), 40, y); y += 14;
+      doc.text('Wrap: ' + (today.wrap || '—'), 40, y); y += 20;
+    }
+    var scenes = ((d.schedule && d.schedule.strips) || []).slice(0, 10).map(function(s,i){
+      return [ s.n || (i+1), s.title || '', s.int ? 'INT' : 'EXT', s.loc || '', s.pages || '' ];
+    });
+    if (scenes.length) {
+      doc.autoTable({ head:[['#','Scene','Type','Location','Pages']], body: scenes, startY: y });
+      y = doc.lastAutoTable.finalY + 20;
+    }
+    var cast = Object.keys(d.cast || {}).map(function(k){ var c = d.cast[k]; return [ c.name||'', c.role||'', c.phone||'' ]; });
+    if (cast.length) { doc.autoTable({ head:[['Cast','Role','Phone']], body: cast, startY: y }); y = doc.lastAutoTable.finalY + 20; }
+    var crew = Object.keys(d.crew || {}).map(function(k){ var c = d.crew[k]; return [ c.name||'', c.role||'', c.phone||'' ]; });
+    if (crew.length) doc.autoTable({ head:[['Crew','Role','Phone']], body: crew, startY: y });
+    doc.save((Core.currentProduction || 'production') + '-callsheet.pdf');
+  }
+  function exportScriptPDF() {
+    var doc = pdfDoc(); if (!doc) return;
+    doc = new window.jspdf.jsPDF({ unit:'in', format:'letter' });
+    doc.setFont('courier','normal'); doc.setFontSize(12);
+    var margin = 1, y = 1;
+    var lines = (Core.data.script && Core.data.script.lines) || [];
+    lines.forEach(function(l){
+      if (y > 10) { doc.addPage(); y = 1; }
+      var text = l.text || '';
+      if (l.t === 'scene') { doc.setFont('courier','bold'); doc.text(text.toUpperCase(), margin, y); doc.setFont('courier','normal'); y += 0.3; }
+      else if (l.t === 'character') { doc.text(text.toUpperCase(), margin + 2.5, y); y += 0.2; }
+      else if (l.t === 'paren') { doc.text('(' + text.replace(/^\(|\)$/g,'') + ')', margin + 2, y); y += 0.2; }
+      else if (l.t === 'dialog') { var wrap = doc.splitTextToSize(text, 3.5); wrap.forEach(function(w){ doc.text(w, margin + 1.5, y); y += 0.2; }); y += 0.05; }
+      else if (l.t === 'transition') { doc.text(text.toUpperCase(), 7, y); y += 0.3; }
+      else if (l.t === 'shot') { doc.setFont('courier','bold'); doc.text(text.toUpperCase(), margin, y); doc.setFont('courier','normal'); y += 0.2; }
+      else if (l.t === 'note') { doc.setFont('courier','italic'); doc.text('[ ' + text + ' ]', margin, y); doc.setFont('courier','normal'); y += 0.2; }
+      else { var wrap2 = doc.splitTextToSize(text, 6); wrap2.forEach(function(w){ doc.text(w, margin, y); y += 0.2; }); y += 0.05; }
+    });
+    doc.save((Core.currentProduction || 'script') + '.pdf');
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // INITIAL TOP-BAR META
+  // ══════════════════════════════════════════════════════════════════════════
+  updateTopbarMeta();
 
   try { console.log('%c Alacrity Hub · Aurora OS · v3 ', 'background:linear-gradient(135deg,#17FFC5,#14AFDF);color:#05080e;padding:3px 8px;border-radius:6px;font-weight:700;'); } catch(_){}
 
