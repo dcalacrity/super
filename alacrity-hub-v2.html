@@ -3345,6 +3345,29 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     if (!el) return; el.addEventListener(ev, handler, opts);
   }
   function emit(name, detail) { document.dispatchEvent(new CustomEvent('ah:' + name, { detail: detail })); }
+  AH.emit = emit;
+
+  // ── EventBus — cross-module data coherency ─────────────────────────────
+  // Modules can fire lifecycle events (scene:added, cast:added, location:added,
+  // script:saved, production:switched, storyMap:changed, etc.) and listen for
+  // any of them via AH.Bus.on(name, fn). All DOM event names are prefixed
+  // "ah:" in CustomEvent form so they also show up in devtools.
+  AH.Bus = {
+    _listeners: {},
+    on: function (event, fn) {
+      (this._listeners[event] = this._listeners[event] || []).push(fn);
+      return function off() { AH.Bus.off(event, fn); };
+    },
+    off: function (event, fn) {
+      var l = this._listeners[event]; if (!l) return;
+      var i = l.indexOf(fn); if (i >= 0) l.splice(i, 1);
+    },
+    emit: function (event, payload) {
+      try { (this._listeners[event] || []).forEach(function (fn) { try { fn(payload); } catch (_) {} }); } catch (_) {}
+      try { (this._listeners['*'] || []).forEach(function (fn) { try { fn(event, payload); } catch (_) {} }); } catch (_) {}
+      try { document.dispatchEvent(new CustomEvent('ah:' + event, { detail: payload })); } catch (_) {}
+    }
+  };
   AH.util = { $: $, $$: $$, uid: uid, clean: clean, pad: pad, formatDate: formatDate, formatTime: formatTime, debounce: debounce, on: on, emit: emit };
 
   function toast(msg, kind) {
@@ -3933,6 +3956,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       $$('#workspace [data-prod]').forEach(function (el) {
         el.addEventListener('click', function () {
           STATE.activeProdId = el.getAttribute('data-prod'); saveState();
+          AH.Bus && AH.Bus.emit('production:switched', { prodId: STATE.activeProdId });
           toast('Active production · ' + STATE.productions.find(function(p){return p.id === STATE.activeProdId;}).title);
           AH.Router.go('dashboard');
         });
@@ -4266,11 +4290,15 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       AH.Storage.put('script', pid, s);
       s._dirty = false;
       Editor.updateDirty();
-      // Sync to Firebase if available
+      // Sync to Firebase if available (non-destructive update)
       if (AH.Firebase.ready && AH.Firebase.user) {
         AH.Firebase.pushProductionData(pid, { script: { lines: s.lines, title: s.title, titlePage: s.titlePage, updatedAt: Date.now() } });
       }
       toast('Script saved');
+      // Fire script:saved so downstream modules (Breakdown, Story Map, Beat
+      // Board, Stripboard) can react. Each subscriber chooses how invasive
+      // its reaction is (usually re-render if currently mounted).
+      AH.Bus.emit('script:saved', { prodId: pid, scenes: (s.lines || []).filter(function (l) { return l.t === 'scene'; }).length, words: (s.lines || []).reduce(function (a, l) { return a + ((l.x || '').split(/\s+/).filter(Boolean).length); }, 0) });
       var btn = $('#se-save'); if (btn) { btn.classList.add('is-saved'); btn.textContent = 'SAVED'; setTimeout(function () { if (btn) { btn.classList.remove('is-saved'); btn.textContent = 'SAVE'; } }, 1800); }
     },
 
@@ -6861,7 +6889,14 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     scs.forEach(function (s) { (byDay[s.day] = byDay[s.day] || []).push(s); });
     var days = Object.keys(byDay).sort();
     return (
-      AH.Views.renderHero(m, { primary: 'EXPORT CALL SHEET', primaryFn: 'AH.Schedule.exportCall()', secondary: 'EXPORT STRIPBOARD PDF', secondaryFn: 'AH.Schedule.exportPDF()' }) +
+      AH.Views.renderHero(m, { primary: 'CALL SHEET', primaryFn: 'AH.Schedule.exportCall()', secondary: 'STRIPBOARD PDF', secondaryFn: 'AH.Schedule.exportPDF()' }) +
+      '<div class="section" style="margin-top:0;"><div class="card" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
+        '<strong style="font-family:var(--f-mono);font-size:10.5px;letter-spacing:0.22em;color:var(--fg-45);text-transform:uppercase;">BOARD</strong>' +
+        '<button class="btn btn--ghost" onclick="AH.Schedule.exportPDF()">STRIPBOARD PDF</button>' +
+        '<button class="btn btn--ghost" onclick="AH.Schedule.exportDOOD()">DAY OUT OF DAYS</button>' +
+        '<button class="btn btn--ghost" onclick="AH.Schedule.autoDay()">AUTO-ASSIGN DAYS</button>' +
+        '<button class="btn btn--primary" onclick="AH.Schedule.addScene()">+ SCENE</button>' +
+      '</div></div>' +
       '<div class="section">' +
         '<div class="section__head">' +
           '<div><div class="section__title">Stripboard · ' + (getActiveProd().title) + '</div><div class="section__sub">DRAG TO REORDER · CLICK CELLS TO EDIT</div></div>' +
@@ -6969,12 +7004,69 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     exportCall: function () { AH.Docs.gen('callSheet'); },
     exportPDF: function () {
       var scs = loadScenes();
-      var rows = scs.map(function (s) { return '<tr><td>' + clean(s.n) + '</td><td>' + (s.int ? 'INT' : 'EXT') + '</td><td>' + clean(s.title) + '</td><td>' + clean(s.loc) + '</td><td>' + clean(s.pages) + '</td><td>' + clean(s.day) + '</td></tr>'; }).join('');
+      var rows = scs.map(function (s) {
+        var p = parsePages(s.pages);
+        return '<tr><td>' + clean(s.n) + '</td><td>' + (s.int ? 'INT' : 'EXT') + '</td><td>' + clean(s.title) + '</td><td>' + clean(s.loc) + '</td><td>' + clean(s.pages) + '</td><td>' + Math.round(p * 8) + '/8</td><td>' + clean(s.day) + '</td></tr>';
+      }).join('');
+      var totalEighths = scs.reduce(function (a, s) { return a + Math.round(parsePages(s.pages) * 8); }, 0);
       var body = PDF.header('Stripboard', getActiveProd().title) +
-        PDF.section('Scenes · ' + scs.length, '<table class="pdf-table"><thead><tr><th>#</th><th>Type</th><th>Slug</th><th>Location</th><th>Pages</th><th>Day</th></tr></thead><tbody>' + rows + '</tbody></table>') +
+        PDF.section('Scenes · ' + scs.length + ' · ' + totalEighths + ' eighths', '<table class="pdf-table"><thead><tr><th>#</th><th>Type</th><th>Slug</th><th>Location</th><th>Pages</th><th>Eighths</th><th>Day</th></tr></thead><tbody>' + rows + '</tbody></table>') +
         PDF.footer();
       PDF.openDoc(body, 'Stripboard_' + slugify(prodTitle()));
       toast('Stripboard PDF generated');
+    },
+    // Day Out of Days — per-cast-member work/hold/start/finish days.
+    exportDOOD: function () {
+      var scs = loadScenes();
+      var cast = AH.Storage.local.get('ah_cast_' + STATE.activeProdId, []);
+      // Determine unique shoot days
+      var days = Array.from(new Set(scs.map(function (s) { return s.day; }))).sort();
+      // Try to infer cast-per-scene from breakdown data
+      var bd = AH.Storage.local.get('ah_bdown_' + STATE.activeProdId, []);
+      var sceneCast = {};
+      bd.forEach(function (b) { sceneCast[b.scn] = (b.cast || []).map(function (c) { return (c || '').toUpperCase().trim(); }); });
+      var castNames = (cast.length ? cast.map(function (c) { return (c.name || '').toUpperCase(); }) : []);
+      // For each cast name, compute W / H / S / F / SW for each day (industry standard: W = work, SW = start-work, H = hold, F = finish, S = start, WF = work-finish).
+      function workMatrix(name) {
+        return days.map(function (d) {
+          var scsInDay = scs.filter(function (s) { return s.day === d; });
+          var works = scsInDay.some(function (s) { return (sceneCast[s.n] || []).indexOf(name) >= 0; });
+          return { day: d, works: works };
+        });
+      }
+      function markSWFH(mat) {
+        var first = mat.findIndex(function (d) { return d.works; });
+        var last  = mat.map(function (d, i) { return d.works ? i : -1; }).filter(function (i) { return i >= 0; }).pop();
+        return mat.map(function (d, i) {
+          if (first < 0) return '';
+          if (i < first) return '';
+          if (i > last)  return '';
+          if (i === first && i === last) return 'SWF';
+          if (i === first) return 'SW';
+          if (i === last)  return 'WF';
+          return d.works ? 'W' : 'H';
+        });
+      }
+      var header = '<tr><th>Cast</th>' + days.map(function (d) { return '<th>' + clean(d) + '</th>'; }).join('') + '<th>Work</th><th>Hold</th><th>Total</th></tr>';
+      var rows = (castNames.length ? castNames : ['(No cast entered)']).map(function (name) {
+        if (name === '(No cast entered)') return '<tr><td colspan="' + (days.length + 4) + '">Populate Cast & Crew then run Breakdown to map cast per scene.</td></tr>';
+        var mat = workMatrix(name);
+        var marks = markSWFH(mat);
+        var work = marks.filter(function (m) { return m === 'W' || m === 'SW' || m === 'WF' || m === 'SWF'; }).length;
+        var hold = marks.filter(function (m) { return m === 'H'; }).length;
+        return '<tr><td><strong>' + clean(name) + '</strong></td>' +
+          marks.map(function (m) {
+            var cls = m === 'SW' || m === 'WF' || m === 'SWF' ? 'background:#0f172a;color:#fff;' : m === 'W' ? 'background:#dcfce7;' : m === 'H' ? 'background:#fef3c7;' : '';
+            return '<td style="text-align:center;' + cls + '">' + m + '</td>';
+          }).join('') +
+          '<td>' + work + '</td><td>' + hold + '</td><td>' + (work + hold) + '</td></tr>';
+      }).join('');
+      var body = PDF.header('Day Out of Days (DOOD)', getActiveProd().title) +
+        PDF.section('Cast × Day · ' + days.length + ' days', '<table class="pdf-table">' + header + rows + '</table>') +
+        '<div class="pdf-p" style="font-size:9pt;color:#64748b;margin-top:8px;">Legend: SW = Start Work · W = Work · H = Hold · WF = Work Finish · SWF = Start Work Finish.</div>' +
+        PDF.footer();
+      PDF.openDoc(body, 'DOOD_' + slugify(prodTitle()));
+      toast('DOOD PDF generated');
     }
   };
 
@@ -7269,6 +7361,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
               var d = loadCast();
               d.push({ id: uid('p'), initials: (parts[0][0] || '') + ((parts[1] && parts[1][0]) || ''), name: name, role: $('#cm-role').value || '', dept: $('#cm-dept').value || '', email: $('#cm-email').value || '', phone: $('#cm-phone').value || '', tags: [] });
               saveCast(d); AH.Modal.close(); AH.Router.go('cast-crew'); toast('Added · ' + name);
+              AH.Bus && AH.Bus.emit('cast:updated', { total: d.length });
             };
           }
         });
@@ -7657,13 +7750,20 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     { id: 'workForHire',       cat: 'legal', title: 'Work-For-Hire',           sub: 'Writer / crew WFH assignment',           fn: 'AH.Docs.gen("workForHire")' },
     { id: 'nudityRider',       cat: 'legal', title: 'Nudity Rider',            sub: 'Nudity / simulated sex consent',         fn: 'AH.Docs.gen("nudityRider")' },
 
+    // Option / Acquisition / Distribution
+    { id: 'optionAgreement',   cat: 'legal', title: 'Option Agreement',        sub: 'Option to purchase literary material',   fn: 'AH.Docs.gen("optionAgreement")' },
+    { id: 'rightsAssignment',  cat: 'legal', title: 'Rights Assignment',       sub: 'Copyright assignment · full purchase',   fn: 'AH.Docs.gen("rightsAssignment")' },
+    { id: 'investorTermsheet', cat: 'legal', title: 'Investor Term Sheet',     sub: 'Non-binding terms for film finance',     fn: 'AH.Docs.gen("investorTermsheet")' },
+
     // Compliance / Safety / Vendors
     { id: 'vendorAgreement',   cat: 'compliance', title: 'Vendor Agreement',   sub: 'Goods / services vendor agreement',     fn: 'AH.Docs.gen("vendorAgreement")' },
     { id: 'musicAgreement',    cat: 'compliance', title: 'Music License',      sub: 'Synch / master / publishing license',   fn: 'AH.Docs.gen("musicAgreement")' },
     { id: 'liabilityWaiver',   cat: 'compliance', title: 'Liability Waiver',   sub: 'Waiver of liability · participants',    fn: 'AH.Docs.gen("liabilityWaiver")' },
     { id: 'completionBond',    cat: 'compliance', title: 'Completion Bond Summary', sub: 'Bond eligibility summary',         fn: 'AH.Docs.gen("completionBond")' },
     { id: 'eoInsurance',       cat: 'compliance', title: 'E&O Insurance Summary',   sub: 'Errors & omissions summary',       fn: 'AH.Docs.gen("eoInsurance")' },
-    { id: 'safetyReport',      cat: 'compliance', title: 'Safety Report',      sub: 'Daily safety + hazards + mitigations', fn: 'AH.Docs.gen("safetyReport")' }
+    { id: 'safetyReport',      cat: 'compliance', title: 'Safety Report',      sub: 'Daily safety + hazards + mitigations', fn: 'AH.Docs.gen("safetyReport")' },
+    { id: 'covidPlan',         cat: 'compliance', title: 'Health & Safety Plan',sub: 'Health protocol / PPE / testing plan', fn: 'AH.Docs.gen("covidPlan")' },
+    { id: 'indieContractor',   cat: 'compliance', title: 'Independent Contractor', sub: 'IC agreement with 1099 language',   fn: 'AH.Docs.gen("indieContractor")' }
   ];
 
   AH.register('documents', function (m) {
@@ -8456,6 +8556,152 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     });
   };
 
+  // ───────── 23. OPTION AGREEMENT ─────────
+  AH.Docs._gens.optionAgreement = function () {
+    fieldModal('Option Agreement', [
+      { id: 'op-owner',   label: 'Rights holder', full: true },
+      { id: 'op-work',    label: 'Title of work', full: true },
+      { id: 'op-fee',     label: 'Option fee',    def: '$1,000' },
+      { id: 'op-purchase',label: 'Purchase price (if exercised)', def: '$25,000' },
+      { id: 'op-term',    label: 'Option term',   def: '18 months' },
+      { id: 'op-ext',     label: 'Extension term',def: '12 months · for 50% of option fee' },
+      { id: 'op-state',   label: 'Governing law', def: 'California' }
+    ], function () {
+      var body = PDF.header('Option Agreement', 'Option to acquire literary material') +
+        PDF.section('Parties', '<div class="pdf-grid2">' +
+          PDF.field('Rights holder', gv('op-owner')) +
+          PDF.field('Producer', prodTitle()) +
+          PDF.field('Work', gv('op-work')) +
+          PDF.field('Governing law', gv('op-state')) +
+        '</div>') +
+        PDF.section('Commercial terms', '<div class="pdf-grid2">' +
+          PDF.field('Option fee', gv('op-fee')) +
+          PDF.field('Purchase price', gv('op-purchase')) +
+          PDF.field('Initial term', gv('op-term')) +
+          PDF.field('Extension', gv('op-ext')) +
+        '</div>') +
+        PDF.section('Grant', '<div class="pdf-p">Rights holder grants to Producer the exclusive, irrevocable, and assignable option to acquire all rights in and to the Work described above for the Option Term (subject to extension). During the Option Term, Producer may develop the Work, pitch to financiers and distributors, and perform all customary development activities. Upon exercise of the option, Rights holder shall execute the Rights Assignment attached hereto as Schedule A.</div>') +
+        PDF.sigBlock(gv('op-owner'), prodTitle() + ' (Producer)') +
+        PDF.footer();
+      PDF.openDoc(body, 'Option_Agreement_' + slugify(gv('op-owner') || 'Rightsholder'));
+      AH.Modal.close(); AH.Docs._log('Option Agreement');
+    });
+  };
+
+  // ───────── 24. RIGHTS ASSIGNMENT ─────────
+  AH.Docs._gens.rightsAssignment = function () {
+    fieldModal('Rights Assignment', [
+      { id: 'ra-owner',    label: 'Rights holder', full: true },
+      { id: 'ra-work',     label: 'Work title',    full: true },
+      { id: 'ra-price',    label: 'Purchase price', def: '$25,000' },
+      { id: 'ra-state',    label: 'Governing law', def: 'California' },
+      { id: 'ra-date',     label: 'Effective date', type: 'date' }
+    ], function () {
+      var body = PDF.header('Rights Assignment', 'Copyright & ancillary rights assignment') +
+        PDF.section('Parties', '<div class="pdf-grid2">' +
+          PDF.field('Assignor', gv('ra-owner')) +
+          PDF.field('Assignee', prodTitle()) +
+          PDF.field('Work', gv('ra-work')) +
+          PDF.field('Purchase price', gv('ra-price')) +
+          PDF.field('Effective date', gv('ra-date')) +
+          PDF.field('Governing law', gv('ra-state')) +
+        '</div>') +
+        PDF.section('Assignment', '<div class="pdf-p">Assignor hereby irrevocably assigns, transfers, and conveys to Assignee, its successors, and assigns, all right, title, and interest in and to the Work worldwide, in perpetuity, in all media now known or hereafter devised, including without limitation the sole and exclusive motion picture, television, streaming, stage, interactive, VR (Alacrity Player), merchandising, publishing, and allied rights, together with the right to adapt, modify, edit, and create derivative works.</div>') +
+        PDF.sigBlock(gv('ra-owner') + ' (Assignor)', prodTitle() + ' (Assignee)') +
+        PDF.footer();
+      PDF.openDoc(body, 'Rights_Assignment_' + slugify(gv('ra-owner') || 'Assignor'));
+      AH.Modal.close(); AH.Docs._log('Rights Assignment');
+    });
+  };
+
+  // ───────── 25. INVESTOR TERM SHEET ─────────
+  AH.Docs._gens.investorTermsheet = function () {
+    fieldModal('Investor Term Sheet', [
+      { id: 'it-investor', label: 'Investor name', full: true },
+      { id: 'it-amount',   label: 'Investment amount', def: '$250,000' },
+      { id: 'it-budget',   label: 'Total production budget', def: '$1,500,000' },
+      { id: 'it-recoup',   label: 'Recoupment position', def: 'First position · pari passu with senior debt' },
+      { id: 'it-premium',  label: 'Recoupment premium', def: '20%' },
+      { id: 'it-profits',  label: 'Net profits share',   def: '50% of Investor Pool' },
+      { id: 'it-state',    label: 'Governing law', def: 'California' }
+    ], function () {
+      var body = PDF.header('Investor Term Sheet', 'Non-binding · for discussion purposes only') +
+        PDF.section('Parties', '<div class="pdf-grid2">' +
+          PDF.field('Investor', gv('it-investor')) +
+          PDF.field('Producer', prodTitle()) +
+          PDF.field('Governing law', gv('it-state')) +
+        '</div>') +
+        PDF.section('Terms', '<div class="pdf-grid2">' +
+          PDF.field('Investment amount', gv('it-amount')) +
+          PDF.field('Total budget', gv('it-budget')) +
+          PDF.field('Recoupment position', gv('it-recoup')) +
+          PDF.field('Recoupment premium', gv('it-premium')) +
+          PDF.field('Net profits', gv('it-profits')) +
+        '</div>') +
+        PDF.section('Conditions Precedent', '<ol class="pdf-list">' +
+          '<li>Execution of definitive Investor Agreement.</li>' +
+          '<li>Producer obtains E&O insurance and completion bond.</li>' +
+          '<li>Verification of chain-of-title and distribution plan.</li>' +
+          '<li>Standard rep & warranty disclosures acceptable to Investor\'s counsel.</li>' +
+        '</ol>') +
+        PDF.section('Disclaimer', '<div class="pdf-p" style="font-size:9pt;color:#64748b;">This Term Sheet is non-binding except as to confidentiality, expenses, and governing law. Definitive agreements supersede this document.</div>') +
+        PDF.sigBlock(gv('it-investor'), prodTitle() + ' (Producer)') +
+        PDF.footer();
+      PDF.openDoc(body, 'Investor_Term_Sheet_' + slugify(gv('it-investor') || 'Investor'));
+      AH.Modal.close(); AH.Docs._log('Investor Term Sheet');
+    });
+  };
+
+  // ───────── 26. HEALTH & SAFETY PLAN ─────────
+  AH.Docs._gens.covidPlan = function () {
+    fieldModal('Health & Safety Plan', [
+      { id: 'hs-coord',     label: 'Safety coordinator', full: true },
+      { id: 'hs-testing',   label: 'Testing cadence', def: 'PCR D-1 · rapid antigen daily for Zone A' },
+      { id: 'hs-ppe',       label: 'PPE standard',    def: 'N95 in enclosed spaces · surgical in open' },
+      { id: 'hs-zones',     label: 'Zones', full: true, def: 'Zone A: talent + hair/makeup + wardrobe. Zone B: crew within 6ft. Zone C: other.' },
+      { id: 'hs-quarantine',label: 'Exposure response', type: 'textarea', full: true, rows: 3, def: 'Stop production. Notify safety officer. Isolate and test exposed personnel. Deep-clean contact surfaces.' }
+    ], function () {
+      var body = PDF.header('Health & Safety Plan', prodTitle()) +
+        PDF.section('Program', '<div class="pdf-grid2">' +
+          PDF.field('Safety coordinator', gv('hs-coord')) +
+          PDF.field('Testing cadence', gv('hs-testing')) +
+          PDF.field('PPE standard', gv('hs-ppe')) +
+          PDF.field('Zones', gv('hs-zones')) +
+        '</div>') +
+        PDF.section('Exposure Response', '<div class="pdf-p">' + clean(gv('hs-quarantine')) + '</div>') +
+        PDF.sigBlock(gv('hs-coord'), prodTitle() + ' (Producer)') +
+        PDF.footer();
+      PDF.openDoc(body, 'Health_Safety_Plan_' + slugify(prodTitle()));
+      AH.Modal.close(); AH.Docs._log('Health & Safety Plan');
+    });
+  };
+
+  // ───────── 27. INDEPENDENT CONTRACTOR AGREEMENT ─────────
+  AH.Docs._gens.indieContractor = function () {
+    fieldModal('Independent Contractor Agreement', [
+      { id: 'ic-name',     label: 'Contractor name', full: true },
+      { id: 'ic-services', label: 'Services', type: 'textarea', full: true, rows: 3 },
+      { id: 'ic-fee',      label: 'Fee',       def: '$0' },
+      { id: 'ic-start',    label: 'Start',     type: 'date' },
+      { id: 'ic-end',      label: 'End',       type: 'date' },
+      { id: 'ic-state',    label: 'Governing law', def: 'California' }
+    ], function () {
+      var body = PDF.header('Independent Contractor Agreement', gv('ic-name')) +
+        PDF.section('Engagement', '<div class="pdf-grid2">' +
+          PDF.field('Contractor', gv('ic-name')) +
+          PDF.field('Fee', gv('ic-fee')) +
+          PDF.field('Term', daterange(gv('ic-start'), gv('ic-end'))) +
+          PDF.field('Governing law', gv('ic-state')) +
+        '</div>') +
+        PDF.section('Services', '<div class="pdf-p">' + clean(gv('ic-services')) + '</div>') +
+        PDF.section('IC Status', '<div class="pdf-p">Contractor is engaged as an independent contractor, not an employee. Contractor is responsible for all federal, state, and local taxes including self-employment tax, and will receive Form 1099-NEC reporting for amounts in excess of $600 per calendar year. Contractor is not entitled to employee benefits, unemployment insurance, or workers\' compensation.</div>') +
+        PDF.sigBlock(gv('ic-name'), prodTitle() + ' (Producer)') +
+        PDF.footer();
+      PDF.openDoc(body, 'IC_Agreement_' + slugify(gv('ic-name') || 'Contractor'));
+      AH.Modal.close(); AH.Docs._log('IC Agreement');
+    });
+  };
+
   // ══════════════════════════════════════════════════════════════════════════
   //  EQUIPMENT
   // ══════════════════════════════════════════════════════════════════════════
@@ -8833,27 +9079,73 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   function saveTakes(d) { AH.Storage.local.set('ah_takes_' + STATE.activeProdId, d); }
   AH.register('onset', function (m) {
     var takes = loadTakes();
+    var walkie = loadWalkie().slice(0, 8);
+    var scs = loadScenes().slice(0, 6);
+    var hot = loadHotsheet().filter(function (h) { return h.when === 'TODAY'; });
     return (
       AH.Views.renderHero(m, { primary: 'NEW TAKE', primaryFn: "AH.OnSet.newTake()", secondary: 'EXPORT LOG', secondaryFn: "AH.OnSet.exportPDF()" }) +
-      '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
-        '<table class="table"><thead><tr><th>TC</th><th>Roll</th><th>Scn</th><th>Take</th><th>Status</th><th>Print</th><th>Note</th><th></th></tr></thead><tbody>' +
-          takes.map(function (t) {
-            var cls = t.good ? 'chip--mint' : (t.status && /NG|HOLD/.test(t.status) ? 'chip--amber' : 'chip--aqua');
-            return '<tr>' +
-              '<td class="num">' + clean(t.tc) + '</td>' +
-              '<td class="num">' + clean(t.roll) + '</td>' +
-              '<td class="num"><strong>' + clean(t.scn) + '</strong></td>' +
-              '<td class="num">' + clean(t.take) + '</td>' +
-              '<td><span class="chip ' + cls + '">' + clean(t.status) + '</span></td>' +
-              '<td><label style="cursor:pointer;"><input type="checkbox" ' + (t.printed ? 'checked' : '') + ' onclick="AH.OnSet.togglePrint(\'' + t.id + '\')"/></label></td>' +
-              '<td>' + clean(t.note || '') + '</td>' +
-              '<td style="text-align:right;"><button class="btn btn--ghost" onclick="AH.OnSet.del(\'' + t.id + '\')">×</button></td>' +
-            '</tr>';
-          }).join('') +
-        '</tbody></table>' +
-      '</div></div>'
+      // Live hub grid
+      '<div class="section" style="display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1fr);gap:12px;">' +
+        '<div class="card" style="padding:0;overflow:hidden;">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--edge);">' +
+            '<div class="section__title">Take Log</div>' +
+            '<div style="display:flex;gap:6px;">' +
+              '<button class="btn btn--primary" onclick="AH.OnSet.newTake()">+ TAKE</button>' +
+              '<button class="btn btn--ghost" onclick="AH.OnSet.exportPDF()">PDF</button>' +
+            '</div>' +
+          '</div>' +
+          '<table class="table"><thead><tr><th>TC</th><th>Roll</th><th>Scn</th><th>Take</th><th>Status</th><th>Print</th><th>Note</th><th></th></tr></thead><tbody>' +
+            takes.map(function (t) {
+              var cls = t.good ? 'chip--mint' : (t.status && /NG|HOLD/.test(t.status) ? 'chip--amber' : 'chip--aqua');
+              return '<tr>' +
+                '<td class="num">' + clean(t.tc) + '</td>' +
+                '<td class="num">' + clean(t.roll) + '</td>' +
+                '<td class="num"><strong>' + clean(t.scn) + '</strong></td>' +
+                '<td class="num">' + clean(t.take) + '</td>' +
+                '<td><span class="chip ' + cls + '">' + clean(t.status) + '</span></td>' +
+                '<td><label style="cursor:pointer;"><input type="checkbox" ' + (t.printed ? 'checked' : '') + ' onclick="AH.OnSet.togglePrint(\'' + t.id + '\')"/></label></td>' +
+                '<td>' + clean(t.note || '') + '</td>' +
+                '<td style="text-align:right;"><button class="btn btn--ghost" onclick="AH.OnSet.del(\'' + t.id + '\')">×</button></td>' +
+              '</tr>';
+            }).join('') +
+          '</tbody></table>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:12px;">' +
+          // Live clock / timecode
+          '<div class="card" style="text-align:center;">' +
+            '<div class="section__title" style="margin-bottom:6px;">CLOCK</div>' +
+            '<div id="onset-clock" style="font-family:var(--f-mono);font-size:32px;font-weight:700;letter-spacing:0.08em;color:var(--mint);">00:00:00</div>' +
+            '<div style="font-family:var(--f-mono);font-size:10.5px;letter-spacing:0.22em;color:var(--fg-45);margin-top:4px;">' + clean(new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase()) + '</div>' +
+          '</div>' +
+          // Today's scene queue
+          '<div class="card">' +
+            '<div class="section__title" style="margin-bottom:10px;">Scene Queue</div>' +
+            (scs.length ? scs.map(function (s) { return '<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--edge);font-size:12.5px;"><span style="font-family:var(--f-mono);font-weight:700;color:var(--mint);min-width:32px;">' + clean(s.n) + '</span><span style="flex:1;">' + clean(s.title) + '</span><span class="chip ' + (s.int ? 'chip--aqua' : 'chip--amber') + '">' + (s.int ? 'INT' : 'EXT') + '</span></div>'; }).join('') : '<div style="color:var(--fg-45);">No scenes queued.</div>') +
+          '</div>' +
+          // Walkie feed (recent)
+          '<div class="card">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;"><div class="section__title">Walkie Recent</div><button class="btn btn--ghost" onclick="AH.Walkie.ptt()">PTT</button></div>' +
+            (walkie.length ? walkie.map(function (w) { return '<div style="padding:5px 0;font-family:var(--f-mono);font-size:11px;color:var(--fg-80);border-bottom:1px solid var(--edge);"><span style="color:var(--mint);">' + clean(w.time) + ' ' + clean(w.ch) + '</span> <strong>' + clean(w.from) + '</strong> → ' + clean(w.to) + ' · ' + clean(w.msg) + '</div>'; }).join('') : '<div style="color:var(--fg-45);font-size:12px;">Quiet.</div>') +
+          '</div>' +
+          // Hot sheet today
+          '<div class="card">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;"><div class="section__title">Hot · TODAY</div><button class="btn btn--ghost" onclick="AH.Hot.add()">+ FLAG</button></div>' +
+            (hot.length ? hot.map(function (h) { return '<div style="padding:6px 0;font-size:12px;border-bottom:1px solid var(--edge);"><span class="chip ' + h.cls + '" style="margin-right:8px;">' + clean(h.dept) + '</span>' + clean(h.txt) + '</div>'; }).join('') : '<div style="color:var(--mint);font-size:12px;">Day clear · no issues flagged.</div>') +
+          '</div>' +
+        '</div>' +
+      '</div>'
     );
   });
+  AH.hooks['onset:mount'] = function () {
+    var tick = function () {
+      var el = document.getElementById('onset-clock'); if (!el) { clearInterval(AH.OnSet._clock); return; }
+      var d = new Date();
+      el.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+    };
+    if (AH.OnSet._clock) clearInterval(AH.OnSet._clock);
+    tick();
+    AH.OnSet._clock = setInterval(tick, 1000);
+  };
   AH.OnSet = {
     newTake: function () {
       AH.Modal.prompt('New take', 'Roll · Scn · Take · Status · TC', 'A001 · 03 · 1 · CIRCLED · 00:00:00:00', function (v) {
@@ -9986,6 +10278,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       if (AH.Firebase && AH.Firebase.ready && AH.Firebase.user) {
         AH.Firebase.pushProductionData(STATE.activeProdId, { storyMap: StoryMap.state, storyMapUpdatedAt: Date.now() });
       }
+      AH.Bus && AH.Bus.emit('storyMap:changed', { nodes: (StoryMap.state.nodes || []).length, links: (StoryMap.state.links || []).length });
     },
     // Every mutation flows through here. We snapshot the PRE-current state
     // into history so undo rolls back one complete user operation.
@@ -11591,6 +11884,55 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   AH.CmdK = CmdK;
 
   // ══════════════════════════════════════════════════════════════════════════
+  //  DATA COHERENCY · cross-module hooks
+  //  ────────────────────────────────────────────────────────────────────────
+  //  Central place to wire event-bus reactions. Each handler is defensive —
+  //  if a module isn't loaded yet, it's a no-op. Adding a subscription here
+  //  is how you make two features talk without hard-coupling them.
+  // ══════════════════════════════════════════════════════════════════════════
+  AH.Coherency = {
+    init: function () {
+      // On script save: refresh Beat Board (if mounted), refresh Story Map
+      // (if mounted), recompute dashboard counters.
+      AH.Bus.on('script:saved', function (p) {
+        if (AH.Router.current === 'beatboard') AH.Router.go('beatboard');
+        if (AH.Router.current === 'storymap') StoryMap && StoryMap.render && StoryMap.render();
+        if (AH.Router.current === 'breakdown') AH.Router.go('breakdown');
+        if (AH.Router.current === 'dashboard') AH.Router.go('dashboard');
+      });
+      // On story map changes: if beat board mounted, refresh to sync sli.
+      AH.Bus.on('storyMap:changed', function () {
+        if (AH.Router.current === 'beatboard') AH.Router.go('beatboard');
+      });
+      // On production switch: reload all per-production state keys.
+      AH.Bus.on('production:switched', function (p) {
+        Editor && Editor.state && (Editor.state = null);
+        StoryMap && StoryMap.load && StoryMap.load();
+        if (AH.Router.current) AH.Router.go(AH.Router.current);
+      });
+      // Cast added → refresh call sheet + dashboard counts.
+      AH.Bus.on('cast:updated', function () {
+        if (AH.Router.current === 'dashboard') AH.Router.go('dashboard');
+      });
+      // Location added → if a location form modal is open, refresh options.
+      AH.Bus.on('location:updated', function () {
+        if (AH.Router.current === 'locations') AH.Router.go('locations');
+      });
+    }
+  };
+
+  // Patched Prod.setActive to emit production:switched
+  (function () {
+    if (!AH.Prod) return;
+    var orig = AH.Prod.setActive;
+    AH.Prod.setActive = function (id) {
+      var r = orig ? orig.call(AH.Prod, id) : null;
+      AH.Bus.emit('production:switched', { prodId: id });
+      return r;
+    };
+  })();
+
+  // ══════════════════════════════════════════════════════════════════════════
   //  AUTH / LOGIN
   // ══════════════════════════════════════════════════════════════════════════
   AH.Auth = {
@@ -11605,6 +11947,10 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   function boot() {
     // Theme
     setTheme(STATE.theme || 'dark');
+
+    // Data coherency wiring — must happen before router goes live so every
+    // module that emits during its first render already has a listener.
+    AH.Coherency.init();
 
     // Rail open default
     try {
