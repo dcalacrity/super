@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#59f0ff"/>
+      <stop offset="55%" stop-color="#7a5cff"/>
+      <stop offset="100%" stop-color="#ff3cf0"/>
+    </linearGradient>
+    <radialGradient id="r1" cx="20%" cy="20%" r="60%">
+      <stop offset="0%" stop-color="#59f0ff" stop-opacity=".5"/>
+      <stop offset="100%" stop-color="#05060e" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="r2" cx="85%" cy="80%" r="60%">
+      <stop offset="0%" stop-color="#ff3cf0" stop-opacity=".45"/>
+      <stop offset="100%" stop-color="#05060e" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0 H0 V48" stroke="#8ca0ff" stroke-opacity=".08" fill="none"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" fill="#05060e"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <rect width="1200" height="630" fill="url(#r1)"/>
+  <rect width="1200" height="630" fill="url(#r2)"/>
+  <g transform="translate(80,180)">
+    <path d="M110 0 L0 160 H80 L50 300 L220 100 H140 Z" fill="url(#g)" opacity=".95"/>
+  </g>
+  <g font-family="Space Grotesk, Inter, sans-serif" fill="#e8ecff">
+    <text x="420" y="230" font-size="62" font-weight="700" letter-spacing="-1">D.C. ALACRITY</text>
+    <text x="420" y="305" font-size="42" font-weight="600" fill="url(#g)">Architecture for the next</text>
+    <text x="420" y="360" font-size="42" font-weight="600" fill="url(#g)">era of storytelling.</text>
+    <text x="420" y="430" font-size="22" font-weight="500" fill="#a8b0d6" font-family="JetBrains Mono, monospace">AI-AUGMENTED · ZERO-TRUST · VIRTUAL PRODUCTION STUDIO</text>
+  </g>
+</svg>
