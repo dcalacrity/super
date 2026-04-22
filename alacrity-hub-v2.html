@@ -7271,7 +7271,15 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   AH.register('breakdown', function (m) {
     var bd = loadBreakdown();
     return (
-      AH.Views.renderHero(m, { primary: 'RUN AI BREAKDOWN', primaryFn: 'AH.Break.runAI()' }) +
+      AH.Views.renderHero(m, {
+        primary: 'RUN AI BREAKDOWN', primaryFn: 'AH.Break.runAI()',
+        secondary: 'ANNOTATED PDF',  secondaryFn: 'AH.Break.exportAnnotatedPDF()'
+      }) +
+      '<div class="section" style="margin-top:0;"><div class="card" style="display:flex;gap:8px;flex-wrap:wrap;">' +
+        '<button class="btn btn--ghost" onclick="AH.Break.runAI()">⟳ RE-RUN AI BREAKDOWN</button>' +
+        '<button class="btn btn--ghost" onclick="AH.Break.exportPDF()">ELEMENTS PDF</button>' +
+        '<button class="btn btn--ghost" onclick="AH.Break.exportAnnotatedPDF()">ANNOTATED PDF</button>' +
+      '</div></div>' +
       '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
         '<table class="table"><thead><tr>' +
           '<th>Scn</th>' +
@@ -7370,6 +7378,41 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         ) + PDF.footer();
       PDF.openDoc(body, 'Breakdown_Elements_' + slugify(prodTitle()));
       toast('Breakdown PDF generated');
+    },
+    // Annotated breakdown PDF — renders each scene's first few lines with
+    // colored element pills inline. Good for production meetings.
+    exportAnnotatedPDF: function () {
+      if (!AH.Editor || !AH.Editor.state || !AH.Editor.state.lines) { toast('Load a script first', 'warn'); return; }
+      var lines = AH.Editor.state.lines;
+      var bd = loadBreakdown();
+      var bdMap = {}; bd.forEach(function (b) { bdMap[b.scn] = b; });
+      var COLORS = { cast: '#0e7490', extras: '#a855f7', stunts: '#dc2626', vehicles: '#16a34a', props: '#0d9488', sfx: '#f59e0b', costumes: '#0369a1', makeup: '#be185d', sound: '#2563eb', locations: '#65a30d', animals: '#c2410c', music: '#7c3aed' };
+      var sceneNum = 0; var html = [];
+      lines.forEach(function (l, i) {
+        if (l.t === 'scene') {
+          sceneNum++;
+          var bd = bdMap[String(sceneNum).padStart(2, '0')] || bdMap[String(sceneNum)] || {};
+          html.push('<h3 style="font-size:12pt;text-transform:uppercase;margin:14pt 0 6pt;border-bottom:2px solid #0f172a;padding-bottom:3pt;">SCENE ' + sceneNum + ' · ' + clean((l.x || '').toUpperCase()) + '</h3>');
+          var pills = [];
+          BREAKDOWN_CATEGORIES.forEach(function (c) {
+            (bd[c.id] || []).forEach(function (v) { pills.push('<span style="display:inline-block;padding:1px 6px;border-radius:6px;font-size:8pt;background:' + (COLORS[c.id] || '#64748b') + ';color:#fff;margin:2px 2px 0 0;">' + c.icon + ' ' + clean(v) + '</span>'); });
+          });
+          if (pills.length) html.push('<div style="margin-bottom:6pt;">' + pills.join('') + '</div>');
+        } else if (l.t === 'action') {
+          html.push('<div style="margin:4pt 0;">' + clean(l.x || '') + '</div>');
+        } else if (l.t === 'char') {
+          html.push('<div style="margin:8pt 0 0 1in;font-weight:700;text-transform:uppercase;">' + clean(l.x || '') + '</div>');
+        } else if (l.t === 'dial') {
+          html.push('<div style="margin:0 0.8in 4pt 0.6in;">' + clean(l.x || '') + '</div>');
+        } else if (l.t === 'paren') {
+          html.push('<div style="margin:0 0 0 0.8in;font-style:italic;color:#444;">(' + clean(l.x || '') + ')</div>');
+        } else if (l.t === 'trans') {
+          html.push('<div style="text-align:right;text-transform:uppercase;margin:8pt 0;">' + clean((l.x || '')) + '</div>');
+        }
+      });
+      var body = PDF.header('Annotated Breakdown', getActiveProd().title) + '<div style="font-size:10pt;line-height:1.5;">' + html.join('') + '</div>' + PDF.footer();
+      PDF.openDoc(body, 'Annotated_Breakdown_' + slugify(prodTitle()));
+      toast('Annotated breakdown PDF generated');
     }
   };
 
@@ -9752,19 +9795,52 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   }
   AH.register('integrations', function (m) {
     var conn = loadIntegrations();
+    var formats = [
+      { k: 'fdx',      label: 'Final Draft',     ext: '.fdx',      in: 'AH.Editor.importFDX()',              out: 'AH.Editor.exportFDX()' },
+      { k: 'fountain', label: 'Fountain',        ext: '.fountain', in: 'AH.Editor.openImportModal()',        out: 'AH.Editor._export(\'fountain\')' },
+      { k: 'txt',      label: 'Plain Text',      ext: '.txt',      in: 'AH.Editor.openImportModal()',        out: 'AH.Editor._export(\'txt\')' },
+      { k: 'pdf',      label: 'Screenplay PDF',  ext: '.pdf',      in: 'AH.Editor.openImportModal()',        out: 'AH.Editor._export(\'pdf\')' },
+      { k: 'json',     label: 'Alacrity JSON',   ext: '.json',     in: 'AH.Editor.openImportModal()',        out: 'AH.Editor._export(\'json\')' },
+      { k: 'csv',      label: 'CSV · Scenes',    ext: '.csv',      in: null,                                  out: 'AH.ExportCenter.csvSched()' },
+      { k: 'storyMap', label: 'Story Map JSON',  ext: '.json',     in: 'AH.StoryMap.importJSON()',            out: 'AH.StoryMap.exportJSON()' },
+      { k: 'twine',    label: 'Twine / Twee',    ext: '.tw',       in: 'AH.StoryMapX.importTwine()',          out: null },
+      { k: 'ink',      label: 'Ink',             ext: '.json',     in: 'AH.StoryMapX.importInk()',            out: null },
+      { k: 'alacrity', label: 'Alacrity Player Bundle', ext: '.json', in: null,                               out: 'AH.StoryMap.exportAlacrityBundle()' },
+      { k: 'fcpxml',   label: 'FCPXML (NLE)',    ext: '.fcpxml',   in: null,                                  out: 'AH.Post.exportFCPXML()' },
+      { k: 'edl',      label: 'CMX3600 EDL',     ext: '.edl',      in: null,                                  out: 'AH.Post.exportEDL()' }
+    ];
     return (
       AH.Views.renderHero(m, { primary: 'ADD INTEGRATION', primaryFn: "AH.Integrations.add()", secondary: 'MANAGE KEYS', secondaryFn: 'AH.Integrations.keys()' }) +
-      '<div class="section"><div class="grid grid--3">' +
-        conn.map(function (c) {
-          return '<div class="card" style="cursor:pointer;" onclick="AH.Integrations.open(\'' + c.id + '\')">' +
-            '<div style="display:flex;justify-content:space-between;align-items:center;">' +
-              '<div class="section__title">' + clean(c.n) + '</div>' +
-              '<span class="chip ' + c.cls + '">' + c.st + '</span>' +
-            '</div>' +
-            '<div style="color:var(--fg-60);margin-top:6px;font-size:12.5px;">' + clean(c.desc) + '</div>' +
-          '</div>';
-        }).join('') +
-      '</div></div>'
+      '<div class="section">' +
+        '<div class="card" style="margin-bottom:10px;">' +
+          '<div class="section__head" style="margin-bottom:14px;"><div><div class="section__title">Format Hub</div><div class="section__sub">IMPORT / EXPORT · BYTE-ACCURATE WITH V1</div></div></div>' +
+          '<div class="grid grid--3">' +
+            formats.map(function (f) {
+              return '<div class="card" style="padding:12px 14px;">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><strong>' + clean(f.label) + '</strong><span class="chip">' + clean(f.ext) + '</span></div>' +
+                '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+                  (f.in ? '<button class="se-btn se-btn--xs" onclick="' + f.in + '">↓ IMPORT</button>' : '<span class="se-btn se-btn--xs is-muted" style="opacity:0.4;">— IMPORT</span>') +
+                  (f.out ? '<button class="se-btn se-btn--xs" onclick="' + f.out + '">↑ EXPORT</button>' : '<span class="se-btn se-btn--xs is-muted" style="opacity:0.4;">— EXPORT</span>') +
+                '</div>' +
+              '</div>';
+            }).join('') +
+          '</div>' +
+        '</div>' +
+        '<div class="card" style="margin-bottom:10px;">' +
+          '<div class="section__title" style="margin-bottom:12px;">Connected services · ' + conn.length + '</div>' +
+          '<div class="grid grid--3">' +
+            conn.map(function (c) {
+              return '<div class="card" style="cursor:pointer;" onclick="AH.Integrations.open(\'' + c.id + '\')">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                  '<div class="section__title">' + clean(c.n) + '</div>' +
+                  '<span class="chip ' + c.cls + '">' + c.st + '</span>' +
+                '</div>' +
+                '<div style="color:var(--fg-60);margin-top:6px;font-size:12.5px;">' + clean(c.desc) + '</div>' +
+              '</div>';
+            }).join('') +
+          '</div>' +
+        '</div>' +
+      '</div>'
     );
   });
   AH.Integrations = {
