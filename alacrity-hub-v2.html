@@ -5879,23 +5879,34 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   AH.register('dashboard', function (m) {
     var prods = STATE.productions;
     var active = prods.slice(0, 3);
-    var scenes = AH.Views.SCENES || [];
+    // Derive real stats from the active production
+    var prodId = STATE.activeProdId;
+    var scriptState = AH.Storage.local.get('ah_script_' + prodId, null);
+    var scenesLocal = AH.Storage.local.get('ah_scenes_' + prodId, []);
+    var castLocal = AH.Storage.local.get('ah_cast_' + prodId, []);
+    var shotsLocal = AH.Storage.local.get('ah_shots_' + prodId, []);
+    var contactsLocal = AH.Storage.local.get('ah_contacts', []);
+    var sceneLines = (scriptState && scriptState.lines) ? scriptState.lines.filter(function (l) { return l.t === 'scene'; }).length : 0;
+    var scriptScenes = Math.max(sceneLines, (scenesLocal || []).length);
+    var contactCount = (castLocal.length || 0) + (contactsLocal.length || 0);
+    var totalDays = prods.reduce(function (a, p) { return a + (p.days || 0); }, 0);
+    var today = new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
     return (
       AH.Views.renderHero(m, { title: 'Command <em>center.</em>', primary: 'OPEN STRIPBOARD', primaryFn: "AH.Router.go('schedule')" }) +
-      // Intel strip (at-a-glance)
+      // Intel strip (at-a-glance) — derived from actual productions
       '<div class="ticker section">' +
-        '<div class="ticker__item">● <b>6</b> ACTIVE</div>' +
-        '<div class="ticker__item">◆ <b>D04</b> TODAY · SIDEQUEST</div>' +
-        '<div class="ticker__item">◉ <b>92%</b> ON BUDGET</div>' +
-        '<div class="ticker__item">✦ <b>0</b> CRITICAL</div>' +
-        '<div class="ticker__item">◎ <b>47</b> SCENES LOGGED</div>' +
-        '<div class="ticker__item">▲ <b>112</b> CONTACTS</div>' +
+        '<div class="ticker__item">● <b>' + prods.length + '</b> ACTIVE</div>' +
+        '<div class="ticker__item">◆ <b>' + clean(today.toUpperCase()) + '</b></div>' +
+        '<div class="ticker__item">◎ <b>' + scriptScenes + '</b> SCENES</div>' +
+        '<div class="ticker__item">▲ <b>' + contactCount + '</b> CONTACTS</div>' +
+        '<div class="ticker__item">◇ <b>' + shotsLocal.length + '</b> SHOTS</div>' +
+        '<div class="ticker__item">▣ <b>' + totalDays + '</b> DAYS SCHEDULED</div>' +
       '</div>' +
       '<div class="grid grid--stats section">' + [
-        statCard('Active productions', '6', '+1 this week', 'up'),
-        statCard('Scenes this week', '18', '+4 vs last', 'up'),
-        statCard('On budget', '92%', 'No anomalies', 'up', true),
-        statCard('Critical vulns', '0', 'ZT · L4', 'up', true)
+        statCard('Active productions', String(prods.length), 'live', 'up'),
+        statCard('Scenes · script',    String(scriptScenes), (scriptScenes ? 'auto' : 'load a script'), 'up'),
+        statCard('People · cast/crew', String(castLocal.length), 'linked', 'up', true),
+        statCard('Critical vulns',     '0', 'ZT · L4', 'up', true)
       ].join('') + '</div>' +
 
       '<div class="section">' +
@@ -6240,9 +6251,79 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     );
   });
   AH.Break = {
+    // Run a heuristic breakdown from the Script Studio: walk each scene's
+    // action/dialogue lines and match against keyword dictionaries for each
+    // V1 category. Fast, deterministic, and works offline.
     runAI: function () {
-      toast('AI breakdown started · 23 elements detected');
-      AH.Notif.push('AI breakdown completed · 23 new elements tagged across 9 scenes');
+      var s = AH.Editor && AH.Editor.state;
+      if (!s || !s.lines || !s.lines.length) { toast('Open Script Studio and load a script first', 'warn'); return; }
+      var dict = {
+        cast:      [],
+        extras:    [/\b(crowd|patron|customer|passerby|onlooker|bystander|pedestrians|extras|commuter)\b/i],
+        stunts:    [/\b(fight|chase|jump|fall|crash|explod|stunt|wreck|brawl|struggl|tackl|punch|flee|runs|leap)\b/i],
+        vehicles:  [/\b(car|truck|van|bike|motorcycle|bus|sedan|SUV|boat|yacht|train|helicopter|plane|taxi)\b/i],
+        props:     [/\b(gun|knife|phone|laptop|book|briefcase|ring|key|bag|letter|map|card|badge|bottle|glass|cup|photo|camera|map|radio|watch|pen|notebook|suitcase)\b/i],
+        sfx:       [/\b(smoke|fire|rain|fog|snow|wind|blood|lightning|explosion|flames|mist|spark)\b/i],
+        costumes:  [/\b(coat|jacket|dress|suit|tie|gown|uniform|boots|shoes|gloves|scarf|hat|mask|hood|shirt|pants|sweater|jeans|tuxedo)\b/i],
+        makeup:    [/\b(scar|bruise|cut|wound|blood on|aged|tears|sweat|dirt on)\b/i],
+        sound:     [/\b(siren|thunder|bell|music|alarm|gunshot|explosion|scream|whisper|footsteps|heartbeat)\b/i],
+        locations: [],
+        animals:   [/\b(dog|cat|horse|bird|wolf|bear|snake|rat|rooster|chicken|cow|goat|puppy|kitten)\b/i],
+        music:     [/\b(song|score|theme|ballad|chorus|anthem|soundtrack)\b/i]
+      };
+      var result = [];
+      var cur = null; var sceneIdx = 0;
+      s.lines.forEach(function (l, i) {
+        if (l.t === 'scene') {
+          sceneIdx++;
+          if (cur) result.push(cur);
+          cur = { scn: String(sceneIdx).padStart(2, '0'), cast: [], extras: [], stunts: [], vehicles: [], props: [], sfx: [], costumes: [], makeup: [], sound: [], locations: [], animals: [], music: [] };
+          // Extract location from scene heading
+          var heading = (l.x || '').toUpperCase();
+          var locMatch = heading.replace(/^(INT\.|EXT\.|INT\/EXT\.|I\/E\.)\s*/, '').split(/\s*[-–—]\s*/)[0];
+          if (locMatch) cur.locations.push(locMatch.trim());
+        }
+        if (!cur) return;
+        if (l.t === 'char') {
+          var name = (l.x || '').replace(/\s*\(.*\)/g, '').trim();
+          if (name && cur.cast.indexOf(name) === -1) cur.cast.push(name);
+        }
+        if (l.t === 'action' || l.t === 'dial') {
+          var text = (l.x || '');
+          Object.keys(dict).forEach(function (cat) {
+            (dict[cat] || []).forEach(function (rx) {
+              var m;
+              while ((m = rx.exec(text)) !== null) {
+                var term = m[0].toLowerCase().replace(/\s+on$/, '');
+                if (cur[cat].indexOf(term) === -1) cur[cat].push(term);
+                if (!rx.global) break;
+              }
+            });
+          });
+        }
+      });
+      if (cur) result.push(cur);
+      saveBreakdown(result);
+      var totalEls = result.reduce(function (a, r) { return a + Object.keys(r).reduce(function (b, k) { return k === 'scn' ? b : b + (r[k] || []).length; }, 0); }, 0);
+      toast('Breakdown · ' + totalEls + ' elements tagged across ' + result.length + ' scenes');
+      AH.Notif.push('Breakdown run · ' + result.length + ' scenes processed · ' + totalEls + ' elements');
+      AH.Router.go('breakdown');
+    },
+    exportPDF: function () {
+      var bd = loadBreakdown();
+      var rows = bd.map(function (r) {
+        return '<tr><td><strong>' + clean(r.scn) + '</strong></td>' +
+          BREAKDOWN_CATEGORIES.map(function (c) { return '<td>' + ((r[c.id] || []).join(', ') || '—') + '</td>'; }).join('') +
+        '</tr>';
+      }).join('');
+      var body = PDF.header('Script Breakdown · Elements', getActiveProd().title) +
+        PDF.section('By scene',
+          '<table class="pdf-table"><thead><tr><th>Scn</th>' +
+            BREAKDOWN_CATEGORIES.map(function (c) { return '<th>' + c.name + '</th>'; }).join('') +
+          '</tr></thead><tbody>' + (rows || '<tr><td colspan="13">No scenes yet — run breakdown from a script.</td></tr>') + '</tbody></table>'
+        ) + PDF.footer();
+      PDF.openDoc(body, 'Breakdown_Elements_' + slugify(prodTitle()));
+      toast('Breakdown PDF generated');
     }
   };
 
@@ -7577,26 +7658,74 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   // ══════════════════════════════════════════════════════════════════════════
   //  CONTINUITY
   // ══════════════════════════════════════════════════════════════════════════
+  function loadContinuity() {
+    var k = 'ah_cont_' + STATE.activeProdId;
+    var d = AH.Storage.local.get(k, null);
+    if (!d) {
+      d = [
+        { id: uid('c'), scn: '01',  wardrobe: 'Olive jacket · steel watch',     props: 'Burner phone',    weather: '—',              clock: '11:42', notes: '' },
+        { id: uid('c'), scn: '02',  wardrobe: 'Rain coat open',                  props: 'Signal jammer',   weather: 'Overcast · 64°F',clock: '12:10', notes: 'Rain drops continue through cut' },
+        { id: uid('c'), scn: '03a', wardrobe: 'Gloves · hoodie',                 props: 'Laptop lid half', weather: '—',              clock: '12:55', notes: '' },
+        { id: uid('c'), scn: '03b', wardrobe: 'Harness · boots',                 props: 'Grapple · radio', weather: 'Wind',           clock: '13:30', notes: 'Mind hair on windy takes' },
+        { id: uid('c'), scn: '04',  wardrobe: 'Casual · wrinkled shirt',         props: 'Whiteboard',      weather: '—',              clock: '14:20', notes: '' }
+      ];
+      AH.Storage.local.set(k, d);
+    }
+    return d;
+  }
+  function saveContinuity(d) { AH.Storage.local.set('ah_cont_' + STATE.activeProdId, d); }
   AH.register('continuity', function (m) {
-    var scs = AH.Views.todayScenes();
+    var c = loadContinuity();
     return (
-      AH.Views.renderHero(m, { primary: 'LOG NEW NOTE', primaryFn: 'AH.Cont.add()' }) +
+      AH.Views.renderHero(m, { primary: 'LOG NEW NOTE', primaryFn: 'AH.Cont.add()', secondary: 'EXPORT PDF', secondaryFn: 'AH.Cont.exportPDF()' }) +
       '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
-        '<table class="table"><thead><tr><th>Scn</th><th>Wardrobe</th><th>Props</th><th>Weather</th><th>Clock</th></tr></thead><tbody>' +
-          scs.map(function (s, i) {
+        '<table class="table"><thead><tr><th>Scn</th><th>Wardrobe</th><th>Props</th><th>Weather</th><th>Clock</th><th>Notes</th><th></th></tr></thead><tbody>' +
+          c.map(function (r) {
             return '<tr>' +
-              '<td class="num"><strong>' + s.n + '</strong></td>' +
-              '<td>' + (i % 2 === 0 ? 'As D03 · unchanged' : 'Rain coat open') + '</td>' +
-              '<td>' + (i === 2 ? 'Laptop lid half' : '—') + '</td>' +
-              '<td>' + (s.int ? '—' : 'Overcast · 64°F') + '</td>' +
-              '<td class="num">' + ['11:42','12:10','12:55','13:30','14:20','15:05','16:22','17:10','18:00'][i] + '</td>' +
+              '<td class="num"><strong>' + clean(r.scn) + '</strong></td>' +
+              '<td><span class="inline-edit" data-id="' + r.id + '" data-f="wardrobe" contenteditable="true">' + clean(r.wardrobe || '') + '</span></td>' +
+              '<td><span class="inline-edit" data-id="' + r.id + '" data-f="props" contenteditable="true">' + clean(r.props || '') + '</span></td>' +
+              '<td><span class="inline-edit" data-id="' + r.id + '" data-f="weather" contenteditable="true">' + clean(r.weather || '') + '</span></td>' +
+              '<td class="num"><span class="inline-edit" data-id="' + r.id + '" data-f="clock" contenteditable="true">' + clean(r.clock || '') + '</span></td>' +
+              '<td><span class="inline-edit" data-id="' + r.id + '" data-f="notes" contenteditable="true">' + clean(r.notes || '') + '</span></td>' +
+              '<td style="text-align:right;"><button class="btn btn--ghost" onclick="AH.Cont.del(\'' + r.id + '\')">×</button></td>' +
             '</tr>';
           }).join('') +
         '</tbody></table>' +
       '</div></div>'
     );
   });
-  AH.Cont = { add: function () { AH.Modal.prompt('New continuity note', 'Scene · item · change', '01 · wardrobe · ', function (v) { if (v) { AH.Notif.push('Continuity logged · ' + v); } }); } };
+  AH.Cont = {
+    add: function () {
+      AH.Modal.prompt('New continuity note', 'Scene · wardrobe · props · weather · clock', '06 · ·  · — · 15:00', function (v) {
+        if (!v) return;
+        var p = v.split(/\s*·\s*/);
+        var d = loadContinuity();
+        d.push({ id: uid('c'), scn: p[0] || '??', wardrobe: p[1] || '', props: p[2] || '', weather: p[3] || '', clock: p[4] || '', notes: '' });
+        saveContinuity(d); AH.Router.go('continuity'); toast('Continuity logged');
+      });
+    },
+    del: function (id) { saveContinuity(loadContinuity().filter(function (r) { return r.id !== id; })); AH.Router.go('continuity'); toast('Row removed'); },
+    exportPDF: function () {
+      var c = loadContinuity();
+      var rows = c.map(function (r) { return '<tr><td>' + clean(r.scn) + '</td><td>' + clean(r.wardrobe) + '</td><td>' + clean(r.props) + '</td><td>' + clean(r.weather) + '</td><td>' + clean(r.clock) + '</td><td>' + clean(r.notes) + '</td></tr>'; }).join('');
+      var body = PDF.header('Continuity Log', getActiveProd().title) +
+        PDF.section('By scene', '<table class="pdf-table"><thead><tr><th>Scn</th><th>Wardrobe</th><th>Props</th><th>Weather</th><th>Clock</th><th>Notes</th></tr></thead><tbody>' + rows + '</tbody></table>') +
+        PDF.footer();
+      PDF.openDoc(body, 'Continuity_' + slugify(prodTitle()));
+      toast('Continuity PDF generated');
+    }
+  };
+  AH.hooks['continuity:mount'] = function () {
+    $$('.inline-edit[data-f]').forEach(function (el) {
+      on(el, 'blur', function () {
+        var d = loadContinuity();
+        var r = d.find(function (x) { return x.id === el.getAttribute('data-id'); }); if (!r) return;
+        r[el.getAttribute('data-f')] = el.innerText.trim();
+        saveContinuity(d);
+      });
+    });
+  };
 
   // ══════════════════════════════════════════════════════════════════════════
   //  RISK MATRIX
@@ -7695,66 +7824,184 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   // ══════════════════════════════════════════════════════════════════════════
   //  ON-SET · rolling cards
   // ══════════════════════════════════════════════════════════════════════════
+  function loadTakes() {
+    var k = 'ah_takes_' + STATE.activeProdId;
+    var d = AH.Storage.local.get(k, null);
+    if (!d) {
+      d = [
+        { id: uid('tk'), tc: '07:12:04:12', roll: 'A001', scn: '01', take: 1, status: 'CIRCLED',   good: true,  printed: true,  note: '' },
+        { id: uid('tk'), tc: '07:15:22:08', roll: 'A001', scn: '01', take: 2, status: 'NG · SOUND',good: false, printed: false, note: 'Plane overhead' },
+        { id: uid('tk'), tc: '07:18:41:00', roll: 'A001', scn: '01', take: 3, status: 'KEEP',     good: true,  printed: true,  note: 'Strong favor' },
+        { id: uid('tk'), tc: '07:24:02:22', roll: 'A001', scn: '02', take: 1, status: 'CIRCLED', good: true,  printed: true,  note: '' },
+        { id: uid('tk'), tc: '07:30:11:14', roll: 'A001', scn: '02', take: 2, status: 'HOLD',    good: false, printed: false, note: 'Safety' }
+      ];
+      AH.Storage.local.set(k, d);
+    }
+    return d;
+  }
+  function saveTakes(d) { AH.Storage.local.set('ah_takes_' + STATE.activeProdId, d); }
   AH.register('onset', function (m) {
-    var takes = [
-      { tc: '07:12:04:12', roll: 'A001', scn: '01', take: '1', st: 'CIRCLED', cls: 'chip--mint' },
-      { tc: '07:15:22:08', roll: 'A001', scn: '01', take: '2', st: 'NG · SOUND', cls: 'chip--amber' },
-      { tc: '07:18:41:00', roll: 'A001', scn: '01', take: '3', st: 'CIRCLED · KEEP', cls: 'chip--mint' },
-      { tc: '07:24:02:22', roll: 'A001', scn: '02', take: '1', st: 'CIRCLED', cls: 'chip--mint' },
-      { tc: '07:30:11:14', roll: 'A001', scn: '02', take: '2', st: 'HOLD', cls: 'chip--aqua' }
-    ];
+    var takes = loadTakes();
     return (
-      AH.Views.renderHero(m, { primary: 'NEW TAKE', primaryFn: "AH.OnSet.newTake()" }) +
+      AH.Views.renderHero(m, { primary: 'NEW TAKE', primaryFn: "AH.OnSet.newTake()", secondary: 'EXPORT LOG', secondaryFn: "AH.OnSet.exportPDF()" }) +
       '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
-        '<table class="table"><thead><tr><th>TC</th><th>Roll</th><th>Scn</th><th>Take</th><th>Status</th></tr></thead><tbody>' +
-          takes.map(function (t) { return '<tr><td class="num">' + t.tc + '</td><td class="num">' + t.roll + '</td><td class="num"><strong>' + t.scn + '</strong></td><td class="num">' + t.take + '</td><td><span class="chip ' + t.cls + '">' + t.st + '</span></td></tr>'; }).join('') +
+        '<table class="table"><thead><tr><th>TC</th><th>Roll</th><th>Scn</th><th>Take</th><th>Status</th><th>Print</th><th>Note</th><th></th></tr></thead><tbody>' +
+          takes.map(function (t) {
+            var cls = t.good ? 'chip--mint' : (t.status && /NG|HOLD/.test(t.status) ? 'chip--amber' : 'chip--aqua');
+            return '<tr>' +
+              '<td class="num">' + clean(t.tc) + '</td>' +
+              '<td class="num">' + clean(t.roll) + '</td>' +
+              '<td class="num"><strong>' + clean(t.scn) + '</strong></td>' +
+              '<td class="num">' + clean(t.take) + '</td>' +
+              '<td><span class="chip ' + cls + '">' + clean(t.status) + '</span></td>' +
+              '<td><label style="cursor:pointer;"><input type="checkbox" ' + (t.printed ? 'checked' : '') + ' onclick="AH.OnSet.togglePrint(\'' + t.id + '\')"/></label></td>' +
+              '<td>' + clean(t.note || '') + '</td>' +
+              '<td style="text-align:right;"><button class="btn btn--ghost" onclick="AH.OnSet.del(\'' + t.id + '\')">×</button></td>' +
+            '</tr>';
+          }).join('') +
         '</tbody></table>' +
       '</div></div>'
     );
   });
-  AH.OnSet = { newTake: function () { toast('Take logged · scene 03 · take 1 · circled'); AH.Notif.push('New take logged · scn 03 · circled'); } };
+  AH.OnSet = {
+    newTake: function () {
+      AH.Modal.prompt('New take', 'Roll · Scn · Take · Status · TC', 'A001 · 03 · 1 · CIRCLED · 00:00:00:00', function (v) {
+        if (!v) return;
+        var p = v.split(/\s*·\s*/);
+        var d = loadTakes();
+        d.unshift({ id: uid('tk'), tc: p[4] || new Date().toLocaleTimeString(), roll: p[0] || 'A001', scn: p[1] || '01', take: parseInt(p[2] || '1'), status: (p[3] || 'CIRCLED').toUpperCase(), good: /CIRCLED|KEEP/.test((p[3] || '').toUpperCase()), printed: /CIRCLED|KEEP|PRINT/.test((p[3] || '').toUpperCase()), note: '' });
+        saveTakes(d);
+        AH.Router.go('onset'); toast('Take logged');
+      });
+    },
+    togglePrint: function (id) {
+      var d = loadTakes();
+      var t = d.find(function (x) { return x.id === id; }); if (t) { t.printed = !t.printed; saveTakes(d); }
+    },
+    del: function (id) { saveTakes(loadTakes().filter(function (t) { return t.id !== id; })); AH.Router.go('onset'); toast('Take removed'); },
+    exportPDF: function () {
+      var d = loadTakes();
+      var rows = d.map(function (t) { return '<tr><td>' + clean(t.tc) + '</td><td>' + clean(t.roll) + '</td><td>' + clean(t.scn) + '</td><td>' + clean(t.take) + '</td><td>' + clean(t.status) + '</td><td>' + (t.printed ? '✓' : '—') + '</td><td>' + clean(t.note || '') + '</td></tr>'; }).join('');
+      var body = PDF.header('Take Log', getActiveProd().title) +
+        PDF.section('Takes · ' + d.length, '<table class="pdf-table"><thead><tr><th>TC</th><th>Roll</th><th>Scn</th><th>Take</th><th>Status</th><th>Print</th><th>Note</th></tr></thead><tbody>' + rows + '</tbody></table>') +
+        PDF.footer();
+      PDF.openDoc(body, 'Take_Log_' + slugify(prodTitle()));
+      toast('Take log PDF generated');
+    }
+  };
 
   // ══════════════════════════════════════════════════════════════════════════
-  //  WALKIE LOG
+  //  WALKIE LOG — channel-keyed entries with timestamps
   // ══════════════════════════════════════════════════════════════════════════
+  function loadWalkie() {
+    var k = 'ah_walkie_' + STATE.activeProdId;
+    var d = AH.Storage.local.get(k, null);
+    if (!d) {
+      d = [
+        { id: uid('wk'), time: '07:12', ch: 'CH1', from: '1st AD',  to: 'SET',      msg: 'Picture up for rehearsal' },
+        { id: uid('wk'), time: '07:24', ch: 'CH2', from: 'GRIP',    to: 'ELECTRIC', msg: '4x4 neg on A cam' },
+        { id: uid('wk'), time: '07:41', ch: 'CH1', from: '2nd AD',  to: 'SET',      msg: 'Background positions' },
+        { id: uid('wk'), time: '08:02', ch: 'CH4', from: 'SOUND',   to: 'VILLAGE',  msg: 'Rolling · quiet please' },
+        { id: uid('wk'), time: '08:14', ch: 'CH1', from: 'DP',      to: 'GAFFER',   msg: 'Bring up key 1/2 stop' }
+      ];
+      AH.Storage.local.set(k, d);
+    }
+    return d;
+  }
+  function saveWalkie(d) { AH.Storage.local.set('ah_walkie_' + STATE.activeProdId, d); }
   AH.register('walkie', function (m) {
-    var log = [
-      { time: '07:12', ch: 'CH1', from: '1st AD', to: 'SET', msg: 'Picture up for rehearsal' },
-      { time: '07:24', ch: 'CH2', from: 'GRIP',   to: 'ELECTRIC', msg: '4x4 neg on A cam' },
-      { time: '07:41', ch: 'CH1', from: '2nd AD', to: 'SET', msg: 'Background positions' },
-      { time: '08:02', ch: 'CH4', from: 'SOUND',  to: 'VILLAGE', msg: 'Rolling · quiet please' },
-      { time: '08:14', ch: 'CH1', from: 'DP',     to: 'GAFFER', msg: 'Bring up key 1/2 stop' }
-    ];
+    var log = loadWalkie();
     return (
-      AH.Views.renderHero(m, { primary: 'PUSH TO TALK', primaryFn: "AH.Walkie.ptt()" }) +
+      AH.Views.renderHero(m, { primary: 'PUSH TO TALK', primaryFn: "AH.Walkie.ptt()", secondary: 'EXPORT LOG', secondaryFn: "AH.Walkie.exportPDF()" }) +
       '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
-        '<table class="table"><thead><tr><th>Time</th><th>Ch</th><th>From</th><th>To</th><th>Message</th></tr></thead><tbody>' +
-          log.map(function (l) { return '<tr><td class="num">' + l.time + '</td><td><span class="chip">' + l.ch + '</span></td><td>' + l.from + '</td><td>' + l.to + '</td><td>' + l.msg + '</td></tr>'; }).join('') +
+        '<table class="table"><thead><tr><th>Time</th><th>Ch</th><th>From</th><th>To</th><th>Message</th><th></th></tr></thead><tbody>' +
+          log.map(function (l) {
+            return '<tr><td class="num">' + clean(l.time) + '</td><td><span class="chip">' + clean(l.ch) + '</span></td><td>' + clean(l.from) + '</td><td>' + clean(l.to) + '</td><td>' + clean(l.msg) + '</td>' +
+              '<td style="text-align:right;"><button class="btn btn--ghost" onclick="AH.Walkie.del(\'' + l.id + '\')">×</button></td></tr>';
+          }).join('') +
         '</tbody></table>' +
       '</div></div>'
     );
   });
-  AH.Walkie = { ptt: function () { toast('PTT · CH1 · "Quiet on set"'); } };
+  AH.Walkie = {
+    ptt: function () {
+      AH.Modal.prompt('PTT · new walkie entry', 'Ch · From · To · Message', 'CH1 · 1st AD · SET · Quiet on set', function (v) {
+        if (!v) return;
+        var p = v.split(/\s*·\s*/);
+        var d = loadWalkie();
+        d.unshift({ id: uid('wk'), time: new Date().toTimeString().slice(0,5), ch: (p[0] || 'CH1').toUpperCase(), from: p[1] || 'CREW', to: p[2] || 'SET', msg: p[3] || '' });
+        saveWalkie(d); AH.Router.go('walkie'); toast(p[0] + ' · ' + (p[3] || '').slice(0, 40));
+      });
+    },
+    del: function (id) { saveWalkie(loadWalkie().filter(function (l) { return l.id !== id; })); AH.Router.go('walkie'); },
+    exportPDF: function () {
+      var d = loadWalkie();
+      var rows = d.map(function (l) { return '<tr><td>' + clean(l.time) + '</td><td>' + clean(l.ch) + '</td><td>' + clean(l.from) + '</td><td>' + clean(l.to) + '</td><td>' + clean(l.msg) + '</td></tr>'; }).join('');
+      var body = PDF.header('Walkie Log', getActiveProd().title) +
+        PDF.section('Entries · ' + d.length, '<table class="pdf-table"><thead><tr><th>Time</th><th>Ch</th><th>From</th><th>To</th><th>Message</th></tr></thead><tbody>' + rows + '</tbody></table>') +
+        PDF.footer();
+      PDF.openDoc(body, 'Walkie_Log_' + slugify(prodTitle()));
+      toast('Walkie log PDF generated');
+    }
+  };
 
   // ══════════════════════════════════════════════════════════════════════════
   //  HOT SHEET
   // ══════════════════════════════════════════════════════════════════════════
+  function loadHotsheet() {
+    var k = 'ah_hot_' + STATE.activeProdId;
+    var d = AH.Storage.local.get(k, null);
+    if (!d) {
+      d = [
+        { id: uid('h'), dept: 'GRIP',  txt: 'Short 2 apple boxes for D05 rooftop',     st: 'AT RISK', when: 'TODAY',    cls: 'chip--amber' },
+        { id: uid('h'), dept: 'SOUND', txt: 'Boom op out sick · swing covering',      st: 'HOT',     when: 'TODAY',    cls: 'chip--rose' },
+        { id: uid('h'), dept: 'ART',   txt: 'Whiteboard props delivered late · build tomorrow', st: 'CLEARED', when: '+24h', cls: 'chip--lime' },
+        { id: uid('h'), dept: 'LOC',   txt: 'Port 17 counter-offer pending',           st: 'AT RISK', when: '+48h',    cls: 'chip--amber' },
+        { id: uid('h'), dept: 'CAMERA',txt: 'Second Alexa arriving for D06 plate work', st: 'CLEARED', when: '+72h',    cls: 'chip--lime' }
+      ];
+      AH.Storage.local.set(k, d);
+    }
+    return d;
+  }
+  function saveHotsheet(d) { AH.Storage.local.set('ah_hot_' + STATE.activeProdId, d); }
   AH.register('hotsheet', function (m) {
-    var issues = [
-      { dept: 'GRIP', txt: 'Short 2 apple boxes for D05 rooftop', cls: 'chip--amber', st: 'AT RISK' },
-      { dept: 'SOUND', txt: 'Boom op out sick · covering with swing', cls: 'chip--rose', st: 'HOT' },
-      { dept: 'ART', txt: 'Whiteboard props delivered late · will build tomorrow', cls: 'chip--lime', st: 'CLEARED' },
-      { dept: 'LOC', txt: 'Port 17 counter-offer pending', cls: 'chip--amber', st: 'AT RISK' }
-    ];
+    var items = loadHotsheet();
+    var buckets = { 'TODAY': [], '+24h': [], '+48h': [], '+72h': [] };
+    items.forEach(function (i) { (buckets[i.when] = buckets[i.when] || []).push(i); });
     return (
-      AH.Views.renderHero(m, { primary: 'PUBLISH', primaryFn: "toast('Hot sheet published · team notified')" }) +
-      '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
-        '<table class="table"><thead><tr><th>Dept</th><th>Issue</th><th>Status</th></tr></thead><tbody>' +
-          issues.map(function (i) { return '<tr><td><span class="chip">' + i.dept + '</span></td><td>' + i.txt + '</td><td><span class="chip ' + i.cls + '">' + i.st + '</span></td></tr>'; }).join('') +
-        '</tbody></table>' +
-      '</div></div>'
+      AH.Views.renderHero(m, { primary: 'PUBLISH', primaryFn: "AH.Hot.publish()", secondary: 'ADD ITEM', secondaryFn: "AH.Hot.add()" }) +
+      '<div class="section">' +
+        Object.keys(buckets).map(function (when) {
+          return '<div class="card" style="margin-bottom:10px;">' +
+            '<div class="section__title" style="margin-bottom:12px;">' + when + ' · ' + buckets[when].length + ' items</div>' +
+            (buckets[when].length ?
+              '<table class="table" style="padding:0;"><tbody>' +
+                buckets[when].map(function (i) {
+                  return '<tr><td style="width:110px;"><span class="chip">' + clean(i.dept) + '</span></td><td>' + clean(i.txt) + '</td><td style="width:140px;"><span class="chip ' + i.cls + '">' + clean(i.st) + '</span></td><td style="width:40px;text-align:right;"><button class="btn btn--ghost" onclick="AH.Hot.del(\'' + i.id + '\')">×</button></td></tr>';
+                }).join('') +
+              '</tbody></table>' : '<div style="color:var(--fg-45);font-size:12px;padding:10px;">Nothing scheduled.</div>') +
+          '</div>';
+        }).join('') +
+      '</div>'
     );
   });
+  AH.Hot = {
+    add: function () {
+      AH.Modal.prompt('Hot sheet item', 'Dept · issue · status · when (TODAY | +24h | +48h | +72h)', 'GRIP · Low on C-stands · AT RISK · TODAY', function (v) {
+        if (!v) return;
+        var p = v.split(/\s*·\s*/);
+        var cls = { 'HOT': 'chip--rose', 'AT RISK': 'chip--amber', 'CLEARED': 'chip--lime' }[(p[2] || '').toUpperCase()] || 'chip--aqua';
+        var d = loadHotsheet();
+        d.push({ id: uid('h'), dept: (p[0] || 'CREW').toUpperCase(), txt: p[1] || '', st: (p[2] || 'AT RISK').toUpperCase(), when: (p[3] || 'TODAY').toUpperCase(), cls: cls });
+        saveHotsheet(d); AH.Router.go('hotsheet'); toast('Hot sheet item added');
+      });
+    },
+    del: function (id) { saveHotsheet(loadHotsheet().filter(function (x) { return x.id !== id; })); AH.Router.go('hotsheet'); },
+    publish: function () {
+      AH.Notif.push('Hot sheet published · ' + loadHotsheet().length + ' items · team notified', { kind: 'warn' });
+      toast('Hot sheet published');
+    }
+  };
 
   // ══════════════════════════════════════════════════════════════════════════
   //  TIMELINE (Gantt)
