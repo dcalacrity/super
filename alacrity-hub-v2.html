@@ -7,9 +7,19 @@
 <meta name="description" content="Alacrity Hub — the AI-augmented, zero-trust production command system. Stripboards, ledgers, continuity, node-graph narrative, one pipeline, one story." />
 <meta name="theme-color" content="#04070d" />
 
+<!-- ── SECURITY HEADERS (mirror V1) ─────────────────────────────────── -->
+<meta http-equiv="X-Content-Type-Options" content="nosniff" />
+<meta name="referrer" content="strict-origin-when-cross-origin" />
+<meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=()" />
+
+<!-- ── PDF ENGINE · jsPDF + autoTable (for programmatic PDFs) ───────── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<!-- pdf.js is dynamically loaded on first PDF import to keep payload small -->
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
 <style>
 /* ════════════════════════════════════════════════════════════════════════════
@@ -1807,6 +1817,8 @@ select:focus-visible,
 .se-btn.is-saved { background: rgba(23,255,197,0.14); color: var(--mint); border-color: var(--edge-mint); }
 .se-btn.is-muted { color: var(--fg-45); }
 .se-btn--xs { height: 26px; padding: 0 10px; font-size: 9.5px; }
+.se-btn--map { color: #dcc4ff; border-color: rgba(167,148,255,0.35); background: rgba(167,148,255,0.1); }
+.se-btn--map:hover { color: #f3eaff; border-color: #a794ff; box-shadow: 0 0 0 1px rgba(167,148,255,0.35), 0 8px 22px rgba(167,148,255,0.18); }
 
 .se-stt {
   display: inline-flex; border-radius: 999px; overflow: hidden;
@@ -1962,16 +1974,18 @@ select:focus-visible,
   padding: 24px; min-height: 0;
   scroll-behavior: smooth;
 }
+/* 8.5" × 11" at 96 DPI = 816 × 1056 px. Standard screenplay margins:
+   top 1.0" (96px) · bottom 1.0" (96px) · left 1.5" (144px) · right 1.0" (96px) */
 .se-page {
   width: min(816px, 100%);
   min-height: 1056px;
   margin: 0 auto;
-  padding: 72px 96px 96px 108px;
+  padding: 96px 96px 96px 144px;
   background: #fdfaf0;
   color: #1c1917;
   border-radius: 12px;
   box-shadow: 0 30px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,0,0,0.05);
-  font-family: 'Courier New', 'Courier Prime', Courier, monospace;
+  font-family: 'Courier Prime', 'Courier New', Courier, monospace;
   font-size: 12pt;
   line-height: 1.4;
   position: relative;
@@ -2053,19 +2067,35 @@ html[data-theme="light"] .se-page { box-shadow: 0 10px 30px rgba(4,26,31,0.1), 0
 .se-page.mode-shot .se-line:hover { background: rgba(196,163,90,0.08); }
 .se-page.mode-dir .se-line:hover { background: rgba(168,85,247,0.08); }
 .se-line.is-selected { box-shadow: inset 0 0 0 1px rgba(34,211,238,0.4); background: rgba(34,211,238,0.04); }
+.se-line-row.is-flash { animation: seFlash 1.6s ease-out; }
+@keyframes seFlash {
+  0%   { background: rgba(23,255,197,0.32); }
+  60%  { background: rgba(23,255,197,0.12); }
+  100% { background: transparent; }
+}
 
+/* ── WGA SCREENPLAY MARGINS (Courier 12pt · 10 chars per inch) ──
+   Page is 8.5" × 11". Page padding-left is 1.5", right is 1" → content is 6" wide.
+   Industry margins (measured from LEFT EDGE OF PAPER):
+     Action / Scene Heading:  1.5"          → 0 in content area
+     Dialogue:                2.5" – 6.0"    → left 1.0" (1in), width 3.5"
+     Parenthetical:           3.0" – 5.0"    → left 1.5" (1.5in), width 2.0"
+     Character cue:           3.7"          → left 2.2" (2.2in)
+     Transition:              right-aligned ~6.0"
+*/
 .se-line [contenteditable] { outline: none; min-height: 14pt; white-space: pre-wrap; word-break: break-word; }
-.se-el-scene [contenteditable]   { font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; margin: 18pt 0 8pt; color: #000; }
+.se-el-scene [contenteditable]   { font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; margin: 18pt 0 8pt 0; color: #000; }
 .se-el-action [contenteditable]  { margin: 4pt 0; color: #1c1917; }
-.se-el-char [contenteditable]    { margin: 12pt 0 0; margin-left: 220pt; text-transform: uppercase; font-weight: 700; color: #000; }
-.se-el-paren [contenteditable]   { margin: 0 0 0 180pt; color: #555; font-style: italic; }
-.se-el-dial [contenteditable]    { margin: 0 90pt 4pt 100pt; color: #1c1917; }
+.se-el-char [contenteditable]    { margin: 12pt 0 0 2.2in; text-transform: uppercase; font-weight: 700; color: #000; max-width: 3in; }
+.se-el-paren [contenteditable]   { margin: 0 0 0 1.5in; color: #444; font-style: italic; max-width: 2in; }
+.se-el-dial [contenteditable]    { margin: 0 1.5in 4pt 1in; color: #1c1917; max-width: 3.5in; }
 .se-el-trans [contenteditable]   { margin: 12pt 0 12pt; text-align: right; text-transform: uppercase; font-weight: 600; color: #444; }
 .se-el-centered [contenteditable]{ margin: 12pt 0; text-align: center; font-weight: 600; text-transform: uppercase; }
 .se-el-empty [contenteditable]   { min-height: 14pt; }
 .se-el-pathway [contenteditable] { margin: 14pt 0; font-weight: 700; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.08em; border-left: 3px solid #9B7ED8; padding-left: 12px; }
-.se-el-choice [contenteditable]  { margin: 6pt 0 6pt 40pt; font-style: italic; color: #059669; }
+.se-el-choice [contenteditable]  { margin: 6pt 0 6pt 0.8in; font-style: italic; color: #059669; max-width: 3.5in; }
 .se-el-choice [contenteditable]::before { content: "◆ "; color: #059669; }
+.se-el-shot [contenteditable]    { margin: 10pt 0; text-transform: uppercase; font-weight: 700; color: #8B6E2C; letter-spacing: 0.05em; }
 
 .se-ann-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 4px 22px; }
 .se-ann-chip {
@@ -2525,38 +2555,137 @@ html[data-theme="light"] .board-strip__cell { background: #ffffff; }
 .kanban__card__t { font-family: var(--f-display); font-weight: 600; font-size: 14px; margin-bottom: 4px; }
 .kanban__card__m { font-family: var(--f-mono); font-size: 10px; color: var(--fg-60); letter-spacing: 0.14em; text-transform: uppercase; }
 
-/* Story map (DAG) */
-.dag-canvas {
+/* ═══════════════════════════════════════════════════════════════════════════
+   STORY MAP / DAG — V1-feature-parity node-graph editor
+   ═══════════════════════════════════════════════════════════════════════════ */
+.dag-root { display: grid; grid-template-columns: 240px 1fr 300px; gap: 10px; min-height: 72vh; }
+@media (max-width: 1200px) { .dag-root { grid-template-columns: 220px 1fr; }  .dag-inspector { display:none; } }
+@media (max-width: 860px)  { .dag-root { grid-template-columns: 1fr; } .dag-tracks { display:none; } }
+
+.dag-toolbar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--glass-1); border: 1px solid var(--edge);
+  margin-bottom: 10px;
+}
+.dag-toolbar__group { display: inline-flex; gap: 6px; align-items: center; padding-right: 10px; border-right: 1px solid var(--edge); }
+.dag-toolbar__group:last-child { border-right: 0; }
+.dag-tbtn {
+  height: 30px; padding: 0 12px; border-radius: 999px;
+  background: var(--glass-2); border: 1px solid var(--edge); color: var(--fg-80);
+  font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.14em;
+  text-transform: uppercase; font-weight: 700; cursor: pointer;
+  transition: color 0.18s, border-color 0.18s, background 0.18s, transform 0.18s;
+}
+.dag-tbtn:hover { color: var(--mint); border-color: var(--edge-mint); transform: translateY(-1px); }
+.dag-tbtn.is-active { color: var(--ink-0); background: linear-gradient(135deg,var(--mint),var(--aqua)); border-color: transparent; }
+
+.dag-tracks {
+  border-radius: 14px; border: 1px solid var(--edge);
+  background: var(--glass-1); padding: 12px;
+  display: flex; flex-direction: column; gap: 10px;
+  overflow: auto;
+}
+.dag-tracks__title { font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--fg-45); padding-bottom: 6px; border-bottom: 1px solid var(--edge); }
+.dag-track-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 8px; border: 1px solid var(--edge);
+}
+.dag-track-row__sw { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); }
+.dag-track-row__label { flex: 1; font-size: 12px; }
+.dag-track-row__toggle { cursor: pointer; opacity: 0.7; font-family: var(--f-mono); font-size: 10px; }
+
+.dag-viewport {
   position: relative;
-  min-height: 520px;
+  height: 72vh;
   border-radius: var(--r-md);
   background:
     radial-gradient(1000px 600px at 80% 20%, rgba(167,148,255,0.08), transparent 60%),
     linear-gradient(180deg, rgba(5,8,14,0.6), rgba(3,5,9,0.9));
   border: 1px solid var(--edge);
   overflow: hidden;
+  user-select: none;
 }
+html[data-theme="light"] .dag-viewport { background: radial-gradient(1000px 600px at 80% 20%, rgba(167,148,255,0.06), transparent 60%), linear-gradient(180deg,#f0f7f2,#e4eee7); }
+
+.dag-canvas {
+  position: absolute; inset: 0;
+  transform-origin: 0 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,26,31,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(4,26,31,0.06) 1px, transparent 1px); }
+
 .dag-node {
   position: absolute;
-  min-width: 160px; padding: 12px 14px;
+  width: 170px; min-height: 56px; padding: 10px 12px;
   border-radius: 12px;
-  background: var(--glass-2); border: 1px solid var(--edge-2);
+  background: var(--glass-2); border: 1.5px solid var(--edge-2);
   color: var(--fg);
   font-family: var(--f-body); font-size: 12px;
   cursor: grab;
   box-shadow: var(--sh-1);
+  transition: box-shadow 0.18s, border-color 0.18s;
 }
+.dag-node:hover { box-shadow: var(--sh-2); }
+.dag-node:active { cursor: grabbing; }
+.dag-node.is-selected { border-color: var(--mint); box-shadow: 0 0 0 2px rgba(23,255,197,0.3), var(--sh-2); }
+.dag-node--scene { }
 .dag-node--start { border-color: var(--mint); box-shadow: var(--sh-mint); }
-.dag-node--end { border-color: var(--aqua); }
-.dag-node--branch { border-color: var(--violet); }
-.dag-node__label {
-  font-family: var(--f-display); font-weight: 700; font-size: 13px;
-  margin-bottom: 2px;
+.dag-node--end   { border-color: var(--aqua); }
+.dag-node--fork  { border-color: var(--violet); background: linear-gradient(180deg, rgba(167,148,255,0.12), var(--glass-2)); }
+.dag-node--merge { border-color: var(--amber); }
+.dag-node--beat  { border-color: var(--lime); border-style: dashed; }
+.dag-node__hdr { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 3px; }
+.dag-node__label { font-family: var(--f-display); font-weight: 700; font-size: 13px; letter-spacing: 0.02em; line-height: 1.15; }
+.dag-node__meta  { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-60); }
+.dag-node__track { width: 6px; height: 6px; border-radius: 50%; background: #ccc; flex-shrink: 0; }
+.dag-node__port  { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: var(--mint); border: 2px solid var(--ink-0); cursor: crosshair; opacity: 0; transition: opacity 0.18s; }
+.dag-node:hover .dag-node__port { opacity: 1; }
+.dag-node__port--in  { left: -8px; top: 50%; transform: translateY(-50%); background: var(--aqua); }
+.dag-node__port--out { right: -8px; top: 50%; transform: translateY(-50%); }
+
+.dag-link { fill: none; stroke-width: 2; }
+.dag-link--standard { stroke: rgba(167,148,255,0.7); }
+.dag-link--jump     { stroke: rgba(247,184,107,0.8); stroke-dasharray: 6 4; }
+.dag-link--micro    { stroke: rgba(23,255,197,0.7); stroke-width: 1.4; }
+.dag-link--custom   { stroke: rgba(255,122,168,0.8); stroke-dasharray: 2 3; }
+.dag-link-label { fill: var(--fg-60); font-family: var(--f-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+.dag-inspector {
+  border-radius: 14px; border: 1px solid var(--edge);
+  background: var(--glass-1); padding: 14px;
+  display: flex; flex-direction: column; gap: 10px;
+  overflow: auto;
 }
-.dag-node__meta {
-  font-family: var(--f-mono); font-size: 9px; letter-spacing: 0.14em;
-  text-transform: uppercase; color: var(--fg-60);
+.dag-inspector__title { font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--fg-45); padding-bottom: 6px; border-bottom: 1px solid var(--edge); }
+.dag-inspector label { display: block; font-family: var(--f-mono); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-60); margin-bottom: 4px; }
+.dag-inspector input, .dag-inspector textarea, .dag-inspector select {
+  width: 100%; padding: 8px 10px; border-radius: 8px;
+  border: 1px solid var(--edge-2); background: var(--ink-2); color: var(--fg);
+  font-family: var(--f-body); font-size: 12px;
 }
+.dag-inspector textarea { min-height: 80px; resize: vertical; }
+
+.dag-minimap {
+  position: absolute; right: 12px; bottom: 12px;
+  width: 180px; height: 120px;
+  border-radius: 10px; border: 1px solid var(--edge);
+  background: rgba(5,8,14,0.7); overflow: hidden;
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+}
+.dag-minimap__viewport {
+  position: absolute;
+  border: 1px solid var(--mint);
+  background: rgba(23,255,197,0.1);
+}
+.dag-minimap__node { position: absolute; background: var(--fg-60); border-radius: 2px; }
+
+.dag-zoom-ind { position: absolute; left: 12px; bottom: 12px; padding: 4px 10px; border-radius: 999px; background: var(--glass-2); border: 1px solid var(--edge); font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.14em; color: var(--fg-60); pointer-events: none; }
 
 /* Dialer keypad */
 .dialer-pad { display: grid; grid-template-columns: repeat(3, 80px); gap: 10px; justify-content: center; margin-top: 18px; }
@@ -2898,6 +3027,22 @@ html[data-theme="light"] .board-strip__cell { background: #ffffff; }
   //  the only verbatim V1 carry-overs — these identify the same backend.
   // ══════════════════════════════════════════════════════════════════════════
 
+  // ── PRODUCTION CONSOLE REDACTION (V1 parity) ──────────────────────────────
+  // On non-dev hosts: silence chatty logs, redact errors. Keeps secrets out of
+  // browser consoles and protects against accidental leak of user data.
+  (function () {
+    var h = location.hostname;
+    var isDev = h === 'localhost' || h === '127.0.0.1' || h === '' || /\.localhost$/.test(h);
+    if (!isDev) {
+      try {
+        var noop = function () {};
+        console.log = noop; console.info = noop; console.debug = noop; console.warn = noop;
+        var _err = console.error.bind(console);
+        console.error = function () { _err('[Alacrity] error'); };
+      } catch (_) {}
+    }
+  })();
+
   var AH = window.AH = {};
   var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -2978,11 +3123,14 @@ html[data-theme="light"] .board-strip__cell { background: #ffffff; }
       s.type = 'module';
       s.textContent = [
         'import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";',
+        'import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";',
         'import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";',
-        'import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";',
+        'import { getDatabase, ref, set, get, onValue, update, child, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";',
         'const cfg = ' + JSON.stringify(FB_CONFIG) + ';',
+        'const rk = ' + JSON.stringify(RECAPTCHA_SITE_KEY) + ';',
         'try {',
         '  const app = initializeApp(cfg);',
+        '  try { initializeAppCheck(app, { provider: new ReCaptchaV3Provider(rk), isTokenAutoRefreshEnabled: true }); } catch(_) {}',
         '  const auth = getAuth(app);',
         '  const db = getDatabase(app);',
         '  const provider = new GoogleAuthProvider();',
@@ -2991,9 +3139,11 @@ html[data-theme="light"] .board-strip__cell { background: #ffffff; }
         '  window.AH.Firebase.db = db;',
         '  window.AH.Firebase.provider = provider;',
         '  window.AH.Firebase.ref = ref;',
+        '  window.AH.Firebase.child = child;',
         '  window.AH.Firebase.set = set;',
         '  window.AH.Firebase.get = get;',
         '  window.AH.Firebase.update = update;',
+        '  window.AH.Firebase.remove = remove;',
         '  window.AH.Firebase.onValue = onValue;',
         '  window.AH.Firebase.signInWithPopup = signInWithPopup;',
         '  window.AH.Firebase.onAuthStateChanged = onAuthStateChanged;',
@@ -3030,8 +3180,21 @@ html[data-theme="light"] .board-strip__cell { background: #ffffff; }
       if (this.auth && this.signOut) return this.signOut(this.auth);
       return Promise.resolve();
     },
-    // Path naming matches V1 schema
+    // ── Path naming matches V1 schema exactly ─────────────────────────────
+    // users/{uid}/productions/{prodId}                 — full production data
+    // users/{uid}/productionsList                      — list of { id, title }
+    // users/{uid}/business/crm                         — business CRM blob
+    //
+    // All writes use `update()` so partial writes do NOT clobber the rest
+    // of the production subtree (avoids V1→V2 data-loss on script autosave).
     pushProductionData: function (prodId, data) {
+      if (!this.ready || !this.db || !this.user) return Promise.resolve(false);
+      try {
+        var p = this.ref(this.db, 'users/' + this.user.uid + '/productions/' + prodId);
+        return this.update(p, data).then(function () { return true; }).catch(function (e) { console.warn(e); return false; });
+      } catch (_) { return Promise.resolve(false); }
+    },
+    setProductionData: function (prodId, data) {
       if (!this.ready || !this.db || !this.user) return Promise.resolve(false);
       try {
         var p = this.ref(this.db, 'users/' + this.user.uid + '/productions/' + prodId);
@@ -3044,6 +3207,27 @@ html[data-theme="light"] .board-strip__cell { background: #ffffff; }
         var p = this.ref(this.db, 'users/' + this.user.uid + '/productions/' + prodId);
         return this.get(p).then(function (snap) { return snap && snap.val ? snap.val() : null; });
       } catch (_) { return Promise.resolve(null); }
+    },
+    pushProductionsList: function (list) {
+      if (!this.ready || !this.db || !this.user) return Promise.resolve(false);
+      try {
+        var p = this.ref(this.db, 'users/' + this.user.uid + '/productionsList');
+        return this.set(p, list).then(function () { return true; }).catch(function () { return false; });
+      } catch (_) { return Promise.resolve(false); }
+    },
+    loadProductionsList: function () {
+      if (!this.ready || !this.db || !this.user) return Promise.resolve(null);
+      try {
+        var p = this.ref(this.db, 'users/' + this.user.uid + '/productionsList');
+        return this.get(p).then(function (snap) { return snap && snap.val ? snap.val() : null; });
+      } catch (_) { return Promise.resolve(null); }
+    },
+    pushBizCRM: function (blob) {
+      if (!this.ready || !this.db || !this.user) return Promise.resolve(false);
+      try {
+        var p = this.ref(this.db, 'users/' + this.user.uid + '/business/crm');
+        return this.set(p, blob).then(function () { return true; }).catch(function () { return false; });
+      } catch (_) { return Promise.resolve(false); }
     }
   };
 
@@ -3814,10 +3998,11 @@ html[data-theme="light"] .board-strip__cell { background: #ffffff; }
             '<span class="se-cmdbar__status" id="se-status">' + (s._dirty ? 'UNSAVED' : 'SAVED') + '</span>' +
           '</div>' +
           '<div class="se-cmdbar__actions">' +
-            '<button class="se-btn" onclick="AH.Editor.openImportModal()" title="Import">IMPORT</button>' +
-            '<button class="se-btn" onclick="AH.Editor.openExportModal()" title="Export">EXPORT</button>' +
+            '<button class="se-btn" onclick="AH.Editor.openImportModal()" title="Import (FDX · Fountain · PDF · JSON · TXT)">IMPORT</button>' +
+            '<button class="se-btn" onclick="AH.Editor.openExportModal()" title="Export (FDX · Fountain · PDF · JSON · TXT · HTML)">EXPORT</button>' +
             '<button class="se-btn is-primary" id="se-save" onclick="AH.Editor.save()" title="Save (⌘/Ctrl+S)">SAVE</button>' +
             '<button class="se-btn" onclick="AH.Editor.openSearch()" title="Find (⌘/Ctrl+F)">FIND</button>' +
+            '<button class="se-btn se-btn--map" onclick="AH.Router.go(\'storymap\')" title="Open in Story Map (G)">◇ STORY MAP</button>' +
             '<button class="se-btn" onclick="AH.Editor.openKeys()" title="Keyboard shortcuts">?</button>' +
             '<div class="se-stt" title="Script structure mode">' +
               '<div class="se-stt__btn' + (s.scriptType === 'regular' ? ' is-active' : '') + '" onclick="AH.Editor.setScriptType(\'regular\')">REGULAR</div>' +
@@ -4245,6 +4430,17 @@ html[data-theme="light"] .board-strip__cell { background: #ffffff; }
           sel.removeAllRanges(); sel.addRange(rg);
         } catch (_) {}
       }, 20);
+    },
+
+    scrollToLine: function (idx) {
+      setTimeout(function () {
+        var row = document.querySelector('.se-line-row[data-idx="' + idx + '"]') || document.querySelector('.se-line[data-idx="' + idx + '"]');
+        if (row) {
+          row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          row.classList.add('is-flash');
+          setTimeout(function () { row.classList.remove('is-flash'); }, 1600);
+        }
+      }, 80);
     },
 
     addLineAtEnd: function () {
@@ -6714,92 +6910,734 @@ html[data-theme="light"] .board-strip__cell { background: #ffffff; }
   };
 
   // ══════════════════════════════════════════════════════════════════════════
-  //  STORY MAP (DAG)
+  //  STORY MAP · Full V1-parity DAG
+  //  ──────────────────────────────────────────────────────────────────────
+  //  Data model mirrors V1 exactly so JSON exports round-trip with V1:
+  //    tracks:  [{ id, label, color, visible }]
+  //    phases:  [{ id, label }]
+  //    nodes:   [{ id, label, note, trackId, phaseId, x, y, nodeType,
+  //                sceneLineIdx?, tags[], audio?, videoUrl? }]
+  //    links:   [{ id, source, target, type, label?, choiceText? }]
+  //  Link types match V1 LINK_COLORS: standard | jump | micro | custom.
+  //  Node types: scene (default) · fork · merge · beat · start · end.
+  //
+  //  Alacrity Player (Unity VR) bundle export is a first-class feature
+  //  because the Story Map drives the choose-your-own-adventure playback.
   // ══════════════════════════════════════════════════════════════════════════
+  var DAG_SCHEMA_VERSION = '2.0.0';
+  var DAG_PALETTE = ['#17FFC5','#14AFDF','#a794ff','#f7b86b','#ff7aa8','#bfff6b','#5eead4','#fbbf24','#c084fc','#34d399'];
+  var DAG_LINK_COLORS = { standard: '#a794ff', jump: '#f7b86b', micro: '#17FFC5', custom: '#ff7aa8' };
+
+  function slugify(s) {
+    return (s || 'untitled').toString().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 48);
+  }
+
   var StoryMap = {
     state: null,
+    sel: { nodeId: null, linkId: null },
+    view: { scale: 1, tx: 0, ty: 0 },
+    _dragNode: null, _dragOff: null, _panning: false, _panStart: null,
+    _linking: null,
+
+    defaultState: function () {
+      return {
+        _version: 1,
+        _app: 'DC ALACRITY Story Map',
+        tracks: [
+          { id: 't1', label: 'Main',        color: DAG_PALETTE[0], visible: true },
+          { id: 't2', label: 'B-Story',     color: DAG_PALETTE[2], visible: true },
+          { id: 't3', label: 'Antagonist',  color: DAG_PALETTE[4], visible: true }
+        ],
+        phases: [
+          { id: 'p1', label: 'Act I' },
+          { id: 'p2', label: 'Act II' },
+          { id: 'p3', label: 'Act III' }
+        ],
+        nodes: [
+          { id: 'n1', label: 'OPEN',      note: 'Hook — introduce world and stakes', trackId: 't1', phaseId: 'p1', x:   80, y:  60, nodeType: 'start' },
+          { id: 'n2', label: 'MEET',      note: 'Protagonist meets inciting event',   trackId: 't1', phaseId: 'p1', x:  300, y:  60, nodeType: 'scene' },
+          { id: 'n3', label: 'INTERCEPT', note: 'First major obstacle',              trackId: 't1', phaseId: 'p2', x:  560, y:  60, nodeType: 'fork' },
+          { id: 'n4', label: 'ALLY',      note: 'Gain a new ally · B-story',         trackId: 't2', phaseId: 'p2', x:  560, y: 220, nodeType: 'scene' },
+          { id: 'n5', label: 'BETRAY',    note: 'Midpoint reversal',                 trackId: 't1', phaseId: 'p2', x:  820, y:  60, nodeType: 'scene' },
+          { id: 'n6', label: 'ENCRYPT',   note: 'Secret plan',                        trackId: 't1', phaseId: 'p3', x: 1080, y:  60, nodeType: 'scene' },
+          { id: 'n7', label: 'FLEE',      note: 'Climax flight',                      trackId: 't1', phaseId: 'p3', x: 1340, y:  60, nodeType: 'merge' },
+          { id: 'n8', label: 'EPILOGUE',  note: 'Resolution',                         trackId: 't1', phaseId: 'p3', x: 1340, y: 220, nodeType: 'end' }
+        ],
+        links: [
+          { id: 'l1', source: 'n1', target: 'n2', type: 'standard' },
+          { id: 'l2', source: 'n2', target: 'n3', type: 'standard' },
+          { id: 'l3', source: 'n3', target: 'n4', type: 'custom',   label: 'Help the ally', choiceText: 'Aid them' },
+          { id: 'l4', source: 'n3', target: 'n5', type: 'standard', label: 'Continue alone' },
+          { id: 'l5', source: 'n4', target: 'n7', type: 'jump' },
+          { id: 'l6', source: 'n5', target: 'n6', type: 'standard' },
+          { id: 'l7', source: 'n6', target: 'n7', type: 'standard' },
+          { id: 'l8', source: 'n7', target: 'n8', type: 'standard' }
+        ],
+        nodeCounter: 8, linkCounter: 8, trackCounter: 3, phaseCounter: 3,
+        startNodeId: 'n1'
+      };
+    },
     load: function () {
       var k = 'ah_dag_' + STATE.activeProdId;
       var d = AH.Storage.local.get(k, null);
-      if (!d) {
-        d = {
-          nodes: [
-            { id: 'n1', label: 'OPEN', meta: 'Scene 01', x: 80,  y: 60,  kind: 'start' },
-            { id: 'n2', label: 'MEET', meta: 'Scene 02', x: 280, y: 60,  kind: 'branch' },
-            { id: 'n3', label: 'INTERCEPT', meta: 'Scene 03', x: 480, y: 60,  kind: 'branch' },
-            { id: 'n4', label: 'ALLY',      meta: 'Scene 04', x: 480, y: 220, kind: 'branch' },
-            { id: 'n5', label: 'BETRAY',    meta: 'Scene 05', x: 680, y: 60,  kind: 'branch' },
-            { id: 'n6', label: 'ENCRYPT',   meta: 'Scene 06', x: 880, y: 60,  kind: 'branch' },
-            { id: 'n7', label: 'FLEE',      meta: 'Scene 07', x: 1080,y: 60,  kind: 'branch' },
-            { id: 'n8', label: 'EPILOGUE',  meta: 'Scene 08', x: 1080,y: 220, kind: 'end' }
-          ],
-          edges: [
-            ['n1','n2'],['n2','n3'],['n2','n4'],['n3','n5'],['n5','n6'],['n6','n7'],['n7','n8'],['n4','n8']
-          ]
-        };
-        AH.Storage.local.set(k, d);
-      }
-      StoryMap.state = d; return d;
+      if (!d) { d = StoryMap.defaultState(); AH.Storage.local.set(k, d); }
+      // Backfill for older stored shapes
+      d.tracks = d.tracks || [];
+      d.phases = d.phases || [];
+      d.nodes  = d.nodes || [];
+      d.links  = d.links || [];
+      StoryMap.state = d;
+      return d;
     },
-    save: function () { AH.Storage.local.set('ah_dag_' + STATE.activeProdId, StoryMap.state); }
+    save: function () {
+      AH.Storage.local.set('ah_dag_' + STATE.activeProdId, StoryMap.state);
+      if (AH.Firebase && AH.Firebase.ready && AH.Firebase.user) {
+        AH.Firebase.pushProductionData(STATE.activeProdId, { storyMap: StoryMap.state, storyMapUpdatedAt: Date.now() });
+      }
+    },
+    dirty: function () { StoryMap.save(); StoryMap.render(); },
+
+    nodeById: function (id) { return StoryMap.state.nodes.find(function (n) { return n.id === id; }); },
+    linkById: function (id) { return StoryMap.state.links.find(function (l) { return l.id === id; }); },
+    trackById: function (id) { return StoryMap.state.tracks.find(function (t) { return t.id === id; }); },
+
+    render: function () {
+      var canvas = $('#dag-canvas'); if (!canvas) return;
+      var svg = $('#dag-svg'); var view = StoryMap.view;
+      canvas.style.transform = 'translate(' + view.tx + 'px,' + view.ty + 'px) scale(' + view.scale + ')';
+      // Nodes
+      canvas.innerHTML = StoryMap.state.nodes.map(function (n) {
+        var t = StoryMap.trackById(n.trackId);
+        var color = t ? t.color : '#888';
+        var visible = !t || t.visible !== false;
+        return '<div class="dag-node dag-node--' + (n.nodeType || 'scene') + (StoryMap.sel.nodeId === n.id ? ' is-selected' : '') + '"' +
+          ' data-nid="' + n.id + '"' +
+          ' style="left:' + n.x + 'px;top:' + n.y + 'px;' + (visible ? '' : 'opacity:0.35;filter:grayscale(0.6);') + '">' +
+          '<div class="dag-node__port dag-node__port--in"></div>' +
+          '<div class="dag-node__port dag-node__port--out" data-out="' + n.id + '"></div>' +
+          '<div class="dag-node__hdr">' +
+            '<div class="dag-node__label">' + clean(n.label || '') + '</div>' +
+            '<span class="dag-node__track" style="background:' + color + ';"></span>' +
+          '</div>' +
+          '<div class="dag-node__meta">' +
+            ((n.nodeType || 'scene').toUpperCase()) +
+            (typeof n.sceneLineIdx === 'number' ? ' · L' + n.sceneLineIdx : '') +
+            (n.phaseId ? ' · ' + clean((StoryMap.state.phases.find(function (p) { return p.id === n.phaseId; }) || { label: '' }).label) : '') +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      // Links (edges) as SVG
+      svg.innerHTML = StoryMap.state.links.map(function (l) {
+        var a = StoryMap.nodeById(l.source), b = StoryMap.nodeById(l.target);
+        if (!a || !b) return '';
+        var x1 = a.x + 170, y1 = a.y + 28, x2 = b.x, y2 = b.y + 28;
+        var dx = Math.max(40, Math.abs(x2 - x1) * 0.45);
+        var d = 'M ' + x1 + ' ' + y1 + ' C ' + (x1 + dx) + ' ' + y1 + ', ' + (x2 - dx) + ' ' + y2 + ', ' + x2 + ' ' + y2;
+        var cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
+        var label = l.label ? '<text class="dag-link-label" x="' + cx + '" y="' + (cy - 4) + '" text-anchor="middle">' + clean(l.label) + '</text>' : '';
+        return '<path class="dag-link dag-link--' + (l.type || 'standard') + '" data-lid="' + l.id + '" d="' + d + '"/>' + label;
+      }).join('');
+
+      StoryMap._wireDrag();
+      StoryMap._renderInspector();
+      StoryMap._renderTracks();
+      StoryMap._renderMinimap();
+      $('#dag-zoom-ind') && ($('#dag-zoom-ind').textContent = 'Z ' + Math.round(StoryMap.view.scale * 100) + '%');
+    },
+
+    _wireDrag: function () {
+      var vp = $('#dag-viewport'); var canvas = $('#dag-canvas'); if (!vp || !canvas) return;
+      // Per-node drag
+      $$('.dag-node').forEach(function (el) {
+        var nid = el.getAttribute('data-nid');
+        el.onmousedown = function (e) {
+          if (e.target.classList.contains('dag-node__port')) return;
+          var n = StoryMap.nodeById(nid); if (!n) return;
+          StoryMap.sel = { nodeId: nid, linkId: null };
+          StoryMap._dragNode = n;
+          StoryMap._dragOff = { x: e.clientX / StoryMap.view.scale - n.x, y: e.clientY / StoryMap.view.scale - n.y };
+          StoryMap.render();
+          e.preventDefault(); e.stopPropagation();
+        };
+        el.ondblclick = function () { StoryMap.editNode(nid); };
+        // Port → begin link
+        var outPort = el.querySelector('.dag-node__port--out');
+        if (outPort) outPort.onmousedown = function (e) {
+          StoryMap._linking = { from: nid, x1: 0, y1: 0, x2: 0, y2: 0 };
+          e.stopPropagation(); e.preventDefault();
+        };
+      });
+      // Click an edge
+      $$('path.dag-link').forEach(function (p) {
+        p.style.pointerEvents = 'stroke'; p.style.cursor = 'pointer';
+        p.onclick = function () { StoryMap.sel = { nodeId: null, linkId: p.getAttribute('data-lid') }; StoryMap.render(); };
+      });
+    },
+
+    _bindGlobalDrag: function () {
+      var vp = $('#dag-viewport'); if (!vp || vp._dagBound) return; vp._dagBound = true;
+      // Pan (middle click or space-hold — we use plain click on empty)
+      vp.addEventListener('mousedown', function (e) {
+        if (e.target === vp || e.target.id === 'dag-svg' || e.target.id === 'dag-canvas') {
+          StoryMap._panning = true; StoryMap._panStart = { x: e.clientX - StoryMap.view.tx, y: e.clientY - StoryMap.view.ty };
+          StoryMap.sel = { nodeId: null, linkId: null }; StoryMap.render();
+        }
+      });
+      vp.addEventListener('wheel', function (e) {
+        if (!e.ctrlKey && !e.metaKey) { /* allow page scroll */ return; }
+        e.preventDefault();
+        var d = e.deltaY > 0 ? 0.9 : 1.1;
+        StoryMap.view.scale = Math.min(2, Math.max(0.3, StoryMap.view.scale * d));
+        StoryMap.render();
+      }, { passive: false });
+      document.addEventListener('mousemove', function (e) {
+        if (StoryMap._dragNode) {
+          var n = StoryMap._dragNode;
+          n.x = Math.round((e.clientX / StoryMap.view.scale) - StoryMap._dragOff.x);
+          n.y = Math.round((e.clientY / StoryMap.view.scale) - StoryMap._dragOff.y);
+          // Snap to 20px grid while shift-held
+          if (e.shiftKey) { n.x = Math.round(n.x / 20) * 20; n.y = Math.round(n.y / 20) * 20; }
+          var el = document.querySelector('.dag-node[data-nid="' + n.id + '"]');
+          if (el) { el.style.left = n.x + 'px'; el.style.top = n.y + 'px'; }
+          // redraw edges
+          var svg = $('#dag-svg');
+          if (svg) svg.innerHTML = StoryMap.state.links.map(function (l) {
+            var a = StoryMap.nodeById(l.source), b = StoryMap.nodeById(l.target);
+            if (!a || !b) return '';
+            var x1 = a.x + 170, y1 = a.y + 28, x2 = b.x, y2 = b.y + 28;
+            var dx = Math.max(40, Math.abs(x2 - x1) * 0.45);
+            var d = 'M ' + x1 + ' ' + y1 + ' C ' + (x1 + dx) + ' ' + y1 + ', ' + (x2 - dx) + ' ' + y2 + ', ' + x2 + ' ' + y2;
+            return '<path class="dag-link dag-link--' + (l.type || 'standard') + '" data-lid="' + l.id + '" d="' + d + '"/>';
+          }).join('');
+        } else if (StoryMap._panning && StoryMap._panStart) {
+          StoryMap.view.tx = e.clientX - StoryMap._panStart.x;
+          StoryMap.view.ty = e.clientY - StoryMap._panStart.y;
+          var c = $('#dag-canvas'); if (c) c.style.transform = 'translate(' + StoryMap.view.tx + 'px,' + StoryMap.view.ty + 'px) scale(' + StoryMap.view.scale + ')';
+        } else if (StoryMap._linking) {
+          // ghost line follows cursor (handled lightly — full connection completes on mouseup over a node)
+        }
+      });
+      document.addEventListener('mouseup', function (e) {
+        if (StoryMap._dragNode) { StoryMap._dragNode = null; StoryMap.save(); StoryMap.render(); }
+        StoryMap._panning = false; StoryMap._panStart = null;
+        if (StoryMap._linking) {
+          var tgt = (e.target && e.target.closest && e.target.closest('.dag-node'));
+          if (tgt) {
+            var toId = tgt.getAttribute('data-nid');
+            if (toId && toId !== StoryMap._linking.from) {
+              StoryMap.addLink(StoryMap._linking.from, toId);
+            }
+          }
+          StoryMap._linking = null;
+        }
+      });
+    },
+
+    _renderInspector: function () {
+      var el = $('#dag-inspector'); if (!el) return;
+      var n = StoryMap.nodeById(StoryMap.sel.nodeId);
+      var l = StoryMap.linkById(StoryMap.sel.linkId);
+      if (!n && !l) {
+        el.innerHTML =
+          '<div class="dag-inspector__title">INSPECTOR</div>' +
+          '<div style="color:var(--fg-45);font-size:12px;line-height:1.5;">Select a node or edge to edit its properties. Double-click a node for a dedicated editor. Drag from the green port to link two nodes.</div>' +
+          '<div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;">' +
+            '<button class="btn btn--ghost" onclick="AH.StoryMap.add()">+ NEW NODE</button>' +
+            '<button class="btn btn--ghost" onclick="AH.StoryMap.addFork()">+ FORK NODE</button>' +
+            '<button class="btn btn--ghost" onclick="AH.StoryMap.addMerge()">+ MERGE NODE</button>' +
+            '<button class="btn btn--ghost" onclick="AH.StoryMap.autoLayout()">☰ AUTO LAYOUT</button>' +
+            '<button class="btn btn--ghost" onclick="AH.StoryMap.validate()">✓ VALIDATE</button>' +
+          '</div>';
+        return;
+      }
+      if (n) {
+        var trackOpts = StoryMap.state.tracks.map(function (t) { return '<option value="' + t.id + '"' + (t.id === n.trackId ? ' selected' : '') + '>' + clean(t.label) + '</option>'; }).join('');
+        var phaseOpts = StoryMap.state.phases.map(function (p) { return '<option value="' + p.id + '"' + (p.id === n.phaseId ? ' selected' : '') + '>' + clean(p.label) + '</option>'; }).join('');
+        el.innerHTML =
+          '<div class="dag-inspector__title">NODE · ' + clean(n.id) + '</div>' +
+          '<div><label>Label</label><input id="ins-label" value="' + clean(n.label || '') + '"/></div>' +
+          '<div><label>Type</label><select id="ins-type">' +
+            ['scene','fork','merge','beat','start','end'].map(function (k) { return '<option value="' + k + '"' + (n.nodeType === k ? ' selected' : '') + '>' + k.toUpperCase() + '</option>'; }).join('') +
+          '</select></div>' +
+          '<div><label>Track</label><select id="ins-track">' + trackOpts + '</select></div>' +
+          '<div><label>Phase · Act</label><select id="ins-phase">' + phaseOpts + '</select></div>' +
+          '<div><label>Note · beat</label><textarea id="ins-note">' + clean(n.note || '') + '</textarea></div>' +
+          '<div><label>Scene line reference</label><input id="ins-line" type="number" value="' + (typeof n.sceneLineIdx === 'number' ? n.sceneLineIdx : '') + '" placeholder="Line index in script"/></div>' +
+          '<div><label>Video URL · Alacrity Player</label><input id="ins-video" value="' + clean(n.videoUrl || '') + '" placeholder="StreamingAssets/Films/&lt;film&gt;/scene_01.mp4"/></div>' +
+          '<div style="display:flex;gap:6px;margin-top:6px;">' +
+            '<button class="btn btn--primary" style="flex:1;" onclick="AH.StoryMap.saveNode()">SAVE</button>' +
+            '<button class="btn btn--ghost"  onclick="AH.StoryMap.deleteNode()">DELETE</button>' +
+          '</div>' +
+          '<div style="display:flex;gap:6px;margin-top:6px;">' +
+            '<button class="btn btn--ghost" style="flex:1;" onclick="AH.StoryMap.setStart()">SET AS START</button>' +
+            '<button class="btn btn--ghost" style="flex:1;" onclick="AH.StoryMap.gotoScriptLine()">GO TO SCRIPT</button>' +
+          '</div>';
+      } else if (l) {
+        el.innerHTML =
+          '<div class="dag-inspector__title">EDGE · ' + clean(l.id) + '</div>' +
+          '<div style="color:var(--fg-60);font-size:11px;font-family:var(--f-mono);letter-spacing:0.12em;">' +
+            clean(l.source) + '  →  ' + clean(l.target) +
+          '</div>' +
+          '<div><label>Type</label><select id="ins-ltype">' +
+            ['standard','jump','micro','custom'].map(function (k) { return '<option value="' + k + '"' + (l.type === k ? ' selected' : '') + '>' + k.toUpperCase() + '</option>'; }).join('') +
+          '</select></div>' +
+          '<div><label>Label</label><input id="ins-llabel" value="' + clean(l.label || '') + '"/></div>' +
+          '<div><label>Choice text (Alacrity Player)</label><input id="ins-choice" value="' + clean(l.choiceText || '') + '"/></div>' +
+          '<div style="display:flex;gap:6px;margin-top:6px;">' +
+            '<button class="btn btn--primary" style="flex:1;" onclick="AH.StoryMap.saveLink()">SAVE</button>' +
+            '<button class="btn btn--ghost" onclick="AH.StoryMap.deleteLink()">DELETE</button>' +
+          '</div>';
+      }
+    },
+
+    _renderTracks: function () {
+      var el = $('#dag-tracks'); if (!el) return;
+      el.innerHTML =
+        '<div class="dag-tracks__title">TRACKS</div>' +
+        StoryMap.state.tracks.map(function (t) {
+          return '<div class="dag-track-row" data-tid="' + t.id + '">' +
+            '<span class="dag-track-row__sw" style="background:' + t.color + ';"></span>' +
+            '<span class="dag-track-row__label">' + clean(t.label) + '</span>' +
+            '<span class="dag-track-row__toggle" onclick="AH.StoryMap.toggleTrack(\'' + t.id + '\')">' + (t.visible === false ? 'SHOW' : 'HIDE') + '</span>' +
+            '<span class="dag-track-row__toggle" onclick="AH.StoryMap.renameTrack(\'' + t.id + '\')">RENAME</span>' +
+          '</div>';
+        }).join('') +
+        '<div style="display:flex;gap:6px;margin-top:6px;">' +
+          '<button class="btn btn--ghost" style="flex:1;" onclick="AH.StoryMap.addTrack()">+ TRACK</button>' +
+        '</div>' +
+        '<div class="dag-tracks__title" style="margin-top:12px;">PHASES</div>' +
+        StoryMap.state.phases.map(function (p) {
+          return '<div class="dag-track-row" data-pid="' + p.id + '">' +
+            '<span class="dag-track-row__label">' + clean(p.label) + '</span>' +
+            '<span class="dag-track-row__toggle" onclick="AH.StoryMap.renamePhase(\'' + p.id + '\')">RENAME</span>' +
+          '</div>';
+        }).join('') +
+        '<button class="btn btn--ghost" style="margin-top:6px;" onclick="AH.StoryMap.addPhase()">+ PHASE</button>' +
+        '<div class="dag-tracks__title" style="margin-top:12px;">LEGEND</div>' +
+        '<div style="font-family:var(--f-mono);font-size:10px;line-height:1.8;color:var(--fg-60);">' +
+          '<div><span style="color:#a794ff;">━━</span> STANDARD</div>' +
+          '<div><span style="color:#f7b86b;">╌╌</span> JUMP</div>' +
+          '<div><span style="color:#17FFC5;">──</span> MICRO</div>' +
+          '<div><span style="color:#ff7aa8;">╴╴</span> CUSTOM / BRANCH</div>' +
+        '</div>';
+    },
+
+    _renderMinimap: function () {
+      var el = $('#dag-minimap'); if (!el) return;
+      if (!StoryMap.state.nodes.length) { el.innerHTML = ''; return; }
+      // Compute bounds
+      var minX = Math.min.apply(null, StoryMap.state.nodes.map(function (n) { return n.x; }));
+      var minY = Math.min.apply(null, StoryMap.state.nodes.map(function (n) { return n.y; }));
+      var maxX = Math.max.apply(null, StoryMap.state.nodes.map(function (n) { return n.x + 170; }));
+      var maxY = Math.max.apply(null, StoryMap.state.nodes.map(function (n) { return n.y + 60; }));
+      var w = Math.max(1, maxX - minX), h = Math.max(1, maxY - minY);
+      var sx = 180 / w, sy = 120 / h, s = Math.min(sx, sy) * 0.92;
+      el.innerHTML = StoryMap.state.nodes.map(function (n) {
+        var t = StoryMap.trackById(n.trackId);
+        return '<div class="dag-minimap__node" style="left:' + Math.round((n.x - minX) * s + 6) + 'px;top:' + Math.round((n.y - minY) * s + 6) + 'px;width:' + Math.round(170 * s) + 'px;height:' + Math.round(48 * s) + 'px;background:' + (t ? t.color : '#888') + ';"></div>';
+      }).join('');
+    },
+
+    // ───── ACTIONS ─────────────────────────────────────────────────────────
+    add: function () { StoryMap.addNodeType('scene'); },
+    addFork: function () { StoryMap.addNodeType('fork'); },
+    addMerge: function () { StoryMap.addNodeType('merge'); },
+    addNodeType: function (kind) {
+      var s = StoryMap.state;
+      var id = 'n' + (++s.nodeCounter);
+      s.nodes.push({
+        id: id, label: kind.toUpperCase() + ' · ' + id, note: '',
+        trackId: (s.tracks[0] && s.tracks[0].id) || 't1',
+        phaseId: (s.phases[0] && s.phases[0].id) || 'p1',
+        x: 120 + Math.random() * 600, y: 120 + Math.random() * 300,
+        nodeType: kind
+      });
+      StoryMap.sel = { nodeId: id, linkId: null };
+      StoryMap.dirty(); toast('Node added · ' + id);
+    },
+    addLink: function (srcId, tgtId) {
+      var s = StoryMap.state;
+      var id = 'l' + (++s.linkCounter);
+      s.links.push({ id: id, source: srcId, target: tgtId, type: 'standard' });
+      StoryMap.sel = { nodeId: null, linkId: id };
+      StoryMap.dirty(); toast('Edge · ' + srcId + ' → ' + tgtId);
+    },
+    editNode: function (id) { StoryMap.sel = { nodeId: id, linkId: null }; StoryMap.render(); },
+    saveNode: function () {
+      var n = StoryMap.nodeById(StoryMap.sel.nodeId); if (!n) return;
+      var v = function (id) { return ($('#' + id) || {}).value; };
+      n.label = v('ins-label') || n.label;
+      n.nodeType = v('ins-type') || n.nodeType;
+      n.trackId = v('ins-track') || n.trackId;
+      n.phaseId = v('ins-phase') || n.phaseId;
+      n.note = v('ins-note') || '';
+      var li = v('ins-line'); n.sceneLineIdx = li === '' ? null : Number(li);
+      n.videoUrl = v('ins-video') || '';
+      StoryMap.dirty(); toast('Node saved');
+    },
+    deleteNode: function () {
+      var id = StoryMap.sel.nodeId; if (!id) return;
+      var s = StoryMap.state;
+      s.nodes = s.nodes.filter(function (n) { return n.id !== id; });
+      s.links = s.links.filter(function (l) { return l.source !== id && l.target !== id; });
+      StoryMap.sel = { nodeId: null, linkId: null };
+      StoryMap.dirty(); toast('Node deleted');
+    },
+    saveLink: function () {
+      var l = StoryMap.linkById(StoryMap.sel.linkId); if (!l) return;
+      var v = function (id) { return ($('#' + id) || {}).value; };
+      l.type = v('ins-ltype') || 'standard';
+      l.label = v('ins-llabel') || '';
+      l.choiceText = v('ins-choice') || '';
+      StoryMap.dirty(); toast('Edge saved');
+    },
+    deleteLink: function () {
+      var id = StoryMap.sel.linkId; if (!id) return;
+      StoryMap.state.links = StoryMap.state.links.filter(function (l) { return l.id !== id; });
+      StoryMap.sel = { nodeId: null, linkId: null };
+      StoryMap.dirty(); toast('Edge deleted');
+    },
+    setStart: function () {
+      if (!StoryMap.sel.nodeId) return;
+      StoryMap.state.startNodeId = StoryMap.sel.nodeId;
+      StoryMap.dirty(); toast('Start node · ' + StoryMap.sel.nodeId);
+    },
+    gotoScriptLine: function () {
+      var n = StoryMap.nodeById(StoryMap.sel.nodeId); if (!n) return;
+      if (typeof n.sceneLineIdx !== 'number') { toast('No script line bound to this node', 'warn'); return; }
+      AH.Router.go('script-editor');
+      setTimeout(function () {
+        if (AH.Editor && AH.Editor.scrollToLine) AH.Editor.scrollToLine(n.sceneLineIdx);
+      }, 200);
+    },
+
+    addTrack: function () {
+      var s = StoryMap.state; var id = 't' + (++s.trackCounter);
+      AH.Modal.prompt('Add track', 'Track name', 'Track ' + s.trackCounter, function (v) {
+        if (!v) return;
+        s.tracks.push({ id: id, label: v, color: DAG_PALETTE[(s.tracks.length) % DAG_PALETTE.length], visible: true });
+        StoryMap.dirty();
+      });
+    },
+    toggleTrack: function (id) {
+      var t = StoryMap.trackById(id); if (!t) return;
+      t.visible = t.visible === false ? true : false;
+      StoryMap.dirty();
+    },
+    renameTrack: function (id) {
+      var t = StoryMap.trackById(id); if (!t) return;
+      AH.Modal.prompt('Rename track', 'New name', t.label, function (v) { if (v) { t.label = v; StoryMap.dirty(); } });
+    },
+    addPhase: function () {
+      var s = StoryMap.state;
+      AH.Modal.prompt('Add phase', 'Phase name · Act IV', 'Act ' + (s.phases.length + 1), function (v) {
+        if (!v) return;
+        s.phases.push({ id: 'p' + (++s.phaseCounter), label: v });
+        StoryMap.dirty();
+      });
+    },
+    renamePhase: function (id) {
+      var p = StoryMap.state.phases.find(function (p) { return p.id === id; }); if (!p) return;
+      AH.Modal.prompt('Rename phase', 'New name', p.label, function (v) { if (v) { p.label = v; StoryMap.dirty(); } });
+    },
+
+    autoLayout: function () {
+      var s = StoryMap.state;
+      var phases = s.phases; var tracks = s.tracks;
+      var phaseIndex = {}; phases.forEach(function (p, i) { phaseIndex[p.id] = i; });
+      var trackIndex = {}; tracks.forEach(function (t, i) { trackIndex[t.id] = i; });
+      var ORIGIN_X = 80, ORIGIN_Y = 60, PHASE_W = 280, TRACK_H = 180;
+      var buckets = {};
+      s.nodes.forEach(function (n) {
+        var key = (phaseIndex[n.phaseId] || 0) + ':' + (trackIndex[n.trackId] || 0);
+        buckets[key] = buckets[key] || [];
+        buckets[key].push(n);
+      });
+      Object.keys(buckets).forEach(function (k) {
+        var kp = k.split(':'); var pi = +kp[0], ti = +kp[1];
+        buckets[k].forEach(function (n, i) {
+          n.x = ORIGIN_X + pi * PHASE_W + (i % 2) * 30;
+          n.y = ORIGIN_Y + ti * TRACK_H + i * 70;
+        });
+      });
+      StoryMap.dirty(); toast('Auto-layout applied');
+    },
+
+    validate: function () {
+      var s = StoryMap.state;
+      var issues = [];
+      var incoming = {}, outgoing = {};
+      s.nodes.forEach(function (n) { incoming[n.id] = 0; outgoing[n.id] = 0; });
+      s.links.forEach(function (l) {
+        if (incoming[l.target] != null) incoming[l.target]++;
+        if (outgoing[l.source] != null) outgoing[l.source]++;
+      });
+      s.nodes.forEach(function (n) {
+        if (n.nodeType !== 'start' && incoming[n.id] === 0) issues.push(n.id + ' · unreachable (no incoming edge)');
+        if (n.nodeType !== 'end' && outgoing[n.id] === 0) issues.push(n.id + ' · dead-end (no outgoing edge)');
+      });
+      // Cycle check (basic Tarjan-style DFS)
+      var seen = {}, stack = {};
+      function dfs(id) {
+        if (stack[id]) return true;
+        if (seen[id]) return false;
+        stack[id] = true; seen[id] = true;
+        var out = s.links.filter(function (l) { return l.source === id; });
+        for (var i = 0; i < out.length; i++) if (dfs(out[i].target)) return true;
+        stack[id] = false; return false;
+      }
+      var hasCycle = s.nodes.some(function (n) { return dfs(n.id); });
+      if (hasCycle) issues.push('⚠ Cycle detected — Alacrity Player requires a DAG');
+
+      var html = issues.length
+        ? '<ul style="margin:0;padding-left:18px;line-height:1.7;">' + issues.map(function (i) { return '<li>' + clean(i) + '</li>'; }).join('') + '</ul>'
+        : '<div style="color:var(--mint);font-weight:700;letter-spacing:0.1em;">✓ STORY MAP IS VALID</div><div style="color:var(--fg-60);margin-top:8px;font-size:12px;">All nodes reachable · No cycles · Ready for Alacrity Player export.</div>';
+      AH.Modal.open('Validation · Story Map', html, { size: 'md', footer: '<button class="btn btn--primary" onclick="AH.Modal.close()">OK</button>' });
+    },
+
+    // ───── IMPORT / EXPORT (V1 parity formats) ─────────────────────────────
+    exportJSON: function () {
+      var s = StoryMap.state;
+      var payload = {
+        _version: 1,
+        _app: 'DC ALACRITY Story Map',
+        _exported: new Date().toISOString(),
+        tracks: s.tracks, phases: s.phases, nodes: s.nodes, links: s.links,
+        nodeCounter: s.nodeCounter, linkCounter: s.linkCounter,
+        trackCounter: s.trackCounter, phaseCounter: s.phaseCounter,
+        startNodeId: s.startNodeId
+      };
+      AH.Editor._download(slugify(getActiveProd().title) + '_story-map.json', JSON.stringify(payload, null, 2));
+      toast('Story Map · JSON exported');
+    },
+    exportMarkdown: function () {
+      var s = StoryMap.state;
+      var out = ['# Story Map · ' + getActiveProd().title, '', 'Exported ' + new Date().toISOString(), ''];
+      s.phases.forEach(function (p) {
+        out.push('## ' + p.label); out.push('');
+        s.tracks.forEach(function (t) {
+          var nodes = s.nodes.filter(function (n) { return n.phaseId === p.id && n.trackId === t.id; });
+          if (!nodes.length) return;
+          out.push('### ' + t.label);
+          nodes.forEach(function (n) {
+            out.push('- **' + n.label + '** · _' + (n.nodeType || 'scene') + '_');
+            if (n.note) out.push('  - ' + n.note);
+            var outLinks = s.links.filter(function (l) { return l.source === n.id; });
+            outLinks.forEach(function (l) {
+              var target = StoryMap.nodeById(l.target);
+              out.push('  - → ' + (target ? target.label : l.target) + (l.label ? ' (' + l.label + ')' : '') + ' [' + l.type + ']');
+            });
+          });
+          out.push('');
+        });
+      });
+      AH.Editor._download(slugify(getActiveProd().title) + '_story-map.md', out.join('\n'));
+      toast('Story Map · Markdown exported');
+    },
+    exportSVG: function () {
+      var s = StoryMap.state;
+      var minX = Math.min.apply(null, s.nodes.map(function (n) { return n.x; })) - 40;
+      var minY = Math.min.apply(null, s.nodes.map(function (n) { return n.y; })) - 40;
+      var maxX = Math.max.apply(null, s.nodes.map(function (n) { return n.x + 170; })) + 40;
+      var maxY = Math.max.apply(null, s.nodes.map(function (n) { return n.y + 60; })) + 40;
+      var w = maxX - minX, h = maxY - minY;
+      var svg = ['<?xml version="1.0" encoding="UTF-8"?>',
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + minX + ' ' + minY + ' ' + w + ' ' + h + '" width="' + w + '" height="' + h + '">',
+        '<rect x="' + minX + '" y="' + minY + '" width="' + w + '" height="' + h + '" fill="#0a0f17"/>'
+      ];
+      s.links.forEach(function (l) {
+        var a = StoryMap.nodeById(l.source), b = StoryMap.nodeById(l.target);
+        if (!a || !b) return;
+        var x1 = a.x + 170, y1 = a.y + 28, x2 = b.x, y2 = b.y + 28;
+        var dx = Math.max(40, Math.abs(x2 - x1) * 0.45);
+        var d = 'M ' + x1 + ' ' + y1 + ' C ' + (x1 + dx) + ' ' + y1 + ', ' + (x2 - dx) + ' ' + y2 + ', ' + x2 + ' ' + y2;
+        svg.push('<path d="' + d + '" fill="none" stroke="' + (DAG_LINK_COLORS[l.type || 'standard']) + '" stroke-width="2"/>');
+      });
+      s.nodes.forEach(function (n) {
+        var t = StoryMap.trackById(n.trackId);
+        svg.push('<rect x="' + n.x + '" y="' + n.y + '" rx="12" ry="12" width="170" height="56" fill="#0f1520" stroke="' + (t ? t.color : '#888') + '" stroke-width="2"/>');
+        svg.push('<text x="' + (n.x + 12) + '" y="' + (n.y + 22) + '" fill="#eef3f6" font-family="Inter Tight,Helvetica,sans-serif" font-size="12" font-weight="700">' + clean(n.label) + '</text>');
+        svg.push('<text x="' + (n.x + 12) + '" y="' + (n.y + 40) + '" fill="#7d8ea0" font-family="JetBrains Mono,monospace" font-size="9">' + (n.nodeType || 'scene').toUpperCase() + '</text>');
+      });
+      svg.push('</svg>');
+      AH.Editor._download(slugify(getActiveProd().title) + '_story-map.svg', svg.join('\n'));
+      toast('Story Map · SVG exported');
+    },
+    exportCSV: function () {
+      var s = StoryMap.state;
+      var rows = [['id','label','type','track','phase','x','y','scene_line','note','outgoing']];
+      s.nodes.forEach(function (n) {
+        var t = StoryMap.trackById(n.trackId);
+        var p = s.phases.find(function (p) { return p.id === n.phaseId; });
+        var outL = s.links.filter(function (l) { return l.source === n.id; }).map(function (l) { return l.target + '(' + l.type + ')'; }).join('|');
+        rows.push([n.id, n.label, n.nodeType || 'scene', t ? t.label : '', p ? p.label : '', n.x, n.y, n.sceneLineIdx == null ? '' : n.sceneLineIdx, (n.note || '').replace(/[\r\n]+/g, ' '), outL]);
+      });
+      var csv = rows.map(function (r) { return r.map(function (c) { var s = String(c == null ? '' : c); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(','); }).join('\n');
+      AH.Editor._download(slugify(getActiveProd().title) + '_story-map.csv', csv);
+      toast('Story Map · CSV exported');
+    },
+
+    // ── Alacrity Player bundle — same schema as V1 (Unity FilmConfig shape)
+    exportAlacrityBundle: function () {
+      var s = StoryMap.state;
+      var prod = getActiveProd();
+      var filmId = slugify(prod.title);
+      var filmConfig = {
+        _alacrityPlayerBundle: true,
+        _schemaVersion: DAG_SCHEMA_VERSION,
+        _generated: new Date().toISOString(),
+        filmId: filmId,
+        filmTitle:       prod.title || 'Untitled',
+        filmDescription: prod.logline || '',
+        directorName:    prod.director || '',
+        year:            String(prod.year || new Date().getFullYear()),
+        startingNodeId:  s.startNodeId || (s.nodes[0] && s.nodes[0].id) || '',
+        storyMap: {
+          _version: 1, _app: 'DC ALACRITY Story Map', _exported: new Date().toISOString(),
+          nodes: s.nodes, links: s.links, tracks: s.tracks, phases: s.phases,
+          nodeCounter: s.nodeCounter, linkCounter: s.linkCounter,
+          trackCounter: s.trackCounter, phaseCounter: s.phaseCounter
+        }
+      };
+      var videoEntries = s.nodes.filter(function (n) { return (n.nodeType || 'scene') === 'scene' || n.nodeType === 'start' || n.nodeType === 'end'; })
+        .map(function (n, i) {
+          return {
+            title: n.label || ('Scene ' + (i + 1)),
+            description: n.note || '',
+            sourceMode: 'StreamingAssets',
+            url: n.videoUrl || ('Films/' + filmId + '/' + slugify(n.label || ('scene_' + (i + 1))) + '.mp4'),
+            thumbnail: null
+          };
+        });
+      filmConfig.videoEntries = videoEntries;
+      var bundle = {
+        filmConfig: filmConfig,
+        storyMapJson: filmConfig.storyMap,
+        instructions: [
+          '1. Open the Alacrity Player Unity project.',
+          '2. Menu: Alacrity Player → Import Alacrity Bundle.',
+          '3. Pick this JSON — it will create a FilmConfig asset.',
+          '4. Put the scene videos in Assets/StreamingAssets/Films/' + filmId + '/.',
+          '5. Add the FilmConfig to AlacrityPlayerManager.filmLibrary.',
+          '6. Hit Play — VR choose-your-own-adventure playback begins.'
+        ]
+      };
+      AH.Editor._download(filmId + '_alacrity_bundle.json', JSON.stringify(bundle, null, 2));
+      toast('Alacrity Player bundle exported · ' + videoEntries.length + ' scenes');
+    },
+
+    importJSON: function () {
+      var inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json';
+      inp.onchange = function () {
+        var f = inp.files[0]; if (!f) return;
+        var rd = new FileReader();
+        rd.onload = function () {
+          try {
+            var data = JSON.parse(rd.result);
+            // Support Alacrity Player bundle wrapper, DCA story map, or raw
+            if (data.filmConfig && data.filmConfig.storyMap) data = data.filmConfig.storyMap;
+            else if (data.storyMap) data = data.storyMap;
+            if (!data.nodes) throw new Error('No nodes[] in JSON');
+            StoryMap.state = Object.assign(StoryMap.defaultState(), data, {
+              nodeCounter: data.nodeCounter || data.nodes.length,
+              linkCounter: data.linkCounter || (data.links || []).length,
+              trackCounter: data.trackCounter || (data.tracks || []).length,
+              phaseCounter: data.phaseCounter || (data.phases || []).length
+            });
+            StoryMap.dirty(); toast('Story Map imported · ' + data.nodes.length + ' nodes');
+          } catch (e) { toast('Import failed · ' + e.message, 'error'); }
+        };
+        rd.readAsText(f);
+      };
+      inp.click();
+    },
+
+    // ── Bridge: sync from script scenes ────────────────────────────────────
+    syncFromScript: function () {
+      if (!AH.Editor || !AH.Editor.state) { toast('Open Script Studio first', 'warn'); return; }
+      var s = StoryMap.state;
+      var lines = AH.Editor.state.lines || [];
+      var existing = {};
+      s.nodes.forEach(function (n) { if (typeof n.sceneLineIdx === 'number') existing[n.sceneLineIdx] = n; });
+      var created = 0;
+      lines.forEach(function (l, idx) {
+        if (l.t !== 'scene') return;
+        if (existing[idx]) {
+          existing[idx].label = (l.x || '').toUpperCase();
+          return;
+        }
+        var id = 'n' + (++s.nodeCounter);
+        s.nodes.push({
+          id: id, label: (l.x || 'SCENE ' + idx).toUpperCase(), note: '',
+          trackId: (s.tracks[0] && s.tracks[0].id) || 't1',
+          phaseId: (s.phases[0] && s.phases[0].id) || 'p1',
+          x: 80 + (s.nodes.length * 220), y: 80,
+          nodeType: 'scene', sceneLineIdx: idx
+        });
+        created++;
+      });
+      // Auto-link sequential scene nodes if no links exist
+      if (!s.links.length && s.nodes.length > 1) {
+        for (var i = 0; i < s.nodes.length - 1; i++) {
+          s.links.push({ id: 'l' + (++s.linkCounter), source: s.nodes[i].id, target: s.nodes[i + 1].id, type: 'standard' });
+        }
+      }
+      StoryMap.dirty();
+      toast('Story Map synced · ' + created + ' new scenes');
+    }
   };
   AH.StoryMap = StoryMap;
+
   AH.register('storymap', function (m) {
-    var d = StoryMap.load();
+    StoryMap.load();
     return (
-      AH.Views.renderHero(m, { primary: 'ADD NODE', primaryFn: "AH.StoryMap.add()" }) +
-      '<div class="section"><div class="dag-canvas" id="dag-canvas" style="width:100%;">' +
-        '<svg id="dag-svg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;"></svg>' +
-        d.nodes.map(function (n) {
-          return '<div class="dag-node dag-node--' + n.kind + '" data-nid="' + n.id + '" style="left:' + n.x + 'px;top:' + n.y + 'px;"><div class="dag-node__label">' + clean(n.label) + '</div><div class="dag-node__meta">' + clean(n.meta) + '</div></div>';
-        }).join('') +
-      '</div></div>'
+      AH.Views.renderHero(m, {
+        primary: 'EXPORT ALACRITY BUNDLE',
+        primaryFn: 'AH.StoryMap.exportAlacrityBundle()',
+        secondary: 'SYNC FROM SCRIPT',
+        secondaryFn: 'AH.StoryMap.syncFromScript()'
+      }) +
+      '<div class="section">' +
+        '<div class="dag-toolbar">' +
+          '<div class="dag-toolbar__group">' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.add()">+ SCENE</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.addFork()">+ FORK</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.addMerge()">+ MERGE</button>' +
+          '</div>' +
+          '<div class="dag-toolbar__group">' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.autoLayout()">AUTO LAYOUT</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.validate()">VALIDATE</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.syncFromScript()">SYNC ⇄ SCRIPT</button>' +
+          '</div>' +
+          '<div class="dag-toolbar__group">' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.exportJSON()">EXPORT JSON</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.exportMarkdown()">MARKDOWN</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.exportSVG()">SVG</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.exportCSV()">CSV</button>' +
+          '</div>' +
+          '<div class="dag-toolbar__group">' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.importJSON()">IMPORT JSON</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.exportAlacrityBundle()" style="color:var(--violet);border-color:rgba(167,148,255,0.45);">ALACRITY PLAYER BUNDLE ↗</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="dag-root">' +
+          '<div class="dag-tracks" id="dag-tracks"></div>' +
+          '<div class="dag-viewport" id="dag-viewport">' +
+            '<div class="dag-canvas" id="dag-canvas"></div>' +
+            '<svg id="dag-svg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;"></svg>' +
+            '<div class="dag-minimap" id="dag-minimap"></div>' +
+            '<div class="dag-zoom-ind" id="dag-zoom-ind">Z 100%</div>' +
+          '</div>' +
+          '<div class="dag-inspector" id="dag-inspector"></div>' +
+        '</div>' +
+      '</div>'
     );
   });
   AH.hooks['storymap:mount'] = function () {
-    var d = StoryMap.state;
-    var canvas = $('#dag-canvas'); if (!canvas) return;
-    var svg = $('#dag-svg');
-    var drawEdges = function () {
-      svg.innerHTML = '';
-      d.edges.forEach(function (e) {
-        var a = d.nodes.find(function (n) { return n.id === e[0]; });
-        var b = d.nodes.find(function (n) { return n.id === e[1]; });
-        if (!a || !b) return;
-        var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', a.x + 80); line.setAttribute('y1', a.y + 24);
-        line.setAttribute('x2', b.x + 80); line.setAttribute('y2', b.y + 24);
-        line.setAttribute('stroke', 'rgba(167,148,255,0.5)'); line.setAttribute('stroke-width', '2');
-        svg.appendChild(line);
-      });
-    };
-    drawEdges();
-    var dragN = null, offX = 0, offY = 0;
-    $$('.dag-node').forEach(function (el) {
-      on(el, 'mousedown', function (e) {
-        dragN = d.nodes.find(function (n) { return n.id === el.getAttribute('data-nid'); });
-        var r = el.getBoundingClientRect(); offX = e.clientX - r.left; offY = e.clientY - r.top;
-        e.preventDefault();
-      });
-    });
-    on(document, 'mousemove', function (e) {
-      if (!dragN) return;
-      var cr = canvas.getBoundingClientRect();
-      dragN.x = Math.max(0, e.clientX - cr.left - offX); dragN.y = Math.max(0, e.clientY - cr.top - offY);
-      var el = document.querySelector('.dag-node[data-nid="' + dragN.id + '"]');
-      if (el) { el.style.left = dragN.x + 'px'; el.style.top = dragN.y + 'px'; }
-      drawEdges();
-    });
-    on(document, 'mouseup', function () { if (dragN) { StoryMap.save(); dragN = null; } });
-  };
-  AH.StoryMap.add = function () {
-    AH.Modal.prompt('Add node', 'Label · scene ref', 'NEW · Scene ', function (v) {
-      if (!v) return;
-      var p = v.split(/\s*·\s*/);
-      var s = StoryMap.state;
-      s.nodes.push({ id: 'n' + (s.nodes.length + 1), label: p[0], meta: p[1] || '', x: 100 + Math.random() * 400, y: 100 + Math.random() * 200, kind: 'branch' });
-      StoryMap.save(); AH.Router.go('storymap'); toast('Node added');
-    });
+    StoryMap.load();
+    StoryMap.render();
+    StoryMap._bindGlobalDrag();
   };
 
   // ══════════════════════════════════════════════════════════════════════════
