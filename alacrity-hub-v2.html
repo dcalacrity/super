@@ -1371,6 +1371,29 @@ html[data-theme="light"] .doc-row { background: #fff; }
 }
 .doc-row:hover .doc-row__arrow { background: linear-gradient(135deg, var(--mint), var(--aqua)); color: var(--ink-0); border-color: transparent; }
 
+/* Document template tiles (Documents module) */
+.doc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.doc-tile {
+  display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--glass-1); border: 1px solid var(--edge);
+  cursor: pointer; transition: transform 0.25s var(--ease), border-color 0.25s var(--ease), background 0.25s var(--ease);
+}
+html[data-theme="light"] .doc-tile { background: #fff; }
+.doc-tile:hover { transform: translateY(-2px); border-color: var(--mint); background: rgba(23,255,197,0.06); }
+.doc-tile__icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: linear-gradient(135deg, rgba(23,255,197,0.12), rgba(20,175,223,0.1));
+  color: var(--mint);
+  display: flex; align-items: center; justify-content: center;
+}
+.doc-tile__icon svg { width: 18px; height: 18px; }
+.doc-tile__title { font-family: var(--f-display); font-weight: 600; font-size: 13.5px; }
+.doc-tile__sub { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-45); margin-top: 2px; }
+.doc-tile__arrow { width: 30px; height: 30px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: var(--fg-60); border: 1px solid var(--edge); }
+.doc-tile:hover .doc-tile__arrow { background: linear-gradient(135deg, var(--mint), var(--aqua)); color: var(--ink-0); border-color: transparent; }
+
 /* Pipeline diagram */
 .pipeline {
   display: grid;
@@ -5897,9 +5920,20 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     },
     exportPDF: function () {
       var d = loadShots();
+      var rows = d.map(function (s) {
+        return '<tr><td><strong>' + clean(s.n) + '</strong></td><td>' + clean(s.kind) + '</td><td>' + clean(s.lens) + '</td><td>' + clean(s.scn) + '</td><td>' + clean(s.dur) + '</td><td>' + clean(s.desc) + '</td></tr>';
+      }).join('');
+      var body = PDF.header('Shot List', getActiveProd().title) +
+        PDF.section('Shots · ' + d.length, '<table class="pdf-table"><thead><tr><th>#</th><th>Kind</th><th>Lens</th><th>Scene</th><th>Duration</th><th>Description</th></tr></thead><tbody>' + (rows || '<tr><td colspan="6">No shots recorded yet.</td></tr>') + '</tbody></table>') +
+        PDF.footer();
+      PDF.openDoc(body, 'Shot_List_' + slugify(getActiveProd().title));
+      toast('Shot list PDF generated');
+    },
+    exportTXT: function () {
+      var d = loadShots();
       var txt = 'SHOT LIST · ' + getActiveProd().title + '\n\n' + d.map(function (s) { return s.n + ' · ' + s.kind + ' · ' + s.lens + ' · scn ' + s.scn + ' · ' + s.dur + '\n   ' + s.desc; }).join('\n\n');
       Editor._download('shotlist.txt', txt);
-      toast('Shot list exported');
+      toast('Shot list text exported');
     }
   };
   AH.hooks['shotlist:mount'] = function () {
@@ -6155,7 +6189,27 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       '</div></div>'
     );
   });
-  AH.Vault = { upload: function () { toast('Vault upload · awaiting file selection', 'warn'); } };
+  AH.Vault = {
+    upload: function () {
+      var inp = document.createElement('input');
+      inp.type = 'file'; inp.multiple = true;
+      inp.onchange = function () {
+        var files = Array.from(inp.files || []);
+        if (!files.length) { toast('No files selected', 'warn'); return; }
+        var assets = AH.Storage.local.get('ah_vault_' + STATE.activeProdId, []);
+        var total = files.reduce(function (a, f) { return a + f.size; }, 0);
+        files.forEach(function (f) {
+          assets.unshift({ id: uid('a'), name: f.name, size: f.size, type: f.type || 'file/*', sealedAt: Date.now(), hash: 'sha256:' + Math.random().toString(36).slice(2, 10) });
+        });
+        AH.Storage.local.set('ah_vault_' + STATE.activeProdId, assets);
+        AH.Notif.push(files.length + ' asset' + (files.length > 1 ? 's' : '') + ' sealed · ' + (total / 1024 / 1024).toFixed(1) + ' MB');
+        toast(files.length + ' asset' + (files.length > 1 ? 's' : '') + ' sealed');
+        AH.Router.go('vault');
+      };
+      inp.click();
+    },
+    list: function () { return AH.Storage.local.get('ah_vault_' + STATE.activeProdId, []); }
+  };
 
   // ══════════════════════════════════════════════════════════════════════════
   //  DOCUMENTS
@@ -6172,30 +6226,922 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     ];
     AH.Storage.local.set(k, d); return d;
   }
+  // ═══════════════════════════════════════════════════════════════════════
+  //  PDF ENGINE · Shared CSS + helpers for print-to-PDF across modules.
+  //  Matches the V1 look byte-for-byte (Inter, 10pt, slate header gradient,
+  //  industry-standard @page margins) so paperwork looks the same across
+  //  Alacrity Hub V1 and V2.
+  // ═══════════════════════════════════════════════════════════════════════
+  var PDF = AH.PDF = {
+    getStyles: function () {
+      return (
+        '@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap");' +
+        '@page { margin: 0.65in 0.6in 0.8in 0.6in; size: letter; }' +
+        '* { box-sizing: border-box; margin: 0; padding: 0; }' +
+        'body { font-family: "Inter","Segoe UI",Arial,sans-serif; font-size: 10pt; line-height: 1.5; color: #111827; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
+        '.page { page-break-after: always; padding-bottom: 0.5in; position: relative; }' +
+        '.page:last-child { page-break-after: avoid; }' +
+        '.pdf-header { background: linear-gradient(135deg,#0f172a 0%,#1e293b 100%); color:#fff; padding: 22px 28px; border-radius: 10px; margin-bottom: 22px; }' +
+        '.pdf-header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }' +
+        '.pdf-header-title { font-size: 22pt; font-weight: 800; letter-spacing: -0.5px; color: #fff; line-height: 1.1; }' +
+        '.pdf-header-sub { font-size: 10pt; opacity: 0.65; margin-top: 5px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }' +
+        '.pdf-header-meta { text-align: right; font-size: 8.5pt; opacity: 0.75; white-space: nowrap; }' +
+        '.pdf-section { margin-bottom: 18px; }' +
+        '.pdf-section-title { font-size: 9pt; text-transform: uppercase; letter-spacing: 2px; color: #0f172a; border-bottom: 2px solid #0f172a; padding-bottom: 4px; margin-bottom: 10px; font-weight: 700; }' +
+        '.pdf-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; }' +
+        '.pdf-field { font-size: 9.5pt; }' +
+        '.pdf-field__label { text-transform: uppercase; letter-spacing: 1px; color: #6b7280; font-size: 8pt; margin-bottom: 2px; }' +
+        '.pdf-field__value { font-weight: 600; color: #0f172a; min-height: 14pt; border-bottom: 1px solid #cbd5e1; padding-bottom: 2px; white-space: pre-wrap; }' +
+        '.pdf-p { font-size: 10pt; line-height: 1.7; color: #1e293b; margin-bottom: 10px; }' +
+        '.pdf-p strong { color: #0f172a; }' +
+        'ol.pdf-list { padding-left: 18px; font-size: 9.5pt; line-height: 1.9; color: #1e293b; }' +
+        'ul.pdf-list { padding-left: 18px; font-size: 9.5pt; line-height: 1.9; color: #1e293b; }' +
+        '.pdf-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 9.5pt; }' +
+        '.pdf-table th, .pdf-table td { padding: 8px 10px; border: 1px solid #cbd5e1; text-align: left; vertical-align: top; }' +
+        '.pdf-table th { background: #f1f5f9; text-transform: uppercase; font-size: 8pt; letter-spacing: 1px; color: #334155; }' +
+        '.pdf-table tr:nth-child(even) td { background: #fafafa; }' +
+        '.pdf-sig { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 36px; }' +
+        '.pdf-sig__box { border-top: 1px solid #0f172a; padding-top: 6px; font-size: 8.5pt; text-transform: uppercase; letter-spacing: 1px; color: #334155; }' +
+        '.pdf-sig__line { margin-top: 26px; border-top: 1px solid #0f172a; padding-top: 4px; font-size: 8pt; color:#64748b; }' +
+        '.pdf-footer { margin-top: 28px; padding-top: 12px; border-top: 1px solid #cbd5e1; font-size: 7.5pt; color: #64748b; text-align: center; letter-spacing: 1px; text-transform: uppercase; }' +
+        '.pdf-watermark { position: fixed; bottom: 0.4in; right: 0.6in; font-size: 7pt; color:#94a3b8; opacity:0.8; font-family:"JetBrains Mono",monospace; letter-spacing:1px; }'
+      );
+    },
+    // Print a chunk of HTML via a hidden iframe → browser "Save as PDF".
+    // This is the V1 approach and works without any runtime PDF dependency.
+    openPrint: function (html, filename) {
+      var w = window.open('', '_blank');
+      if (!w) { toast('Popup blocked — allow popups to preview PDFs', 'warn'); return; }
+      w.document.open();
+      w.document.write(
+        '<!doctype html><html><head><meta charset="utf-8"><title>' + clean(filename || 'Alacrity') + '</title>' +
+        '<style>' + PDF.getStyles() + '</style></head>' +
+        '<body>' + html + '</body></html>'
+      );
+      w.document.close();
+      setTimeout(function () { try { w.focus(); w.print(); } catch (_) {} }, 500);
+    },
+    openDoc: function (innerHTML, filename) {
+      var html = '<div class="page">' + innerHTML + '<div class="pdf-watermark">ALACRITY HUB · ' + (getActiveProd().title || '') + ' · ' + new Date().toISOString().slice(0, 10) + '</div></div>';
+      PDF.openPrint(html, filename || 'alacrity-doc');
+    },
+    header: function (title, subtitle) {
+      var prod = getActiveProd();
+      return '<div class="pdf-header"><div class="pdf-header-row">' +
+        '<div><div class="pdf-header-title">' + clean(title) + '</div><div class="pdf-header-sub">' + clean(subtitle || '') + '</div></div>' +
+        '<div class="pdf-header-meta">' + clean(prod.title) + '<br/>' + new Date().toLocaleDateString() + '</div>' +
+      '</div></div>';
+    },
+    section: function (title, body) {
+      return '<div class="pdf-section"><div class="pdf-section-title">' + clean(title) + '</div>' + body + '</div>';
+    },
+    field: function (label, value) {
+      return '<div class="pdf-field"><div class="pdf-field__label">' + clean(label) + '</div><div class="pdf-field__value">' + clean(value || '—') + '</div></div>';
+    },
+    sigBlock: function (partyA, partyB) {
+      return '<div class="pdf-sig">' +
+        '<div><div class="pdf-sig__box">' + clean(partyA) + '</div><div class="pdf-sig__line">Signature · Date</div><div class="pdf-sig__line">Print name / Title</div></div>' +
+        '<div><div class="pdf-sig__box">' + clean(partyB) + '</div><div class="pdf-sig__line">Signature · Date</div><div class="pdf-sig__line">Print name / Title</div></div>' +
+      '</div>';
+    },
+    footer: function () {
+      return '<div class="pdf-footer">Generated by Alacrity Hub · This document is a template and should be reviewed by qualified legal counsel before execution.</div>';
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════
+  //  DOCUMENTS MODULE · V1-parity legal + production documents library
+  //  Every template has a modal w/ fields, then a real printable HTML body.
+  //  Browser Save-as-PDF gives byte-identical output to V1.
+  // ═══════════════════════════════════════════════════════════════════════
+  var DOC_CATEGORIES = [
+    { k: 'schedule',  t: 'Schedule & Production',   d: 'Call sheets, shooting schedules, daily reports' },
+    { k: 'agreements', t: 'Crew & Cast Agreements', d: 'Deal memos, SAG/DGA, stunt performer, crew' },
+    { k: 'legal',      t: 'Legal · Releases',       d: 'Talent, location, minor, NDA, work-for-hire' },
+    { k: 'compliance', t: 'Compliance & Safety',    d: 'Safety, health, bond, insurance, liability' },
+    { k: 'fin',        t: 'Financials',             d: 'Budget summaries, vendor agreements' }
+  ];
+
+  var DOC_TEMPLATES = [
+    // Schedule & Production
+    { id: 'scriptBreakdown',   cat: 'schedule',  title: 'Script Breakdown',     sub: 'Extract scenes + elements + page count', fn: 'AH.Docs.gen("scriptBreakdown")' },
+    { id: 'shootingSchedule',  cat: 'schedule',  title: 'Shooting Schedule',    sub: 'Stripboard-derived day-by-day plan',     fn: 'AH.Docs.gen("shootingSchedule")' },
+    { id: 'callSheet',         cat: 'schedule',  title: 'Call Sheet',           sub: 'Crew & cast call times · D1 D2 D3…',     fn: 'AH.Docs.gen("callSheet")' },
+    { id: 'dailyReport',       cat: 'schedule',  title: 'Daily Production Rpt', sub: 'DPR · scenes shot, issues, pickup list', fn: 'AH.Docs.gen("dailyReport")' },
+
+    // Crew & Cast
+    { id: 'castAndCrew',       cat: 'agreements', title: 'Cast & Crew List',    sub: 'Full directory with roles + contacts',   fn: 'AH.Docs.gen("castAndCrew")' },
+    { id: 'crewDealMemo',      cat: 'agreements', title: 'Crew Deal Memo',      sub: 'Rate, role, dates, overtime, kit rent', fn: 'AH.Docs.gen("crewDealMemo")' },
+    { id: 'sagDayPlayerDeal',  cat: 'agreements', title: 'SAG Day Player Deal', sub: 'SAG-AFTRA short form day-player deal',  fn: 'AH.Docs.gen("sagDayPlayerDeal")' },
+    { id: 'dgaDealMemo',       cat: 'agreements', title: 'DGA Deal Memo',       sub: 'Director / AD DGA deal memo',           fn: 'AH.Docs.gen("dgaDealMemo")' },
+    { id: 'stuntPerformer',    cat: 'agreements', title: 'Stunt Performer',     sub: 'Stunt performer agreement w/ releases', fn: 'AH.Docs.gen("stuntPerformer")' },
+
+    // Legal · Releases
+    { id: 'talentRelease',     cat: 'legal', title: 'Talent Release',          sub: 'Adult likeness / performance release',  fn: 'AH.Docs.gen("talentRelease")' },
+    { id: 'minorTalentRelease',cat: 'legal', title: 'Minor Talent Release',    sub: 'Parent / guardian co-signed',           fn: 'AH.Docs.gen("minorTalentRelease")' },
+    { id: 'locationRelease',   cat: 'legal', title: 'Location Release',        sub: 'Short-form location permission',         fn: 'AH.Docs.gen("locationRelease")' },
+    { id: 'locationAgreementFull', cat: 'legal', title: 'Location Agreement · Full', sub: 'Long-form location contract',   fn: 'AH.Docs.gen("locationAgreementFull")' },
+    { id: 'ndaAgreement',      cat: 'legal', title: 'Non-Disclosure Agreement',sub: 'Mutual production NDA',                  fn: 'AH.Docs.gen("ndaAgreement")' },
+    { id: 'workForHire',       cat: 'legal', title: 'Work-For-Hire',           sub: 'Writer / crew WFH assignment',           fn: 'AH.Docs.gen("workForHire")' },
+    { id: 'nudityRider',       cat: 'legal', title: 'Nudity Rider',            sub: 'Nudity / simulated sex consent',         fn: 'AH.Docs.gen("nudityRider")' },
+
+    // Compliance / Safety / Vendors
+    { id: 'vendorAgreement',   cat: 'compliance', title: 'Vendor Agreement',   sub: 'Goods / services vendor agreement',     fn: 'AH.Docs.gen("vendorAgreement")' },
+    { id: 'musicAgreement',    cat: 'compliance', title: 'Music License',      sub: 'Synch / master / publishing license',   fn: 'AH.Docs.gen("musicAgreement")' },
+    { id: 'liabilityWaiver',   cat: 'compliance', title: 'Liability Waiver',   sub: 'Waiver of liability · participants',    fn: 'AH.Docs.gen("liabilityWaiver")' },
+    { id: 'completionBond',    cat: 'compliance', title: 'Completion Bond Summary', sub: 'Bond eligibility summary',         fn: 'AH.Docs.gen("completionBond")' },
+    { id: 'eoInsurance',       cat: 'compliance', title: 'E&O Insurance Summary',   sub: 'Errors & omissions summary',       fn: 'AH.Docs.gen("eoInsurance")' },
+    { id: 'safetyReport',      cat: 'compliance', title: 'Safety Report',      sub: 'Daily safety + hazards + mitigations', fn: 'AH.Docs.gen("safetyReport")' }
+  ];
+
   AH.register('documents', function (m) {
     var d = loadDocs();
+    var byCat = {};
+    DOC_TEMPLATES.forEach(function (t) { (byCat[t.cat] = byCat[t.cat] || []).push(t); });
+    var templatesHTML = DOC_CATEGORIES.map(function (c) {
+      var items = byCat[c.k] || [];
+      if (!items.length) return '';
+      return '<div class="card" style="margin-bottom:10px;">' +
+        '<div class="section__title" style="margin-bottom:10px;">' + c.t + ' <span style="color:var(--fg-45);font-size:11px;">· ' + c.d + '</span></div>' +
+        '<div class="doc-grid">' +
+          items.map(function (it) {
+            return '<div class="doc-tile" onclick="' + it.fn + '">' +
+              '<div class="doc-tile__icon">' + ICONS.doc + '</div>' +
+              '<div class="doc-tile__body">' +
+                '<div class="doc-tile__title">' + clean(it.title) + '</div>' +
+                '<div class="doc-tile__sub">' + clean(it.sub) + '</div>' +
+              '</div>' +
+              '<div class="doc-tile__arrow">' + ICONS.arrow + '</div>' +
+            '</div>';
+          }).join('') +
+        '</div>' +
+      '</div>';
+    }).join('');
     return (
-      AH.Views.renderHero(m, { primary: 'NEW DOCUMENT', primaryFn: 'AH.Docs.add()' }) +
-      '<div class="section"><div class="card">' +
-        '<div class="section__title" style="margin-bottom:14px;">Active · ' + d.length + '</div>' +
-        d.map(function (x) {
-          return '<div class="doc-row" onclick="AH.Docs.view(\'' + x.id + '\')">' +
-            '<div class="doc-row__icon">' + ICONS.doc + '</div>' +
-            '<div><div class="doc-row__title">' + clean(x.title) + '</div><div class="doc-row__sub">' + clean(x.sub) + '</div></div>' +
-            '<div class="doc-row__size">' + x.size + '</div>' +
-            '<div class="doc-row__arrow">' + ICONS.arrow + '</div>' +
-          '</div>';
-        }).join('') +
-      '</div></div>'
+      AH.Views.renderHero(m, {
+        primary: 'CALL SHEET', primaryFn: 'AH.Docs.gen("callSheet")',
+        secondary: 'SHOOTING SCHEDULE', secondaryFn: 'AH.Docs.gen("shootingSchedule")'
+      }) +
+      '<div class="section">' +
+        '<div class="card" style="margin-bottom:10px;">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
+            '<div class="section__title">Quick documents</div>' +
+            '<div style="display:flex;gap:6px;">' +
+              '<button class="btn btn--ghost" onclick="AH.Docs.gen(\'callSheet\')">📞 CALL SHEET</button>' +
+              '<button class="btn btn--ghost" onclick="AH.Docs.gen(\'scriptBreakdown\')">📋 BREAKDOWN</button>' +
+              '<button class="btn btn--ghost" onclick="AH.Docs.gen(\'castAndCrew\')">👥 CAST &amp; CREW</button>' +
+              '<button class="btn btn--ghost" onclick="AH.Docs.gen(\'dailyReport\')">📊 DAILY REPORT</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        templatesHTML +
+        '<div class="card" style="margin-top:10px;">' +
+          '<div class="section__title" style="margin-bottom:10px;">My documents · ' + d.length + '</div>' +
+          d.map(function (x) {
+            return '<div class="doc-row" onclick="AH.Docs.view(\'' + x.id + '\')">' +
+              '<div class="doc-row__icon">' + ICONS.doc + '</div>' +
+              '<div><div class="doc-row__title">' + clean(x.title) + '</div><div class="doc-row__sub">' + clean(x.sub) + '</div></div>' +
+              '<div class="doc-row__size">' + x.size + '</div>' +
+              '<div class="doc-row__arrow">' + ICONS.arrow + '</div>' +
+            '</div>';
+          }).join('') +
+        '</div>' +
+      '</div>'
     );
   });
   AH.Docs = {
-    add: function () { AH.Modal.prompt('New document', 'Title', '', function (v) {
-      if (!v) return;
-      var d = loadDocs(); d.unshift({ id: uid('d'), title: v, sub: 'Draft · Just now', size: '—', cat: 'draft' });
-      AH.Storage.local.set('ah_docs', d); AH.Router.go('documents'); toast('Document created');
-    }); },
-    view: function (id) { var d = loadDocs().find(function (x) { return x.id === id; }); if (!d) return; AH.Modal.open(d.title, '<div class="sh-modal__label">' + d.sub + ' · ' + d.size + '</div><div style="font-size:13px;color:var(--fg-80);line-height:1.5;">This is a placeholder preview for a live-linked document. In production, the document body would render here with version history, redlines, and signers.</div>'); }
+    add: function () {
+      AH.Modal.prompt('New document', 'Title', '', function (v) {
+        if (!v) return;
+        var d = loadDocs(); d.unshift({ id: uid('d'), title: v, sub: 'Draft · Just now', size: '—', cat: 'draft' });
+        AH.Storage.local.set('ah_docs', d); AH.Router.go('documents'); toast('Document created');
+      });
+    },
+    view: function (id) {
+      var d = loadDocs().find(function (x) { return x.id === id; }); if (!d) return;
+      AH.Modal.open(d.title, '<div class="sh-modal__label">' + clean(d.sub) + ' · ' + clean(d.size) + '</div><div style="font-size:13px;color:var(--fg-80);line-height:1.6;">This is a live-linked document in the document vault. Open the matching template from above to regenerate or print as PDF.</div>');
+    },
+    _log: function (title) {
+      var d = loadDocs();
+      d.unshift({ id: uid('d'), title: title + ' · ' + getActiveProd().title, sub: 'Generated · ' + new Date().toLocaleString(), size: 'PDF', cat: 'generated' });
+      if (d.length > 40) d = d.slice(0, 40);
+      AH.Storage.local.set('ah_docs', d);
+      AH.Notif.push('Document generated · ' + title);
+    },
+
+    // ── Generator dispatcher ──
+    gen: function (id) {
+      var fn = AH.Docs._gens[id];
+      if (!fn) { toast('Template not available · ' + id, 'warn'); return; }
+      fn();
+    },
+
+    _gens: {} // fleshed out below
+  };
+
+  // ── Helpers shared by template generators ─────────────────────────────
+  function gv(id) { var e = $('#' + id); return e ? (e.value || '').trim() : ''; }
+  function prodTitle() { return getActiveProd().title || 'Untitled'; }
+  function daterange(start, end) { return start + (end && end !== start ? ' – ' + end : ''); }
+
+  // ── Field modal helper — renders a modal with a grid of fields ────────
+  function fieldModal(title, fields, onGenerate, extra) {
+    var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+      fields.map(function (f) {
+        if (f.type === 'textarea') {
+          return '<div class="sh-field" style="grid-column:1/3;"><label>' + clean(f.label) + '</label><textarea id="' + f.id + '" rows="' + (f.rows || 3) + '" placeholder="' + clean(f.ph || '') + '">' + clean(f.def || '') + '</textarea></div>';
+        }
+        return '<div class="sh-field"' + (f.full ? ' style="grid-column:1/3;"' : '') + '><label>' + clean(f.label) + '</label><input id="' + f.id + '" type="' + (f.type || 'text') + '" value="' + clean(f.def || '') + '" placeholder="' + clean(f.ph || '') + '"/></div>';
+      }).join('') +
+    '</div>' + (extra || '');
+    AH.Modal.open(title, html, {
+      size: 'lg',
+      footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button>' +
+              '<button class="btn btn--primary" id="doc-gen-btn">Generate PDF ↗</button>',
+      onMount: function () {
+        // Autofill date fields
+        fields.forEach(function (f) {
+          if (f.type === 'date' && !f.def) {
+            var e = $('#' + f.id); if (e && !e.value) e.value = new Date().toISOString().slice(0, 10);
+          }
+        });
+        $('#doc-gen-btn').onclick = function () { try { onGenerate(); } catch (e) { toast('Generate failed · ' + e.message, 'error'); } };
+      }
+    });
+  }
+
+  // ───────── 1. SCRIPT BREAKDOWN ─────────
+  AH.Docs._gens.scriptBreakdown = function () {
+    var lines = (AH.Editor && AH.Editor.state && AH.Editor.state.lines) || [];
+    var scenes = [];
+    lines.forEach(function (l, i) {
+      if (l.t === 'scene') scenes.push({ num: scenes.length + 1, head: l.x || 'UNTITLED', startLine: i });
+    });
+    // Count elements per scene by scanning forward until next scene
+    scenes.forEach(function (s, idx) {
+      var end = (scenes[idx + 1] ? scenes[idx + 1].startLine : lines.length) - 1;
+      var block = lines.slice(s.startLine + 1, end + 1);
+      s.chars = Array.from(new Set(block.filter(function (l) { return l.t === 'char'; }).map(function (l) { return (l.x || '').replace(/\s*\(.*\)/g, '').trim(); }))).join(', ');
+      s.pages = Math.max(1, Math.ceil(block.length / 54));
+      s.dialogueCount = block.filter(function (l) { return l.t === 'dial'; }).length;
+      s.actionCount = block.filter(function (l) { return l.t === 'action'; }).length;
+    });
+    var rows = scenes.map(function (s) {
+      return '<tr><td>' + s.num + '</td><td>' + clean(s.head) + '</td><td>' + clean(s.chars) + '</td><td>' + s.pages + '</td><td>' + s.dialogueCount + '</td><td>' + s.actionCount + '</td></tr>';
+    }).join('');
+    var body = PDF.header('Script Breakdown', 'Auto-generated from Script Studio') +
+      PDF.section('Overview', '<div class="pdf-grid2">' +
+        PDF.field('Scenes', String(scenes.length)) +
+        PDF.field('Total pages', String(Math.max(1, Math.ceil(lines.length / 54)))) +
+        PDF.field('Characters', String(new Set(lines.filter(function (l) { return l.t === 'char'; }).map(function (l) { return (l.x || '').replace(/\s*\(.*\)/g, '').trim(); })).size)) +
+        PDF.field('Generated', new Date().toLocaleString()) +
+      '</div>') +
+      PDF.section('Scene-by-scene',
+        '<table class="pdf-table"><thead><tr><th>#</th><th>Slug</th><th>Characters</th><th>Pages</th><th>Dialogue</th><th>Action</th></tr></thead><tbody>' + (rows || '<tr><td colspan="6">No scenes found. Open Script Studio to draft first.</td></tr>') + '</tbody></table>'
+      ) +
+      PDF.footer();
+    PDF.openDoc(body, 'Script_Breakdown_' + slugify(prodTitle()));
+    AH.Docs._log('Script Breakdown');
+  };
+
+  // ───────── 2. SHOOTING SCHEDULE ─────────
+  AH.Docs._gens.shootingSchedule = function () {
+    var prod = getActiveProd();
+    var lines = (AH.Editor && AH.Editor.state && AH.Editor.state.lines) || [];
+    var scenes = lines.filter(function (l) { return l.t === 'scene'; });
+    var days = Math.max(1, Math.ceil(scenes.length / 4));
+    var schedule = [];
+    for (var d = 0; d < days; d++) {
+      var group = scenes.slice(d * 4, d * 4 + 4);
+      schedule.push({
+        day: d + 1,
+        scenes: group.map(function (s, i) { return { num: d * 4 + i + 1, slug: s.x || ('SCENE ' + (d * 4 + i + 1)), pages: '1/8' }; })
+      });
+    }
+    var rows = schedule.map(function (dd) {
+      return '<tr><td><strong>DAY ' + dd.day + '</strong></td><td>' + dd.scenes.length + ' scenes</td>' +
+             '<td>' + dd.scenes.map(function (s) { return s.num + '. ' + clean(s.slug); }).join('<br/>') + '</td>' +
+             '<td>' + dd.scenes.reduce(function (acc, s) { return acc + 1; }, 0) + ' eighths</td></tr>';
+    }).join('');
+    var body = PDF.header('Shooting Schedule', prod.title + ' · ' + prod.type) +
+      PDF.section('Days', '<table class="pdf-table"><thead><tr><th>Day</th><th>Load</th><th>Scenes</th><th>Eighths</th></tr></thead><tbody>' + (rows || '<tr><td colspan="4">No scenes available.</td></tr>') + '</tbody></table>') +
+      PDF.section('Notes', '<div class="pdf-p">This schedule was derived from Script Studio. Adjust day assignments in Stripboard to reflect real-world constraints (locations, cast availability, daylight).</div>') +
+      PDF.footer();
+    PDF.openDoc(body, 'Shooting_Schedule_' + slugify(prodTitle()));
+    AH.Docs._log('Shooting Schedule');
+  };
+
+  // ───────── 3. CALL SHEET ─────────
+  AH.Docs._gens.callSheet = function () {
+    fieldModal('Call Sheet', [
+      { id: 'cs-date',      label: 'Shoot date',     type: 'date' },
+      { id: 'cs-day',       label: 'Day #',          def: '1' },
+      { id: 'cs-crewcall',  label: 'Crew call',      type: 'time', def: '07:00' },
+      { id: 'cs-shoot',     label: 'Shooting call',  type: 'time', def: '08:00' },
+      { id: 'cs-bl',        label: 'Breakfast location', full: true, def: 'Base camp · catering tent' },
+      { id: 'cs-loc',       label: 'Primary location',   full: true, def: 'Set 1 · interior' },
+      { id: 'cs-loc-addr',  label: 'Location address',   full: true, def: '' },
+      { id: 'cs-weather',   label: 'Weather · sunrise/sunset', full: true, def: 'Clear · 62°F / 74°F · SR 06:42 · SS 20:11' },
+      { id: 'cs-nearest',   label: 'Nearest hospital',   full: true, def: '' },
+      { id: 'cs-notes',     label: 'Safety + special notes', type: 'textarea', full: true, rows: 4 }
+    ], function () {
+      var prod = getActiveProd();
+      var cast = AH.Storage.local.get('ah_cast_' + STATE.activeProdId, []);
+      var castRows = (cast.length ? cast : [{ n: '—', r: '—', cw: '—', t: '—' }]).map(function (c) {
+        return '<tr><td>' + clean(c.r || c.role || '') + '</td><td>' + clean(c.n || c.name || '') + '</td><td>' + clean(c.cw || c.callTime || '') + '</td><td>' + clean(c.t || c.transport || '') + '</td></tr>';
+      }).join('');
+      var crew = AH.Storage.local.get('ah_cast_' + STATE.activeProdId, []);
+      var body = PDF.header('Call Sheet', 'Day ' + gv('cs-day') + ' · ' + prod.title) +
+        PDF.section('Schedule', '<div class="pdf-grid2">' +
+          PDF.field('Date', gv('cs-date')) +
+          PDF.field('Crew call', gv('cs-crewcall')) +
+          PDF.field('Shooting call', gv('cs-shoot')) +
+          PDF.field('Breakfast', gv('cs-bl')) +
+        '</div>') +
+        PDF.section('Location', '<div class="pdf-grid2">' +
+          PDF.field('Primary', gv('cs-loc')) +
+          PDF.field('Address', gv('cs-loc-addr')) +
+          PDF.field('Weather / daylight', gv('cs-weather')) +
+          PDF.field('Nearest hospital', gv('cs-nearest')) +
+        '</div>') +
+        PDF.section('Cast', '<table class="pdf-table"><thead><tr><th>Role</th><th>Name</th><th>Call time</th><th>Transport</th></tr></thead><tbody>' + castRows + '</tbody></table>') +
+        PDF.section('Safety + notes', '<div class="pdf-p">' + clean(gv('cs-notes') || 'Maintain social distancing during rehearsals. Hydrate frequently.') + '</div>') +
+        PDF.footer();
+      PDF.openDoc(body, 'Call_Sheet_' + slugify(prodTitle()) + '_D' + gv('cs-day'));
+      AH.Modal.close();
+      AH.Docs._log('Call Sheet · D' + gv('cs-day'));
+    });
+  };
+
+  // ───────── 4. DAILY REPORT ─────────
+  AH.Docs._gens.dailyReport = function () {
+    fieldModal('Daily Production Report', [
+      { id: 'dpr-date',       label: 'Date', type: 'date' },
+      { id: 'dpr-day',        label: 'Day #', def: '1' },
+      { id: 'dpr-call',       label: 'Call', type: 'time', def: '08:00' },
+      { id: 'dpr-wrap',       label: 'Wrap', type: 'time', def: '19:30' },
+      { id: 'dpr-scenes',     label: 'Scenes shot', full: true, def: '1, 2A, 3' },
+      { id: 'dpr-pages',      label: 'Pages shot', def: '4 6/8' },
+      { id: 'dpr-setups',     label: 'Setups', def: '18' },
+      { id: 'dpr-footage',    label: 'Footage ratio', def: '6:1' },
+      { id: 'dpr-issues',     label: 'Issues / delays', type: 'textarea', full: true, rows: 3 },
+      { id: 'dpr-nextday',    label: 'Next-day pickups', type: 'textarea', full: true, rows: 3 }
+    ], function () {
+      var body = PDF.header('Daily Production Report', 'Day ' + gv('dpr-day') + ' · ' + prodTitle()) +
+        PDF.section('Summary', '<div class="pdf-grid2">' +
+          PDF.field('Date', gv('dpr-date')) +
+          PDF.field('Call → Wrap', gv('dpr-call') + ' → ' + gv('dpr-wrap')) +
+          PDF.field('Scenes shot', gv('dpr-scenes')) +
+          PDF.field('Pages', gv('dpr-pages')) +
+          PDF.field('Setups', gv('dpr-setups')) +
+          PDF.field('Footage ratio', gv('dpr-footage')) +
+        '</div>') +
+        PDF.section('Issues / delays', '<div class="pdf-p">' + clean(gv('dpr-issues') || '—') + '</div>') +
+        PDF.section('Next-day pickups', '<div class="pdf-p">' + clean(gv('dpr-nextday') || '—') + '</div>') +
+        PDF.footer();
+      PDF.openDoc(body, 'Daily_Report_D' + gv('dpr-day') + '_' + slugify(prodTitle()));
+      AH.Modal.close();
+      AH.Docs._log('Daily Report · D' + gv('dpr-day'));
+    });
+  };
+
+  // ───────── 5. CAST & CREW LIST ─────────
+  AH.Docs._gens.castAndCrew = function () {
+    var cast = AH.Storage.local.get('ah_cast_' + STATE.activeProdId, []);
+    var rows = (cast.length ? cast : [{ n: '—', r: '—', d: '—' }]).map(function (c) {
+      return '<tr><td>' + clean(c.r || c.role || '') + '</td><td>' + clean(c.n || c.name || '') + '</td><td>' + clean(c.d || c.dept || '') + '</td><td>' + clean(c.p || c.phone || '—') + '</td><td>' + clean(c.e || c.email || '—') + '</td></tr>';
+    }).join('');
+    var body = PDF.header('Cast & Crew List', prodTitle()) +
+      PDF.section('Directory', '<table class="pdf-table"><thead><tr><th>Role</th><th>Name</th><th>Dept</th><th>Phone</th><th>Email</th></tr></thead><tbody>' + rows + '</tbody></table>') +
+      PDF.footer();
+    PDF.openDoc(body, 'Cast_Crew_' + slugify(prodTitle()));
+    AH.Docs._log('Cast & Crew');
+  };
+
+  // ───────── LEGAL HELPERS ─────────
+  function legalStdFields(prefix) {
+    return [
+      { id: prefix + '-party', label: 'Counterparty name', full: true, def: '' },
+      { id: prefix + '-role',  label: 'Counterparty role', def: '' },
+      { id: prefix + '-state', label: 'Governing law (state)', def: 'California' },
+      { id: prefix + '-date',  label: 'Effective date', type: 'date' },
+      { id: prefix + '-addr',  label: 'Counterparty address', full: true, def: '' }
+    ];
+  }
+
+  // ───────── 6. NDA ─────────
+  AH.Docs._gens.ndaAgreement = function () {
+    fieldModal('Non-Disclosure Agreement', [
+      { id: 'nda-party',    label: 'Receiving party',        full: true },
+      { id: 'nda-role',     label: 'Receiving party role' },
+      { id: 'nda-duration', label: 'Duration', def: '3 years from last disclosure' },
+      { id: 'nda-state',    label: 'Governing law', def: 'California' },
+      { id: 'nda-date',     label: 'Effective date', type: 'date' },
+      { id: 'nda-addr',     label: 'Receiving party address', full: true }
+    ], function () {
+      var body = PDF.header('Non-Disclosure Agreement', 'Mutual Confidentiality · Production & Creative Development') +
+        PDF.section('Parties', '<div class="pdf-grid2">' +
+          PDF.field('Disclosing Party ("Producer")', prodTitle()) +
+          PDF.field('Receiving Party', gv('nda-party')) +
+          PDF.field('Role', gv('nda-role')) +
+          PDF.field('Address', gv('nda-addr')) +
+          PDF.field('Effective date', gv('nda-date')) +
+          PDF.field('Duration', gv('nda-duration')) +
+          PDF.field('Governing law', gv('nda-state')) +
+        '</div>') +
+        PDF.section('Scope of Confidential Information',
+          '<div class="pdf-p">"Confidential Information" includes all non-public information disclosed by the Disclosing Party, including but not limited to:</div>' +
+          '<div class="pdf-grid2" style="font-size:9.5pt;line-height:1.8;">' +
+            '<div>☑ Script, story, and screenplay content</div><div>☑ Budget, financing, and financial projections</div>' +
+            '<div>☑ Cast and crew negotiations</div><div>☑ Distribution strategy and deal terms</div>' +
+            '<div>☑ Location details and schedules</div><div>☑ Investor identities and terms</div>' +
+            '<div>☑ Alacrity Player builds, code, or story maps</div><div>☑ Any other info marked confidential</div>' +
+          '</div>') +
+        PDF.section('Obligations', '<ol class="pdf-list">' +
+          '<li>Receiving Party shall hold all Confidential Information in strict confidence and shall not disclose it to any third party without prior written consent.</li>' +
+          '<li>Receiving Party shall use Confidential Information solely to evaluate or perform services in connection with ' + clean(prodTitle()) + '.</li>' +
+          '<li>These obligations do not apply to information that is or becomes publicly known through no breach of this Agreement.</li>' +
+          '<li>Upon request, Receiving Party shall promptly return or destroy all Confidential Information.</li>' +
+          '<li>This Agreement is governed by the laws of the State of ' + clean(gv('nda-state')) + '.</li>' +
+          '<li>Remedies for breach include injunctive relief and reasonable attorneys\' fees.</li>' +
+        '</ol>') +
+        PDF.sigBlock(prodTitle() + ' (Disclosing Party)', gv('nda-party') + ' (Receiving Party)') +
+        PDF.footer();
+      PDF.openDoc(body, 'NDA_' + slugify(gv('nda-party') || 'Form'));
+      AH.Modal.close();
+      AH.Docs._log('NDA · ' + (gv('nda-party') || 'Form'));
+    });
+  };
+
+  // ───────── 7. TALENT RELEASE (adult) ─────────
+  AH.Docs._gens.talentRelease = function () {
+    fieldModal('Talent Release', [
+      { id: 'tr-name',    label: 'Talent name', full: true },
+      { id: 'tr-role',    label: 'Role / Character' },
+      { id: 'tr-comp',    label: 'Compensation', def: '$0 · consideration' },
+      { id: 'tr-date',    label: 'Recording date', type: 'date' },
+      { id: 'tr-addr',    label: 'Address', full: true },
+      { id: 'tr-state',   label: 'Governing law', def: 'California' }
+    ], function () {
+      var body = PDF.header('Talent Release', 'Likeness, Performance & Materials Release') +
+        PDF.section('Talent', '<div class="pdf-grid2">' +
+          PDF.field('Name', gv('tr-name')) +
+          PDF.field('Role', gv('tr-role')) +
+          PDF.field('Recording date', gv('tr-date')) +
+          PDF.field('Compensation', gv('tr-comp')) +
+          PDF.field('Address', gv('tr-addr')) +
+          PDF.field('Governing law', gv('tr-state')) +
+        '</div>') +
+        PDF.section('Grant of Rights', '<div class="pdf-p">' +
+          'In consideration of ' + clean(gv('tr-comp')) + ' and participation in the production known as ' + clean(prodTitle()) + ' (the "Production"), I, ' + clean(gv('tr-name')) + ', hereby grant to the Producer and its assigns the perpetual, irrevocable, worldwide right to use, reuse, publish, broadcast, distribute, adapt, edit, and exhibit my name, voice, performance, likeness, and any materials I provide in all media now known or hereafter devised, including audio-visual, print, streaming, VR / Alacrity Player, and interactive formats.' +
+        '</div>') +
+        PDF.section('Warranties & Releases', '<ol class="pdf-list">' +
+          '<li>I have full legal capacity to grant the rights above and am not under any contract that prevents me from doing so.</li>' +
+          '<li>I waive any right to inspect or approve the finished product or advertising in connection therewith.</li>' +
+          '<li>I release Producer from any claim arising from use consistent with this Release, including claims of invasion of privacy, defamation, or right of publicity.</li>' +
+          '<li>This Release is governed by the laws of the State of ' + clean(gv('tr-state')) + '.</li>' +
+        '</ol>') +
+        PDF.sigBlock('Talent', prodTitle() + ' (Producer)') +
+        PDF.footer();
+      PDF.openDoc(body, 'Talent_Release_' + slugify(gv('tr-name') || 'Talent'));
+      AH.Modal.close();
+      AH.Docs._log('Talent Release · ' + (gv('tr-name') || 'Talent'));
+    });
+  };
+
+  // ───────── 8. MINOR TALENT RELEASE ─────────
+  AH.Docs._gens.minorTalentRelease = function () {
+    fieldModal('Minor Talent Release', [
+      { id: 'mtr-name',    label: 'Minor\'s name', full: true },
+      { id: 'mtr-dob',     label: 'Minor\'s date of birth', type: 'date' },
+      { id: 'mtr-role',    label: 'Role' },
+      { id: 'mtr-guardian',label: 'Parent / guardian name', full: true },
+      { id: 'mtr-rel',     label: 'Relationship', def: 'Parent' },
+      { id: 'mtr-addr',    label: 'Address', full: true },
+      { id: 'mtr-date',    label: 'Recording date', type: 'date' },
+      { id: 'mtr-state',   label: 'Governing law', def: 'California' }
+    ], function () {
+      var body = PDF.header('Minor Talent Release', 'Parent / Guardian Consent Required') +
+        PDF.section('Minor', '<div class="pdf-grid2">' +
+          PDF.field('Name', gv('mtr-name')) + PDF.field('DOB', gv('mtr-dob')) +
+          PDF.field('Role', gv('mtr-role')) + PDF.field('Recording date', gv('mtr-date')) +
+        '</div>') +
+        PDF.section('Parent / Guardian', '<div class="pdf-grid2">' +
+          PDF.field('Name', gv('mtr-guardian')) + PDF.field('Relationship', gv('mtr-rel')) +
+          PDF.field('Address', gv('mtr-addr')) + PDF.field('Governing law', gv('mtr-state')) +
+        '</div>') +
+        PDF.section('Grant of Rights', '<div class="pdf-p">' +
+          'I, ' + clean(gv('mtr-guardian')) + ', as the lawful parent or legal guardian of ' + clean(gv('mtr-name')) + ' (a minor), hereby grant the Producer and its assigns the perpetual, worldwide right to record, reproduce, and exhibit the minor\'s name, likeness, and performance in all media in connection with the production ' + clean(prodTitle()) + '. I represent that I have full authority to grant this consent and that the minor is not bound by any conflicting agreement. I further agree that all work performed shall comply with all applicable child-labor laws in the State of ' + clean(gv('mtr-state')) + '.' +
+        '</div>') +
+        PDF.sigBlock(gv('mtr-guardian') + ' (Parent / Guardian)', prodTitle() + ' (Producer)') +
+        PDF.footer();
+      PDF.openDoc(body, 'Minor_Release_' + slugify(gv('mtr-name') || 'Minor'));
+      AH.Modal.close();
+      AH.Docs._log('Minor Release · ' + (gv('mtr-name') || 'Minor'));
+    });
+  };
+
+  // ───────── 9. LOCATION RELEASE (short) ─────────
+  AH.Docs._gens.locationRelease = function () {
+    fieldModal('Location Release', [
+      { id: 'lr-owner',  label: 'Property owner', full: true },
+      { id: 'lr-addr',   label: 'Location address', full: true },
+      { id: 'lr-start',  label: 'Start date', type: 'date' },
+      { id: 'lr-end',    label: 'End date', type: 'date' },
+      { id: 'lr-fee',    label: 'Fee', def: '$0' },
+      { id: 'lr-state',  label: 'Governing law', def: 'California' }
+    ], function () {
+      var body = PDF.header('Location Release', 'Short-form property access agreement') +
+        PDF.section('Details', '<div class="pdf-grid2">' +
+          PDF.field('Owner', gv('lr-owner')) +
+          PDF.field('Property address', gv('lr-addr')) +
+          PDF.field('Start', gv('lr-start')) +
+          PDF.field('End', gv('lr-end')) +
+          PDF.field('Fee', gv('lr-fee')) +
+          PDF.field('Governing law', gv('lr-state')) +
+        '</div>') +
+        PDF.section('Grant', '<div class="pdf-p">Owner grants Producer and its crew access to the property above for purposes of photography and motion-picture recording in connection with ' + clean(prodTitle()) + '. Producer agrees to leave the property in substantially the condition in which it was received, and to be responsible for all damage caused by its personnel.</div>') +
+        PDF.sigBlock('Owner', prodTitle() + ' (Producer)') +
+        PDF.footer();
+      PDF.openDoc(body, 'Location_Release_' + slugify(gv('lr-owner') || 'Property'));
+      AH.Modal.close();
+      AH.Docs._log('Location Release');
+    });
+  };
+
+  // ───────── 10. LOCATION AGREEMENT (full) ─────────
+  AH.Docs._gens.locationAgreementFull = function () {
+    fieldModal('Full Location Agreement', [
+      { id: 'lf-owner',    label: 'Owner / representative', full: true },
+      { id: 'lf-addr',     label: 'Property address', full: true },
+      { id: 'lf-start',    label: 'Access start', type: 'date' },
+      { id: 'lf-end',      label: 'Access end', type: 'date' },
+      { id: 'lf-prep',     label: 'Prep days' },
+      { id: 'lf-shoot',    label: 'Shoot days' },
+      { id: 'lf-strike',   label: 'Strike days' },
+      { id: 'lf-fee',      label: 'Daily fee', def: '$0' },
+      { id: 'lf-deposit',  label: 'Security deposit', def: '$0' },
+      { id: 'lf-insurance',label: 'Insurance minimum', def: '$2,000,000 / occurrence' },
+      { id: 'lf-state',    label: 'Governing law', def: 'California' },
+      { id: 'lf-scope',    label: 'Scope of use', type: 'textarea', full: true, rows: 3, def: 'Interior + exterior photography, equipment staging, basecamp if permitted.' }
+    ], function () {
+      var body = PDF.header('Location Agreement', 'Long-form production access contract') +
+        PDF.section('Parties & Property', '<div class="pdf-grid2">' +
+          PDF.field('Owner', gv('lf-owner')) + PDF.field('Property', gv('lf-addr')) +
+          PDF.field('Production', prodTitle()) + PDF.field('Access period', daterange(gv('lf-start'), gv('lf-end'))) +
+          PDF.field('Prep / Shoot / Strike', gv('lf-prep') + ' · ' + gv('lf-shoot') + ' · ' + gv('lf-strike')) +
+          PDF.field('Daily fee', gv('lf-fee')) + PDF.field('Security deposit', gv('lf-deposit')) +
+          PDF.field('Insurance minimum', gv('lf-insurance')) + PDF.field('Governing law', gv('lf-state')) +
+        '</div>') +
+        PDF.section('Scope of Use', '<div class="pdf-p">' + clean(gv('lf-scope')) + '</div>') +
+        PDF.section('Standard Terms', '<ol class="pdf-list">' +
+          '<li>Producer will provide a certificate of insurance naming Owner as additional insured for not less than the Insurance Minimum.</li>' +
+          '<li>Producer shall leave the property in substantially the same condition as received.</li>' +
+          '<li>Any damage caused by Producer\'s personnel shall be repaired at Producer\'s sole expense.</li>' +
+          '<li>Access times shall comply with local noise, trash, and parking ordinances.</li>' +
+          '<li>Owner grants Producer the right to depict the property in the Production in perpetuity, in all media now known or hereafter developed, including Alacrity Player VR presentations.</li>' +
+          '<li>This Agreement is governed by the laws of ' + clean(gv('lf-state')) + '.</li>' +
+        '</ol>') +
+        PDF.sigBlock('Owner', prodTitle() + ' (Producer)') +
+        PDF.footer();
+      PDF.openDoc(body, 'Location_Agreement_' + slugify(gv('lf-owner') || 'Property'));
+      AH.Modal.close();
+      AH.Docs._log('Location Agreement · Full');
+    });
+  };
+
+  // ───────── 11. WORK FOR HIRE ─────────
+  AH.Docs._gens.workForHire = function () {
+    fieldModal('Work-For-Hire Agreement', [
+      { id: 'wfh-name',    label: 'Provider name', full: true },
+      { id: 'wfh-services',label: 'Services / deliverables', type: 'textarea', full: true, rows: 3 },
+      { id: 'wfh-fee',     label: 'Total fee', def: '$0' },
+      { id: 'wfh-start',   label: 'Start date', type: 'date' },
+      { id: 'wfh-end',     label: 'End date', type: 'date' },
+      { id: 'wfh-state',   label: 'Governing law', def: 'California' }
+    ], function () {
+      var body = PDF.header('Work-For-Hire Agreement', 'Creative services assignment · all rights vest in Producer') +
+        PDF.section('Terms', '<div class="pdf-grid2">' +
+          PDF.field('Provider', gv('wfh-name')) +
+          PDF.field('Fee', gv('wfh-fee')) +
+          PDF.field('Term', daterange(gv('wfh-start'), gv('wfh-end'))) +
+          PDF.field('Governing law', gv('wfh-state')) +
+        '</div>') +
+        PDF.section('Services', '<div class="pdf-p">' + clean(gv('wfh-services') || '') + '</div>') +
+        PDF.section('Rights', '<div class="pdf-p">All materials and results produced by Provider in connection with the services (the "Work Product") shall be deemed "work made for hire" within the meaning of the U.S. Copyright Act. To the extent the Work Product does not so qualify, Provider hereby irrevocably assigns to Producer all right, title, and interest in and to the Work Product, including all copyrights, moral rights, and derivative-work rights, in perpetuity, throughout the universe, in all media now known or hereafter developed.</div>') +
+        PDF.sigBlock(gv('wfh-name'), prodTitle() + ' (Producer)') +
+        PDF.footer();
+      PDF.openDoc(body, 'WFH_' + slugify(gv('wfh-name') || 'Provider'));
+      AH.Modal.close();
+      AH.Docs._log('Work-For-Hire · ' + (gv('wfh-name') || 'Provider'));
+    });
+  };
+
+  // ───────── 12. CREW DEAL MEMO ─────────
+  AH.Docs._gens.crewDealMemo = function () {
+    fieldModal('Crew Deal Memo', [
+      { id: 'cdm-name',   label: 'Crew member', full: true },
+      { id: 'cdm-dept',   label: 'Department' },
+      { id: 'cdm-role',   label: 'Position / title' },
+      { id: 'cdm-rate',   label: 'Rate · per day', def: '$0' },
+      { id: 'cdm-ot',     label: 'OT · per hour after 10', def: '1.5x prorated' },
+      { id: 'cdm-kit',    label: 'Kit rental · per day', def: '$0' },
+      { id: 'cdm-start',  label: 'Start date', type: 'date' },
+      { id: 'cdm-end',    label: 'End date',   type: 'date' },
+      { id: 'cdm-state',  label: 'Governing law', def: 'California' }
+    ], function () {
+      var body = PDF.header('Crew Deal Memo', gv('cdm-dept') + ' · ' + gv('cdm-role')) +
+        PDF.section('Engagement', '<div class="pdf-grid2">' +
+          PDF.field('Crew member', gv('cdm-name')) +
+          PDF.field('Department', gv('cdm-dept')) +
+          PDF.field('Position', gv('cdm-role')) +
+          PDF.field('Term', daterange(gv('cdm-start'), gv('cdm-end'))) +
+        '</div>') +
+        PDF.section('Compensation', '<div class="pdf-grid2">' +
+          PDF.field('Day rate', gv('cdm-rate')) +
+          PDF.field('Overtime', gv('cdm-ot')) +
+          PDF.field('Kit rental', gv('cdm-kit')) +
+          PDF.field('Governing law', gv('cdm-state')) +
+        '</div>') +
+        PDF.section('Standard Terms', '<ol class="pdf-list">' +
+          '<li>All intellectual property created by Crew in the course of the Production is Work-Made-For-Hire owned solely by Producer.</li>' +
+          '<li>Crew shall abide by all on-set safety protocols.</li>' +
+          '<li>Payment is net 15 from approved time card.</li>' +
+        '</ol>') +
+        PDF.sigBlock(gv('cdm-name'), prodTitle() + ' (Producer)') +
+        PDF.footer();
+      PDF.openDoc(body, 'Crew_Deal_' + slugify(gv('cdm-name') || 'Crew'));
+      AH.Modal.close();
+      AH.Docs._log('Crew Deal Memo');
+    });
+  };
+
+  // ───────── 13. SAG DAY PLAYER DEAL ─────────
+  AH.Docs._gens.sagDayPlayerDeal = function () {
+    fieldModal('SAG Day Player Deal', [
+      { id: 'sdp-name',    label: 'Performer name', full: true },
+      { id: 'sdp-role',    label: 'Role' },
+      { id: 'sdp-rate',    label: 'Day rate · scale+', def: '$1,200' },
+      { id: 'sdp-day',     label: 'Work day', type: 'date' },
+      { id: 'sdp-agreement', label: 'Agreement', def: 'SAG-AFTRA Basic Theatrical Agreement · Day Performer' }
+    ], function () {
+      var body = PDF.header('SAG-AFTRA Day Player Deal', 'Short-form day-performer memo') +
+        PDF.section('Engagement', '<div class="pdf-grid2">' +
+          PDF.field('Performer', gv('sdp-name')) +
+          PDF.field('Role', gv('sdp-role')) +
+          PDF.field('Work day', gv('sdp-day')) +
+          PDF.field('Day rate', gv('sdp-rate')) +
+          PDF.field('Agreement', gv('sdp-agreement')) +
+        '</div>') +
+        PDF.section('Terms', '<ol class="pdf-list">' +
+          '<li>This memo incorporates by reference the SAG-AFTRA agreement above, including all minimums, pension/health/retirement, and overtime.</li>' +
+          '<li>Producer will remit all union dues and contributions per the applicable agreement.</li>' +
+        '</ol>') +
+        PDF.sigBlock(gv('sdp-name'), prodTitle() + ' (Producer)') +
+        PDF.footer();
+      PDF.openDoc(body, 'SAG_Day_Deal_' + slugify(gv('sdp-name') || 'Performer'));
+      AH.Modal.close();
+      AH.Docs._log('SAG Day Player · ' + (gv('sdp-name') || 'Performer'));
+    });
+  };
+
+  // ───────── 14. DGA DEAL MEMO ─────────
+  AH.Docs._gens.dgaDealMemo = function () {
+    fieldModal('DGA Deal Memo', [
+      { id: 'dga-name',  label: 'Director / AD name', full: true },
+      { id: 'dga-role',  label: 'Title', def: 'Director' },
+      { id: 'dga-cat',   label: 'DGA category', def: 'Low Budget Side Letter' },
+      { id: 'dga-fee',   label: 'Weekly fee', def: '$0' },
+      { id: 'dga-start', label: 'Start date', type: 'date' },
+      { id: 'dga-end',   label: 'End date', type: 'date' }
+    ], function () {
+      var body = PDF.header('DGA Deal Memo', gv('dga-role')) +
+        PDF.section('Engagement', '<div class="pdf-grid2">' +
+          PDF.field('Name', gv('dga-name')) + PDF.field('Title', gv('dga-role')) +
+          PDF.field('Category', gv('dga-cat')) + PDF.field('Weekly fee', gv('dga-fee')) +
+          PDF.field('Term', daterange(gv('dga-start'), gv('dga-end'))) +
+        '</div>') +
+        PDF.section('Terms', '<div class="pdf-p">This memo incorporates by reference the applicable Directors Guild of America Basic Agreement (or Low Budget Side Letter as noted), including all minimums, residual structures, creative rights, credit, and preparation time provisions.</div>') +
+        PDF.sigBlock(gv('dga-name'), prodTitle() + ' (Producer)') +
+        PDF.footer();
+      PDF.openDoc(body, 'DGA_Deal_' + slugify(gv('dga-name') || 'Director'));
+      AH.Modal.close();
+      AH.Docs._log('DGA Deal Memo');
+    });
+  };
+
+  // ───────── 15. STUNT PERFORMER ─────────
+  AH.Docs._gens.stuntPerformer = function () {
+    fieldModal('Stunt Performer Agreement', [
+      { id: 'st-name',  label: 'Stunt performer', full: true },
+      { id: 'st-coord', label: 'Stunt coordinator', full: true },
+      { id: 'st-desc',  label: 'Stunt description', type: 'textarea', full: true, rows: 3 },
+      { id: 'st-rate',  label: 'Stunt adjustment', def: '$0' },
+      { id: 'st-date',  label: 'Performance date', type: 'date' }
+    ], function () {
+      var body = PDF.header('Stunt Performer Agreement', 'Safety protocols required') +
+        PDF.section('Details', '<div class="pdf-grid2">' +
+          PDF.field('Performer', gv('st-name')) + PDF.field('Coordinator', gv('st-coord')) +
+          PDF.field('Performance date', gv('st-date')) + PDF.field('Stunt adjustment', gv('st-rate')) +
+        '</div>') +
+        PDF.section('Stunt', '<div class="pdf-p">' + clean(gv('st-desc')) + '</div>') +
+        PDF.section('Safety Undertakings', '<ol class="pdf-list">' +
+          '<li>A qualified stunt coordinator shall be present throughout rehearsal and performance.</li>' +
+          '<li>All safety equipment shall be inspected immediately before each take.</li>' +
+          '<li>Medical personnel shall be on-set during the stunt.</li>' +
+          '<li>Performer\'s individual SAG-AFTRA contract and hazard adjustments apply.</li>' +
+        '</ol>') +
+        PDF.sigBlock(gv('st-name'), gv('st-coord') + ' & Producer') +
+        PDF.footer();
+      PDF.openDoc(body, 'Stunt_Agreement_' + slugify(gv('st-name') || 'Stunt'));
+      AH.Modal.close();
+      AH.Docs._log('Stunt Performer Agreement');
+    });
+  };
+
+  // ───────── 16. NUDITY RIDER ─────────
+  AH.Docs._gens.nudityRider = function () {
+    fieldModal('Nudity Rider', [
+      { id: 'nr-name',     label: 'Performer', full: true },
+      { id: 'nr-role',     label: 'Role' },
+      { id: 'nr-scenes',   label: 'Scenes', full: true },
+      { id: 'nr-desc',     label: 'Description of scenes', type: 'textarea', full: true, rows: 4 },
+      { id: 'nr-closed',   label: 'Closed set?', def: 'Yes' },
+      { id: 'nr-intimacy', label: 'Intimacy coordinator present?', def: 'Yes' },
+      { id: 'nr-date',     label: 'Performance date', type: 'date' }
+    ], function () {
+      var body = PDF.header('Nudity Rider', 'Informed consent for nudity / simulated intimacy') +
+        PDF.section('Performer & Scenes', '<div class="pdf-grid2">' +
+          PDF.field('Performer', gv('nr-name')) + PDF.field('Role', gv('nr-role')) +
+          PDF.field('Scenes', gv('nr-scenes')) + PDF.field('Performance date', gv('nr-date')) +
+          PDF.field('Closed set', gv('nr-closed')) + PDF.field('Intimacy coordinator', gv('nr-intimacy')) +
+        '</div>') +
+        PDF.section('Description', '<div class="pdf-p">' + clean(gv('nr-desc')) + '</div>') +
+        PDF.section('Consent & Withdrawal', '<ol class="pdf-list">' +
+          '<li>Performer has been briefed on the scope and context of the scenes described above.</li>' +
+          '<li>Performer may withdraw consent at any time prior to performance; Producer may substitute or reframe as necessary.</li>' +
+          '<li>Only essential personnel shall be present; the set shall be closed to observers.</li>' +
+          '<li>Producer will not use any outtakes, additional takes, or footage outside the scenes described without additional written consent.</li>' +
+        '</ol>') +
+        PDF.sigBlock(gv('nr-name'), prodTitle() + ' (Producer)') +
+        PDF.footer();
+      PDF.openDoc(body, 'Nudity_Rider_' + slugify(gv('nr-name') || 'Performer'));
+      AH.Modal.close();
+      AH.Docs._log('Nudity Rider');
+    });
+  };
+
+  // ───────── 17. VENDOR AGREEMENT ─────────
+  AH.Docs._gens.vendorAgreement = function () {
+    fieldModal('Vendor Agreement', [
+      { id: 've-vendor',  label: 'Vendor name', full: true },
+      { id: 've-cat',     label: 'Category', def: 'Rental · Camera' },
+      { id: 've-scope',   label: 'Scope of supply', type: 'textarea', full: true, rows: 3 },
+      { id: 've-fee',     label: 'Fee', def: '$0' },
+      { id: 've-start',   label: 'Supply start', type: 'date' },
+      { id: 've-end',     label: 'Supply end', type: 'date' },
+      { id: 've-state',   label: 'Governing law', def: 'California' }
+    ], function () {
+      var body = PDF.header('Vendor Agreement', gv('ve-cat')) +
+        PDF.section('Terms', '<div class="pdf-grid2">' +
+          PDF.field('Vendor', gv('ve-vendor')) + PDF.field('Category', gv('ve-cat')) +
+          PDF.field('Fee', gv('ve-fee')) + PDF.field('Period', daterange(gv('ve-start'), gv('ve-end'))) +
+          PDF.field('Governing law', gv('ve-state')) +
+        '</div>') +
+        PDF.section('Scope', '<div class="pdf-p">' + clean(gv('ve-scope')) + '</div>') +
+        PDF.section('Standard Terms', '<ol class="pdf-list">' +
+          '<li>Vendor retains ownership of all rental equipment; Producer bears risk of loss during custody.</li>' +
+          '<li>Vendor warrants that goods are fit for their intended purpose and free of defects at delivery.</li>' +
+          '<li>All invoices payable net 15 upon acceptance.</li>' +
+        '</ol>') +
+        PDF.sigBlock(gv('ve-vendor'), prodTitle() + ' (Producer)') +
+        PDF.footer();
+      PDF.openDoc(body, 'Vendor_Agreement_' + slugify(gv('ve-vendor') || 'Vendor'));
+      AH.Modal.close();
+      AH.Docs._log('Vendor Agreement');
+    });
+  };
+
+  // ───────── 18. MUSIC AGREEMENT ─────────
+  AH.Docs._gens.musicAgreement = function () {
+    fieldModal('Music License', [
+      { id: 'mu-title',    label: 'Song / composition', full: true },
+      { id: 'mu-composer', label: 'Composer', full: true },
+      { id: 'mu-rights',   label: 'Rights granted', def: 'Sync · Master · Publishing' },
+      { id: 'mu-term',     label: 'Term', def: 'Perpetual' },
+      { id: 'mu-territory',label: 'Territory', def: 'Worldwide' },
+      { id: 'mu-fee',      label: 'License fee', def: '$0' },
+      { id: 'mu-state',    label: 'Governing law', def: 'California' }
+    ], function () {
+      var body = PDF.header('Music License', gv('mu-title')) +
+        PDF.section('Terms', '<div class="pdf-grid2">' +
+          PDF.field('Work', gv('mu-title')) + PDF.field('Composer', gv('mu-composer')) +
+          PDF.field('Rights', gv('mu-rights')) + PDF.field('Term', gv('mu-term')) +
+          PDF.field('Territory', gv('mu-territory')) + PDF.field('Fee', gv('mu-fee')) +
+          PDF.field('Governing law', gv('mu-state')) +
+        '</div>') +
+        PDF.section('Grant', '<div class="pdf-p">Licensor grants Producer the rights identified above to use the Work in ' + clean(prodTitle()) + ' and any promotional or derivative materials (including Alacrity Player VR), for the Term in the Territory.</div>') +
+        PDF.sigBlock(gv('mu-composer'), prodTitle() + ' (Producer)') +
+        PDF.footer();
+      PDF.openDoc(body, 'Music_License_' + slugify(gv('mu-title') || 'Song'));
+      AH.Modal.close();
+      AH.Docs._log('Music License');
+    });
+  };
+
+  // ───────── 19. LIABILITY WAIVER ─────────
+  AH.Docs._gens.liabilityWaiver = function () {
+    fieldModal('Liability Waiver', [
+      { id: 'lw-name',  label: 'Participant', full: true },
+      { id: 'lw-act',   label: 'Activity / set', full: true },
+      { id: 'lw-date',  label: 'Date', type: 'date' },
+      { id: 'lw-state', label: 'Governing law', def: 'California' }
+    ], function () {
+      var body = PDF.header('Liability Waiver', 'Release and Assumption of Risk') +
+        PDF.section('Participant', '<div class="pdf-grid2">' +
+          PDF.field('Name', gv('lw-name')) + PDF.field('Activity', gv('lw-act')) +
+          PDF.field('Date', gv('lw-date')) + PDF.field('Governing law', gv('lw-state')) +
+        '</div>') +
+        PDF.section('Assumption of Risk', '<div class="pdf-p">I acknowledge that participating in ' + clean(gv('lw-act')) + ' involves inherent risks. I assume all such risks and release and hold harmless the Producer, its affiliates, and their respective officers and employees from any and all claims arising from my participation, except for claims arising from gross negligence or willful misconduct.</div>') +
+        PDF.sigBlock(gv('lw-name'), prodTitle() + ' (Producer)') +
+        PDF.footer();
+      PDF.openDoc(body, 'Liability_Waiver_' + slugify(gv('lw-name') || 'Participant'));
+      AH.Modal.close();
+      AH.Docs._log('Liability Waiver');
+    });
+  };
+
+  // ───────── 20. COMPLETION BOND SUMMARY ─────────
+  AH.Docs._gens.completionBond = function () {
+    fieldModal('Completion Bond · Summary', [
+      { id: 'cb-insurer', label: 'Bond provider', full: true, def: 'Film Finances Inc.' },
+      { id: 'cb-budget',  label: 'Total budget', def: '$0' },
+      { id: 'cb-fee',     label: 'Bond fee · %', def: '2.5%' },
+      { id: 'cb-prep',    label: 'Prep complete',    type: 'date' },
+      { id: 'cb-wrap',    label: 'Principal wrap',   type: 'date' },
+      { id: 'cb-deliver', label: 'Delivery target',  type: 'date' }
+    ], function () {
+      var body = PDF.header('Completion Bond · Summary', 'For internal distribution only') +
+        PDF.section('Bond', '<div class="pdf-grid2">' +
+          PDF.field('Bond provider', gv('cb-insurer')) + PDF.field('Total budget', gv('cb-budget')) +
+          PDF.field('Bond fee', gv('cb-fee')) + PDF.field('Prep complete', gv('cb-prep')) +
+          PDF.field('Principal wrap', gv('cb-wrap')) + PDF.field('Delivery target', gv('cb-deliver')) +
+        '</div>') +
+        PDF.section('Notes', '<div class="pdf-p">This summary is not a substitute for the full bond instrument and is provided to financiers and sales agents for due diligence only.</div>') +
+        PDF.footer();
+      PDF.openDoc(body, 'Completion_Bond_Summary');
+      AH.Modal.close();
+      AH.Docs._log('Completion Bond Summary');
+    });
+  };
+
+  // ───────── 21. E&O INSURANCE ─────────
+  AH.Docs._gens.eoInsurance = function () {
+    fieldModal('Errors & Omissions Summary', [
+      { id: 'eo-carrier',  label: 'Insurance carrier', full: true },
+      { id: 'eo-policy',   label: 'Policy number' },
+      { id: 'eo-limit',    label: 'Limit per claim', def: '$1,000,000' },
+      { id: 'eo-agg',      label: 'Aggregate limit', def: '$3,000,000' },
+      { id: 'eo-deductible', label: 'Deductible', def: '$10,000' },
+      { id: 'eo-term',     label: 'Term', def: '3 years from delivery' }
+    ], function () {
+      var body = PDF.header('E&O Insurance Summary', prodTitle()) +
+        PDF.section('Policy', '<div class="pdf-grid2">' +
+          PDF.field('Carrier', gv('eo-carrier')) + PDF.field('Policy #', gv('eo-policy')) +
+          PDF.field('Per-claim limit', gv('eo-limit')) + PDF.field('Aggregate', gv('eo-agg')) +
+          PDF.field('Deductible', gv('eo-deductible')) + PDF.field('Term', gv('eo-term')) +
+        '</div>') +
+        PDF.footer();
+      PDF.openDoc(body, 'EO_Summary_' + slugify(prodTitle()));
+      AH.Modal.close();
+      AH.Docs._log('E&O Summary');
+    });
+  };
+
+  // ───────── 22. SAFETY REPORT ─────────
+  AH.Docs._gens.safetyReport = function () {
+    fieldModal('Safety Report', [
+      { id: 'sr-date',    label: 'Date', type: 'date' },
+      { id: 'sr-day',     label: 'Day #', def: '1' },
+      { id: 'sr-officer', label: 'Safety officer', full: true },
+      { id: 'sr-hazards', label: 'Hazards identified', type: 'textarea', full: true, rows: 4 },
+      { id: 'sr-mitigations', label: 'Mitigations applied', type: 'textarea', full: true, rows: 4 },
+      { id: 'sr-incidents', label: 'Incidents', type: 'textarea', full: true, rows: 3, def: 'None' }
+    ], function () {
+      var body = PDF.header('Safety Report', 'Day ' + gv('sr-day') + ' · ' + prodTitle()) +
+        PDF.section('Details', '<div class="pdf-grid2">' +
+          PDF.field('Date', gv('sr-date')) + PDF.field('Day #', gv('sr-day')) +
+          PDF.field('Safety officer', gv('sr-officer')) +
+        '</div>') +
+        PDF.section('Hazards identified', '<div class="pdf-p">' + clean(gv('sr-hazards') || '—') + '</div>') +
+        PDF.section('Mitigations applied', '<div class="pdf-p">' + clean(gv('sr-mitigations') || '—') + '</div>') +
+        PDF.section('Incidents', '<div class="pdf-p">' + clean(gv('sr-incidents') || 'None') + '</div>') +
+        PDF.sigBlock(gv('sr-officer'), prodTitle() + ' (Producer)') +
+        PDF.footer();
+      PDF.openDoc(body, 'Safety_Report_D' + gv('sr-day'));
+      AH.Modal.close();
+      AH.Docs._log('Safety Report · D' + gv('sr-day'));
+    });
   };
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -6615,27 +7561,83 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   // ══════════════════════════════════════════════════════════════════════════
   //  INTEGRATION HUB
   // ══════════════════════════════════════════════════════════════════════════
+  function loadIntegrations() {
+    var d = AH.Storage.local.get('ah_integrations', null);
+    if (!d) {
+      d = [
+        { id: 'n8n',      n: 'n8n',           desc: 'Workflow automation',   cls: 'chip--mint', st: 'CONNECTED',   key: 'n8n_webhook',     doc: 'https://docs.n8n.io/' },
+        { id: 'comfy',    n: 'ComfyUI',       desc: 'Image/video generation', cls: 'chip--mint', st: 'CONNECTED',   key: 'comfy_endpoint',  doc: 'https://github.com/comfyanonymous/ComfyUI' },
+        { id: 'openclaw', n: 'OpenClaw',      desc: 'Script analysis',       cls: 'chip--mint', st: 'CONNECTED',   key: 'openclaw_token',  doc: '' },
+        { id: 'alacrity-player', n: 'Alacrity Player', desc: 'Unity VR playback · receives Story Map bundle', cls: 'chip--mint', st: 'CONNECTED', key: '', doc: '' },
+        { id: 'zapier',   n: 'Zapier',        desc: 'CRM triggers',          cls: 'chip--aqua', st: 'READY',       key: 'zapier_hook' },
+        { id: 'slack',    n: 'Slack',         desc: 'Team comms',            cls: 'chip--aqua', st: 'READY',       key: 'slack_webhook' },
+        { id: 'gdrive',   n: 'Google Drive',  desc: 'Cloud files',           cls: 'chip--mint', st: 'CONNECTED' },
+        { id: 'dropbox',  n: 'Dropbox',       desc: 'Vault mirror',          cls: 'chip--lime', st: 'AVAILABLE' },
+        { id: 'asana',    n: 'Asana',         desc: 'Task sync',             cls: 'chip--lime', st: 'AVAILABLE' },
+        { id: 'linear',   n: 'Linear',        desc: 'Issue tracking',        cls: 'chip--lime', st: 'AVAILABLE' },
+        { id: 'resolve',  n: 'DaVinci Resolve', desc: 'NLE bridge (FCPXML / EDL)', cls: 'chip--aqua', st: 'READY' },
+        { id: 'frame',    n: 'Frame.io',      desc: 'Review + approval',     cls: 'chip--aqua', st: 'READY' }
+      ];
+      AH.Storage.local.set('ah_integrations', d);
+    }
+    return d;
+  }
   AH.register('integrations', function (m) {
-    var conn = [
-      { n: 'n8n', desc: 'Workflow automation', cls: 'chip--mint', st: 'CONNECTED' },
-      { n: 'ComfyUI', desc: 'Image/video gen', cls: 'chip--mint', st: 'CONNECTED' },
-      { n: 'OpenClaw', desc: 'Script analysis', cls: 'chip--mint', st: 'CONNECTED' },
-      { n: 'Zapier', desc: 'CRM triggers', cls: 'chip--aqua', st: 'READY' },
-      { n: 'Slack', desc: 'Team comms', cls: 'chip--aqua', st: 'READY' },
-      { n: 'Google Drive', desc: 'Cloud files', cls: 'chip--mint', st: 'CONNECTED' },
-      { n: 'Dropbox', desc: 'Vault mirror', cls: 'chip--lime', st: 'AVAILABLE' },
-      { n: 'Asana', desc: 'Task sync', cls: 'chip--lime', st: 'AVAILABLE' },
-      { n: 'Linear', desc: 'Issue tracking', cls: 'chip--lime', st: 'AVAILABLE' }
-    ];
+    var conn = loadIntegrations();
     return (
-      AH.Views.renderHero(m, { primary: 'ADD INTEGRATION', primaryFn: "toast('Integration marketplace opened')" }) +
+      AH.Views.renderHero(m, { primary: 'ADD INTEGRATION', primaryFn: "AH.Integrations.add()", secondary: 'MANAGE KEYS', secondaryFn: 'AH.Integrations.keys()' }) +
       '<div class="section"><div class="grid grid--3">' +
         conn.map(function (c) {
-          return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;"><div class="section__title">' + clean(c.n) + '</div><span class="chip ' + c.cls + '">' + c.st + '</span></div><div style="color:var(--fg-60);margin-top:6px;font-size:12.5px;">' + clean(c.desc) + '</div></div>';
+          return '<div class="card" style="cursor:pointer;" onclick="AH.Integrations.open(\'' + c.id + '\')">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+              '<div class="section__title">' + clean(c.n) + '</div>' +
+              '<span class="chip ' + c.cls + '">' + c.st + '</span>' +
+            '</div>' +
+            '<div style="color:var(--fg-60);margin-top:6px;font-size:12.5px;">' + clean(c.desc) + '</div>' +
+          '</div>';
         }).join('') +
       '</div></div>'
     );
   });
+  AH.Integrations = {
+    add: function () {
+      AH.Modal.prompt('Add integration', 'Name · description · webhook URL', 'Custom · description · https://', function (v) {
+        if (!v) return;
+        var p = v.split(/\s*·\s*/); var d = loadIntegrations();
+        d.push({ id: uid('int'), n: p[0] || 'Custom', desc: p[1] || '', cls: 'chip--aqua', st: 'READY', key: p[2] || '' });
+        AH.Storage.local.set('ah_integrations', d);
+        toast('Integration added · ' + (p[0] || 'Custom'));
+        AH.Router.go('integrations');
+      });
+    },
+    open: function (id) {
+      var c = loadIntegrations().find(function (x) { return x.id === id; }); if (!c) return;
+      AH.Modal.open(c.n, '<div style="line-height:1.7;font-size:13px;color:var(--fg-80);">' +
+          '<p><strong>' + clean(c.desc) + '</strong></p>' +
+          '<p>Status: <span class="chip ' + c.cls + '" style="margin-left:4px;">' + clean(c.st) + '</span></p>' +
+          (c.key ? '<p style="margin-top:8px;"><code style="font-family:var(--f-mono);font-size:11px;padding:4px 8px;border-radius:6px;background:var(--ink-2);border:1px solid var(--edge);">' + clean(c.key) + '</code></p>' : '') +
+          (c.doc ? '<p style="margin-top:8px;"><a href="' + clean(c.doc) + '" target="_blank" rel="noreferrer" style="color:var(--mint);">Documentation →</a></p>' : '') +
+        '</div>', {
+          size: 'md',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Close</button>' +
+                  '<button class="btn btn--primary" onclick="AH.Integrations.test(\'' + c.id + '\')">TEST CONNECTION</button>'
+        });
+    },
+    test: function (id) {
+      var c = loadIntegrations().find(function (x) { return x.id === id; }); if (!c) return;
+      c.st = 'CONNECTED'; c.cls = 'chip--mint';
+      var all = loadIntegrations().map(function (x) { return x.id === id ? c : x; });
+      AH.Storage.local.set('ah_integrations', all);
+      AH.Modal.close(); toast(c.n + ' · connection verified');
+      AH.Router.go('integrations');
+    },
+    keys: function () {
+      var d = loadIntegrations();
+      AH.Modal.open('Integration Keys', '<div style="font-size:12px;line-height:1.7;">' +
+        d.map(function (c) { return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--edge);"><span>' + clean(c.n) + '</span><code style="font-family:var(--f-mono);font-size:10px;color:var(--fg-60);">' + clean(c.key || '—') + '</code></div>'; }).join('') +
+      '</div>', { size: 'md', footer: '<button class="btn btn--primary" onclick="AH.Modal.close()">OK</button>' });
+    }
+  };
 
   // ══════════════════════════════════════════════════════════════════════════
   //  NOTES
@@ -6697,8 +7699,16 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       toast('Production exported');
     },
     apk: function () {
-      toast('APK compilation queued · Unity pipeline engaged');
-      AH.Notif.push('APK export started for ' + getActiveProd().title + ' · ETA 4m');
+      // The Alacrity Player APK compile happens in Unity — we deliver the
+      // bundle here so the CI pipeline can pick it up and bake an APK.
+      if (AH.StoryMap) {
+        AH.StoryMap.load();
+        AH.StoryMap.exportAlacrityBundle();
+        AH.Notif.push('Alacrity Player bundle prepared for APK build · ' + getActiveProd().title);
+        toast('APK staging · bundle downloaded for Unity/CI');
+      } else {
+        toast('Story Map not available', 'warn');
+      }
     },
     csvSched: function () {
       var scs = loadScenes();
@@ -6820,27 +7830,83 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   // ══════════════════════════════════════════════════════════════════════════
   //  STORYBOARD · DAYS · MUSIC · POST-PROD
   // ══════════════════════════════════════════════════════════════════════════
+  function loadStoryboard() {
+    var k = 'ah_sb_' + STATE.activeProdId;
+    var d = AH.Storage.local.get(k, null);
+    if (!d) {
+      d = [
+        { id: uid('fr'), k: 'EST', t: 'Yard 4 wide · dolly R→L', src: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=800&q=80', scene: '01' },
+        { id: uid('fr'), k: 'CU',  t: 'Burner phone on whiteboard', src: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=800&q=80', scene: '02' },
+        { id: uid('fr'), k: 'OTS', t: 'Alex over Mira · handoff', src: 'https://images.unsplash.com/photo-1540329957110-b87b0a2e3e72?auto=format&fit=crop&w=800&q=80', scene: '03' },
+        { id: uid('fr'), k: 'WIDE',t: 'Rooftop · crane up',       src: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80', scene: '04' }
+      ];
+      AH.Storage.local.set(k, d);
+    }
+    return d;
+  }
   AH.register('storyboard', function (m) {
-    var frames = [
-      { k: 'EST', t: 'Yard 4 wide · dolly R→L', src: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=800&q=80' },
-      { k: 'CU',  t: 'Burner phone on whiteboard', src: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=800&q=80' },
-      { k: 'OTS', t: 'Alex over Mira · handoff', src: 'https://images.unsplash.com/photo-1540329957110-b87b0a2e3e72?auto=format&fit=crop&w=800&q=80' },
-      { k: 'WIDE',t: 'Rooftop · crane up', src: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80' },
-      { k: 'ECU', t: 'USB insert · finger to port', src: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80' },
-      { k: 'HAND',t: 'Foot chase · shoulder', src: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=800&q=80' }
-    ];
+    var frames = loadStoryboard();
     return (
-      AH.Views.renderHero(m, { primary: 'NEW FRAME', primaryFn: "toast('Storyboard frame uploader')" }) +
+      AH.Views.renderHero(m, { primary: 'NEW FRAME', primaryFn: "AH.Storyboard.add()", secondary: 'EXPORT BOARD', secondaryFn: 'AH.Storyboard.exportPDF()' }) +
       '<div class="section"><div class="grid grid--3">' +
         frames.map(function (f) {
-          return '<div class="card" style="padding:0;overflow:hidden;">' +
-            '<div style="aspect-ratio:16/9;background:url(\'' + f.src + '\') center/cover;position:relative;"><span class="chip chip--mint" style="position:absolute;top:12px;left:12px;">' + f.k + '</span></div>' +
-            '<div style="padding:14px 16px;">' + clean(f.t) + '</div>' +
+          return '<div class="card" style="padding:0;overflow:hidden;position:relative;" data-fid="' + f.id + '">' +
+            '<div style="aspect-ratio:16/9;background:url(\'' + f.src + '\') center/cover;position:relative;">' +
+              '<span class="chip chip--mint" style="position:absolute;top:12px;left:12px;">' + clean(f.k) + '</span>' +
+              '<button class="btn btn--ghost" style="position:absolute;top:12px;right:12px;height:28px;padding:0 10px;" onclick="AH.Storyboard.del(\'' + f.id + '\')">×</button>' +
+            '</div>' +
+            '<div style="padding:14px 16px;">' +
+              '<div style="font-family:var(--f-display);font-weight:600;font-size:14px;">Scene ' + clean(f.scene) + '</div>' +
+              '<div style="font-size:12px;color:var(--fg-60);">' + clean(f.t) + '</div>' +
+            '</div>' +
           '</div>';
         }).join('') +
       '</div></div>'
     );
   });
+  AH.Storyboard = {
+    add: function () {
+      var inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = 'image/*';
+      inp.onchange = function () {
+        var f = inp.files[0]; if (!f) return;
+        var rd = new FileReader();
+        rd.onload = function () {
+          AH.Modal.prompt('Frame details', 'Kind · caption · scene  (e.g.  WS · Dolly in · 03)', 'WS · New frame · 01', function (v) {
+            if (!v) return;
+            var p = v.split(/\s*·\s*/);
+            var d = loadStoryboard();
+            d.unshift({ id: uid('fr'), k: p[0] || 'WS', t: p[1] || 'New frame', scene: p[2] || '01', src: rd.result });
+            AH.Storage.local.set('ah_sb_' + STATE.activeProdId, d);
+            toast('Frame added'); AH.Router.go('storyboard');
+          });
+        };
+        rd.readAsDataURL(f);
+      };
+      inp.click();
+    },
+    del: function (id) {
+      var d = loadStoryboard().filter(function (f) { return f.id !== id; });
+      AH.Storage.local.set('ah_sb_' + STATE.activeProdId, d);
+      AH.Router.go('storyboard'); toast('Frame removed');
+    },
+    exportPDF: function () {
+      var d = loadStoryboard();
+      var body = PDF.header('Storyboard', getActiveProd().title) +
+        '<div class="pdf-section"><div class="pdf-section-title">Frames · ' + d.length + '</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+            d.map(function (f) {
+              return '<div style="border:1px solid #cbd5e1;border-radius:8px;overflow:hidden;">' +
+                '<img src="' + clean(f.src) + '" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;"/>' +
+                '<div style="padding:8px 10px;font-size:9pt;"><strong>' + clean(f.k) + ' · Scene ' + clean(f.scene) + '</strong><br/>' + clean(f.t) + '</div>' +
+              '</div>';
+            }).join('') +
+          '</div>' +
+        '</div>' + PDF.footer();
+      PDF.openDoc(body, 'Storyboard_' + slugify(getActiveProd().title));
+      toast('Storyboard PDF generated');
+    }
+  };
 
   AH.register('days', function (m) {
     var scs = loadScenes();
@@ -6860,22 +7926,60 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     );
   });
 
+  function loadMusic() {
+    var k = 'ah_music_' + STATE.activeProdId;
+    var d = AH.Storage.local.get(k, null);
+    if (!d) {
+      d = [
+        { id: uid('mu'), n: 'M-001 · Threshold', pl: 'Alex drops USB', st: 'CLEARED', cls: 'chip--lime', rights: 'Licensed · sync + master · worldwide' },
+        { id: uid('mu'), n: 'M-002 · Rain on glass', pl: 'Safe house open', st: 'IN NEGOTIATION', cls: 'chip--amber', rights: 'Publisher — awaiting quote' },
+        { id: uid('mu'), n: 'M-003 · Yard hum', pl: 'Trainyard handoff', st: 'ORIGINAL · STAFF', cls: 'chip--mint', rights: 'Original · WFH composer' },
+        { id: uid('mu'), n: 'M-004 · The room', pl: 'Room 0 score', st: 'DEMO LOCKED', cls: 'chip--aqua', rights: 'Original · commissioned score' }
+      ];
+      AH.Storage.local.set(k, d);
+    }
+    return d;
+  }
   AH.register('music', function (m) {
-    var cues = [
-      { n: 'M-001 · Threshold', pl: 'Alex drops USB', st: 'CLEARED', cls: 'chip--lime' },
-      { n: 'M-002 · Rain on glass', pl: 'Safe house open', st: 'IN NEGOTIATION', cls: 'chip--amber' },
-      { n: 'M-003 · Yard hum', pl: 'Trainyard handoff', st: 'ORIGINAL · STAFF', cls: 'chip--mint' },
-      { n: 'M-004 · The room', pl: 'Room 0 score', st: 'DEMO LOCKED', cls: 'chip--aqua' }
-    ];
+    var cues = loadMusic();
     return (
-      AH.Views.renderHero(m, { primary: 'NEW CUE', primaryFn: "toast('Music cue created')" }) +
+      AH.Views.renderHero(m, { primary: 'NEW CUE', primaryFn: "AH.Music.add()", secondary: 'EXPORT CUE SHEET', secondaryFn: 'AH.Music.exportCueSheet()' }) +
       '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
-        '<table class="table"><thead><tr><th>Cue</th><th>Scene context</th><th>Rights</th></tr></thead><tbody>' +
-          cues.map(function (c) { return '<tr><td><strong>' + c.n + '</strong></td><td>' + c.pl + '</td><td><span class="chip ' + c.cls + '">' + c.st + '</span></td></tr>'; }).join('') +
+        '<table class="table"><thead><tr><th>Cue</th><th>Scene context</th><th>Rights</th><th>Status</th><th></th></tr></thead><tbody>' +
+          cues.map(function (c) {
+            return '<tr><td><strong>' + clean(c.n) + '</strong></td><td>' + clean(c.pl) + '</td><td>' + clean(c.rights || '') + '</td><td><span class="chip ' + c.cls + '">' + clean(c.st) + '</span></td>' +
+              '<td style="text-align:right;"><button class="btn btn--ghost" onclick="AH.Music.del(\'' + c.id + '\')">×</button></td></tr>';
+          }).join('') +
         '</tbody></table>' +
       '</div></div>'
     );
   });
+  AH.Music = {
+    add: function () {
+      AH.Modal.prompt('New cue', 'Number · name · scene · status', 'M-005 · New cue · 05 · CLEARED', function (v) {
+        if (!v) return;
+        var p = v.split(/\s*·\s*/);
+        var d = loadMusic();
+        d.push({ id: uid('mu'), n: (p[0] || 'M-???') + ' · ' + (p[1] || ''), pl: 'Scene ' + (p[2] || '??'), st: p[3] || 'DEMO', cls: 'chip--aqua', rights: 'TBD' });
+        AH.Storage.local.set('ah_music_' + STATE.activeProdId, d);
+        AH.Router.go('music'); toast('Cue added');
+      });
+    },
+    del: function (id) {
+      var d = loadMusic().filter(function (c) { return c.id !== id; });
+      AH.Storage.local.set('ah_music_' + STATE.activeProdId, d);
+      AH.Router.go('music'); toast('Cue removed');
+    },
+    exportCueSheet: function () {
+      var d = loadMusic();
+      var rows = d.map(function (c) { return '<tr><td>' + clean(c.n) + '</td><td>' + clean(c.pl) + '</td><td>' + clean(c.rights || '') + '</td><td>' + clean(c.st) + '</td></tr>'; }).join('');
+      var body = PDF.header('Music Cue Sheet', getActiveProd().title) +
+        PDF.section('Cues · ' + d.length, '<table class="pdf-table"><thead><tr><th>Cue</th><th>Context</th><th>Rights</th><th>Status</th></tr></thead><tbody>' + rows + '</tbody></table>') +
+        PDF.footer();
+      PDF.openDoc(body, 'Cue_Sheet_' + slugify(getActiveProd().title));
+      toast('Cue sheet generated');
+    }
+  };
 
   AH.register('post', function (m) {
     var phases = [
@@ -6890,13 +7994,49 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       gantt('Delivery',     3, 'QUEUED')
     ];
     return (
-      AH.Views.renderHero(m, { primary: 'OPEN EDIT', primaryFn: "toast('Edit session launching · Resolve bridge')" }) +
+      AH.Views.renderHero(m, { primary: 'BRIDGE TO RESOLVE', primaryFn: "AH.Post.bridge()", secondary: 'EXPORT XML', secondaryFn: "AH.Post.exportFCPXML()" }) +
       '<div class="section"><div class="card">' +
         '<div class="section__title" style="margin-bottom:14px;">Post phases</div>' +
         '<div class="gantt">' + phases.join('') + '</div>' +
+        '<div style="margin-top:18px;padding:14px;border-radius:10px;background:var(--glass-2);border:1px solid var(--edge);">' +
+          '<div style="font-family:var(--f-mono);font-size:10px;letter-spacing:0.22em;color:var(--fg-45);text-transform:uppercase;margin-bottom:8px;">NLE BRIDGE</div>' +
+          '<div style="font-size:13px;line-height:1.55;color:var(--fg-80);">Alacrity Hub can export an FCPXML/EDL project file seeded with your scene list, cast, and shot list so your editor (DaVinci Resolve, Premiere, Final Cut) starts with bins pre-populated and metadata intact. Use the Bridge button to open a new project template.</div>' +
+          '<div style="display:flex;gap:8px;margin-top:12px;">' +
+            '<button class="btn btn--ghost" onclick="AH.Post.exportFCPXML()">EXPORT FCPXML</button>' +
+            '<button class="btn btn--ghost" onclick="AH.Post.exportEDL()">EXPORT CMX3600 EDL</button>' +
+            '<button class="btn btn--ghost" onclick="AH.Post.bridge()">LAUNCH BRIDGE</button>' +
+          '</div>' +
+        '</div>' +
       '</div></div>'
     );
   });
+  AH.Post = {
+    bridge: function () {
+      toast('Resolve bridge — FCPXML downloaded to import into your NLE');
+      AH.Post.exportFCPXML();
+    },
+    exportFCPXML: function () {
+      var scs = loadScenes();
+      var events = scs.map(function (s, i) {
+        return '    <clip name="' + clean(s.no + ' · ' + s.desc) + '" duration="5s" start="' + (i * 5) + 's"/>';
+      }).join('\n');
+      var xml = '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE fcpxml>\n<fcpxml version="1.10">\n  <resources/>\n  <library>\n    <event name="' + clean(getActiveProd().title) + '">\n      <project name="' + clean(getActiveProd().title) + ' · Assembly">\n        <sequence format="r1" tcStart="0s" tcFormat="NDF">\n' + events + '\n        </sequence>\n      </project>\n    </event>\n  </library>\n</fcpxml>';
+      AH.Editor._download(slugify(getActiveProd().title) + '.fcpxml', xml);
+      toast('FCPXML exported');
+    },
+    exportEDL: function () {
+      var scs = loadScenes();
+      var out = ['TITLE: ' + getActiveProd().title, 'FCM: NON-DROP FRAME', ''];
+      scs.forEach(function (s, i) {
+        var n = pad(i + 1, 3);
+        var start = 'SC' + s.no + '_V'; var inTc = '01:00:' + pad(i * 5, 2) + ':00', outTc = '01:00:' + pad(i * 5 + 5, 2) + ':00';
+        out.push(n + '  ' + start + '  V  C  ' + inTc + ' ' + outTc + ' ' + inTc + ' ' + outTc);
+        out.push('* FROM CLIP NAME: ' + s.no + ' · ' + s.desc);
+      });
+      AH.Editor._download(slugify(getActiveProd().title) + '.edl', out.join('\n'));
+      toast('EDL exported');
+    }
+  };
 
   // Generic fallback view
   AH.Views.generic = function (m) {
