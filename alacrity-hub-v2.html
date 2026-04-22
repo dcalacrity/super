@@ -3828,11 +3828,13 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     },
     render: function () {
       var list = $('#notif-list'); if (!list) return;
+      // Escape all user-supplied text before injecting; V1 passed raw strings
+      // and exposed an XSS vector in a few places. This closes it.
       list.innerHTML = STATE.notifications.map(function (n) {
         return '<div class="notif-item">' +
           (n.dot ? '<div class="notif-item__dot"></div>' : '<div></div>') +
-          '<div class="notif-item__text">' + (n.text) + '</div>' +
-          '<div class="notif-item__time">' + (n.time || 'now') + '</div>' +
+          '<div class="notif-item__text">' + clean(n.text || '') + '</div>' +
+          '<div class="notif-item__time">' + clean(n.time || 'now') + '</div>' +
         '</div>';
       }).join('') || '<div style="padding:30px;text-align:center;color:var(--fg-45);font-family:var(--f-mono);font-size:11px;letter-spacing:0.18em;text-transform:uppercase;">Nothing new</div>';
     }
@@ -6940,11 +6942,19 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     if (m) return +m[1] + (+m[2]) / (+m[3]);
     return parseFloat(p) || 0;
   }
+  // Stable location-based color hash (for vertical color tab on each strip)
+  function locColor(loc) {
+    var palette = ['#17FFC5','#14AFDF','#a794ff','#f7b86b','#ff7aa8','#bfff6b','#5eead4','#fbbf24','#c084fc','#34d399','#fb7185','#60a5fa'];
+    if (!loc) return palette[0];
+    var h = 0; for (var i = 0; i < loc.length; i++) h = (h * 31 + loc.charCodeAt(i)) & 0xffff;
+    return palette[h % palette.length];
+  }
   function boardStrip(s) {
     var cls = s.int ? 'board-strip--int' : 'board-strip--ext';
+    var lc = locColor(s.loc);
     var type = s.int ? 'INT' : 'EXT';
     return (
-      '<div class="board-strip ' + cls + '" draggable="true" data-sid="' + s.id + '">' +
+      '<div class="board-strip ' + cls + '" draggable="true" data-sid="' + s.id + '" style="border-left:5px solid ' + lc + ';">' +
         '<div class="board-strip__cell board-strip__num">' + s.n + '</div>' +
         '<div class="board-strip__cell"><span class="inline-edit" contenteditable data-f="title" data-id="' + s.id + '">' + clean(s.title) + '</span></div>' +
         '<div class="board-strip__cell" style="font-family:var(--f-mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg-60);"><span class="inline-edit" contenteditable data-f="type" data-id="' + s.id + '">' + type + '</span></div>' +
@@ -7325,23 +7335,41 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
 
   AH.register('cast-crew', function (m) {
     var p = loadCast();
+    var depts = Array.from(new Set(p.map(function (x) { return (x.dept || 'GENERAL').toUpperCase(); })));
+    var deptFilter = AH.Storage.local.get('ah_cast_dept_filter', 'ALL');
     return (
-      AH.Views.renderHero(m, { primary: 'ADD MEMBER', primaryFn: 'AH.Cast.add()' }) +
+      AH.Views.renderHero(m, {
+        primary: 'ADD MEMBER', primaryFn: 'AH.Cast.add()',
+        secondary: 'CONTACT SHEET PDF', secondaryFn: 'AH.Cast.exportPDF()'
+      }) +
       '<div class="section">' +
-        '<div class="section__head"><div><div class="section__title">Team</div><div class="section__sub">' + p.length + ' ON THE SLATE</div></div>' +
-          '<div><input id="cast-search" placeholder="Search…" style="padding:8px 12px;border-radius:999px;background:var(--glass-1);border:1px solid var(--edge);color:var(--fg);font-size:13px;outline:none;min-width:200px;"/></div>' +
+        '<div class="card" style="margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
+          '<strong style="font-family:var(--f-mono);font-size:10.5px;letter-spacing:0.22em;color:var(--fg-45);text-transform:uppercase;">DEPT</strong>' +
+          ['ALL'].concat(depts).map(function (d) { return '<button class="btn btn--ghost' + (deptFilter === d ? ' btn--primary' : '') + '" onclick="AH.Cast.filterDept(\'' + clean(d) + '\')">' + clean(d) + '</button>'; }).join('') +
+          '<div style="flex:1;"></div>' +
+          '<input id="cast-search" placeholder="Search name / role…" style="padding:8px 12px;border-radius:999px;background:var(--ink-2);border:1px solid var(--edge);color:var(--fg);font-size:13px;outline:none;min-width:220px;"/>' +
+          '<button class="btn btn--ghost" onclick="AH.Cast.exportPDF()">CONTACT SHEET PDF</button>' +
+          '<button class="btn btn--ghost" onclick="AH.Cast.dealMemo()">CREW DEAL MEMO</button>' +
         '</div>' +
-        '<div class="grid grid--3" id="cast-grid">' + p.map(castCard).join('') + '</div>' +
+        '<div class="section__head"><div><div class="section__title">Team</div><div class="section__sub">' + p.length + ' ON THE SLATE</div></div></div>' +
+        '<div class="grid grid--3" id="cast-grid">' + p.filter(function (x) { return deptFilter === 'ALL' || (x.dept || 'GENERAL').toUpperCase() === deptFilter; }).map(castCard).join('') + '</div>' +
       '</div>'
     );
   });
   function castCard(p) {
+    var avatarBg = p.photo ? 'background-image:url(' + clean(p.photo) + ');background-size:cover;background-position:center;' : '';
     return (
       '<div class="card team-card" data-pid="' + p.id + '">' +
-        '<div class="team-card__avatar">' + clean(p.initials) + '</div>' +
-        '<div><div class="team-card__name">' + clean(p.name) + '</div><div class="team-card__role">' + clean(p.role) + '</div></div>' +
+        '<div class="team-card__avatar" style="' + avatarBg + '">' + (p.photo ? '' : clean(p.initials)) + '</div>' +
+        '<div><div class="team-card__name">' + clean(p.name) + '</div><div class="team-card__role">' + clean(p.role) + (p.dept ? ' · ' + clean(p.dept) : '') + '</div></div>' +
+        (p.email || p.phone ? '<div style="font-family:var(--f-mono);font-size:10.5px;color:var(--fg-60);letter-spacing:0.08em;margin-top:6px;">' + clean(p.phone || '') + (p.phone && p.email ? ' · ' : '') + clean(p.email || '') + '</div>' : '') +
         '<div class="team-card__footer">' + (p.tags || []).map(function (t) { return '<span class="chip">' + clean(t) + '</span>'; }).join('') + '</div>' +
-        '<div style="display:flex;gap:6px;margin-top:10px;"><button class="se-btn se-btn--xs" onclick="AH.Cast.call(\'' + p.id + '\')">CALL</button><button class="se-btn se-btn--xs" onclick="AH.Cast.edit(\'' + p.id + '\')">EDIT</button></div>' +
+        '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">' +
+          '<button class="se-btn se-btn--xs" onclick="AH.Cast.call(\'' + p.id + '\')">CALL</button>' +
+          '<button class="se-btn se-btn--xs" onclick="AH.Cast.edit(\'' + p.id + '\')">EDIT</button>' +
+          '<button class="se-btn se-btn--xs" onclick="AH.Cast.photo(\'' + p.id + '\')">PHOTO</button>' +
+          '<button class="se-btn se-btn--xs" onclick="AH.Cast.dealMemoFor(\'' + p.id + '\')">DEAL MEMO</button>' +
+        '</div>' +
       '</div>'
     );
   }
@@ -7391,6 +7419,40 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     call: function (id) {
       var p = loadCast().find(function (x) { return x.id === id; });
       if (p) { AH.Router.go('dialer'); setTimeout(function () { var i = $('#dial-number'); if (i) i.value = p.phone || ''; }, 100); }
+    },
+    filterDept: function (d) { AH.Storage.local.set('ah_cast_dept_filter', d); AH.Router.go('cast-crew'); },
+    photo: function (id) {
+      var p = loadCast().find(function (x) { return x.id === id; }); if (!p) return;
+      var inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
+      inp.onchange = function () {
+        var f = inp.files[0]; if (!f) return;
+        var rd = new FileReader();
+        rd.onload = function () {
+          p.photo = rd.result;
+          var d = loadCast(); saveCast(d); AH.Router.go('cast-crew'); toast('Photo attached · ' + p.name);
+        };
+        rd.readAsDataURL(f);
+      };
+      inp.click();
+    },
+    dealMemo: function () { AH.Docs.gen('crewDealMemo'); },
+    dealMemoFor: function (id) {
+      var p = loadCast().find(function (x) { return x.id === id; }); if (!p) return;
+      AH.Docs.gen('crewDealMemo');
+      // Pre-fill fields if the modal opens
+      setTimeout(function () {
+        var setV = function (id, v) { var e = $('#' + id); if (e) e.value = v || e.value; };
+        setV('cdm-name', p.name); setV('cdm-dept', p.dept); setV('cdm-role', p.role);
+      }, 250);
+    },
+    exportPDF: function () {
+      var p = loadCast();
+      var rows = p.map(function (c) { return '<tr><td><strong>' + clean(c.name) + '</strong></td><td>' + clean(c.role || '') + '</td><td>' + clean(c.dept || '') + '</td><td>' + clean(c.phone || '') + '</td><td>' + clean(c.email || '') + '</td></tr>'; }).join('');
+      var body = PDF.header('Cast & Crew · Contact Sheet', getActiveProd().title) +
+        PDF.section('Roster · ' + p.length, '<table class="pdf-table"><thead><tr><th>Name</th><th>Role</th><th>Dept</th><th>Phone</th><th>Email</th></tr></thead><tbody>' + rows + '</tbody></table>') +
+        PDF.footer();
+      PDF.openDoc(body, 'Contact_Sheet_' + slugify(prodTitle()));
+      toast('Contact sheet PDF generated');
     }
   };
   AH.hooks['cast-crew:mount'] = function () {
