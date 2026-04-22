@@ -2202,6 +2202,26 @@ html[data-theme="light"] .se-page { box-shadow: 0 10px 30px rgba(4,26,31,0.1), 0
   60%  { background: rgba(23,255,197,0.12); }
   100% { background: transparent; }
 }
+.se-line-row.is-tts { background: linear-gradient(90deg, rgba(167,148,255,0.32), rgba(167,148,255,0.06)); border-left: 3px solid var(--violet); padding-left: 6px; }
+
+/* Focus mode: hide chrome, dim everything except the editor */
+body.se-focus .rail,
+body.se-focus .topbar,
+body.se-focus .bottombar,
+body.se-focus .hero,
+body.se-focus .se-cmdbar,
+body.se-focus .se-probar,
+body.se-focus .se-modebar,
+body.se-focus .se-side,
+body.se-focus .se-right,
+body.se-focus .se-statusbar,
+body.se-focus .se-session { display: none !important; }
+body.se-focus .workspace { padding-left: 0 !important; }
+body.se-focus .se-shell { grid-template-columns: 1fr !important; }
+body.se-focus .se-scroll { padding: 48px !important; }
+
+/* Typewriter mode: center-scroll the active line */
+body.se-typewriter .se-scroll { padding-top: 40vh; padding-bottom: 40vh; }
 
 /* ── WGA SCREENPLAY MARGINS (Courier 12pt · 10 chars per inch) ──
    Page is 8.5" × 11". Page padding-left is 1.5", right is 1" → content is 6" wide.
@@ -4342,6 +4362,20 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           '<button class="se-btn se-btn--xs" onclick="AH.Editor.openCharacters()" title="Characters">CHARS</button>' +
           '<button class="se-btn se-btn--xs" onclick="AH.Editor.openVoices()" title="TTS voices">🔊 VOICES</button>' +
           '<button class="se-btn se-btn--xs" onclick="AH.Editor.openTitlePage()" title="Title page">TITLE</button>' +
+          '<div class="se-probar__sep"></div>' +
+          '<button class="se-btn se-btn--xs" onclick="AH.EditorX.openSceneNav()" title="Jump to scene (⌘P)">⌘P SCENES</button>' +
+          '<button class="se-btn se-btn--xs" onclick="AH.EditorX.openSceneCards()" title="Scene card view">CARDS</button>' +
+          '<button class="se-btn se-btn--xs" onclick="AH.EditorX.openActorSides()" title="Actor sides PDF">SIDES</button>' +
+          '<button class="se-btn se-btn--xs" onclick="AH.EditorX.renameCharacter()" title="Global rename character">RENAME CHAR</button>' +
+          '<button class="se-btn se-btn--xs" onclick="AH.EditorX.validateFormat()" title="Format validator">VALIDATE</button>' +
+          '<button class="se-btn se-btn--xs" onclick="AH.EditorX.snapshot()" title="Take snapshot">◉ SNAPSHOT</button>' +
+          '<button class="se-btn se-btn--xs" onclick="AH.EditorX.openSnapshots()" title="Compare / restore snapshots">DIFF</button>' +
+          '<button class="se-btn se-btn--xs" onclick="AH.EditorX.playTTSRead()" title="TTS read-along">▶ READ</button>' +
+          '<button class="se-btn se-btn--xs" onclick="AH.EditorX.toggleFocus()" title="Focus mode (⌘⇧F)">FOCUS</button>' +
+          '<button class="se-btn se-btn--xs" onclick="AH.EditorX.toggleTypewriter()" title="Typewriter scrolling">TYPEWRITER</button>' +
+          '<button class="se-btn se-btn--xs" onclick="AH.EditorX.startSession()" title="Start writing session">⏱ SESSION</button>' +
+          '<span id="se-session" style="font-family:var(--f-mono);font-size:10px;letter-spacing:0.14em;color:var(--fg-60);padding:0 8px;"></span>' +
+          '<div class="se-probar__sep"></div>' +
           '<button class="se-btn se-btn--xs" onclick="AH.Editor.exportFDX()" title="FDX export">↓ FDX</button>' +
           '<button class="se-btn se-btn--xs" onclick="AH.Editor.importFDX()" title="FDX import">↑ FDX</button>' +
           '<div class="se-probar__spacer"></div>' +
@@ -4428,6 +4462,91 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       });
       // Mode class on page
       $('#se-page').className = 'se-page mode-' + s.mode;
+      // Restore focus/typewriter modes if previously active
+      document.body.classList.toggle('se-focus', !!s._focus);
+      document.body.classList.toggle('se-typewriter', !!s._typewriter);
+      // Wire smart autocomplete for character + scene heading + transition
+      Editor._wireAutocomplete();
+      // Keep session timer ticking if session active
+      if (AH.EditorX && AH.EditorX.session.timer) AH.EditorX._tick();
+    },
+
+    // Smart inline autocomplete. When editing a CHARACTER cue, suggest
+    // previously-used names; when editing a SCENE heading, suggest the
+    // canonical INT./EXT. + recent locations + time-of-day. Works via a
+    // floating "ghost" chip attached to the active line.
+    _wireAutocomplete: function () {
+      var ac = document.getElementById('se-ac'); if (ac) ac.remove();
+      var pop = document.createElement('div'); pop.id = 'se-ac'; pop.style.cssText = 'position:fixed;z-index:2500;display:none;background:var(--glass-2);border:1px solid var(--edge-mint);border-radius:10px;padding:6px;min-width:220px;box-shadow:var(--sh-2);backdrop-filter:blur(12px);max-height:240px;overflow:auto;';
+      document.body.appendChild(pop);
+      var sel = -1; var items = [];
+      function hide() { pop.style.display = 'none'; sel = -1; items = []; }
+      function buildFor(el, line) {
+        var s = Editor.state;
+        var q = (el.innerText || '').trim().toUpperCase();
+        if (!q) return null;
+        if (line.t === 'char') {
+          var chars = Array.from(new Set((s.lines || []).filter(function (l) { return l.t === 'char'; }).map(function (l) { return (l.x || '').replace(/\s*\(.*\)/g, '').trim().toUpperCase(); })));
+          return chars.filter(function (c) { return c && c.startsWith(q) && c !== q; }).slice(0, 8);
+        }
+        if (line.t === 'scene') {
+          var suggestions = [];
+          if (!/^(INT|EXT|INT\/EXT|I\/E)/i.test(q)) { suggestions.push('INT. ', 'EXT. ', 'INT/EXT. '); }
+          var locs = Array.from(new Set((s.lines || []).filter(function (l) { return l.t === 'scene'; }).map(function (l) {
+            return (l.x || '').toUpperCase().replace(/^(INT\.|EXT\.|INT\/EXT\.|I\/E\.)\s*/, '').split(/\s*-\s*/)[0].trim();
+          })));
+          locs.filter(function (x) { return x && x.indexOf(q.replace(/^(INT\.|EXT\.|INT\/EXT\.|I\/E\.)\s*/, '')) === 0; }).slice(0, 6).forEach(function (loc) {
+            ['INT.', 'EXT.'].forEach(function (pref) { suggestions.push(pref + ' ' + loc + ' - DAY'); suggestions.push(pref + ' ' + loc + ' - NIGHT'); });
+          });
+          ['- DAY', '- NIGHT', '- CONTINUOUS', '- LATER', '- MORNING', '- EVENING'].forEach(function (t) { if (!q.endsWith(t.slice(2))) suggestions.push(q.replace(/\s*-.*$/, '') + ' ' + t); });
+          return suggestions.filter(function (x) { return x.toUpperCase() !== q; }).slice(0, 10);
+        }
+        if (line.t === 'trans') {
+          return ['CUT TO:', 'DISSOLVE TO:', 'SMASH CUT TO:', 'MATCH CUT TO:', 'FADE OUT.', 'FADE TO BLACK.'].filter(function (x) { return x.toUpperCase() !== q && x.indexOf(q) === 0; });
+        }
+        return null;
+      }
+      function render() {
+        pop.innerHTML = items.map(function (it, i) {
+          return '<div class="se-ac-item" data-i="' + i + '" style="padding:6px 10px;border-radius:6px;cursor:pointer;font-family:var(--f-mono);font-size:11.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg-80);' + (i === sel ? 'background:rgba(23,255,197,0.14);color:var(--mint);' : '') + '">' + clean(it) + '</div>';
+        }).join('');
+        pop.querySelectorAll('.se-ac-item').forEach(function (el) {
+          el.onclick = function () { commit(+el.getAttribute('data-i')); };
+        });
+      }
+      function commit(i) {
+        var active = document.activeElement;
+        if (!active || !active.isContentEditable) { hide(); return; }
+        var idx = active.closest('.se-line') && +active.closest('.se-line').getAttribute('data-idx');
+        if (idx == null) return;
+        var choice = items[i]; if (!choice) return;
+        active.innerText = choice;
+        Editor.state.lines[idx].x = choice;
+        Editor.markDirty(); hide();
+      }
+      document.addEventListener('input', function (e) {
+        var edit = e.target.closest && e.target.closest('.se-line [contenteditable]');
+        if (!edit || AH.Router.current !== 'script-editor') { hide(); return; }
+        var idx = +edit.closest('.se-line').getAttribute('data-idx');
+        var line = Editor.state.lines[idx]; if (!line) { hide(); return; }
+        items = buildFor(edit, line) || [];
+        if (!items.length) { hide(); return; }
+        var rect = edit.getBoundingClientRect();
+        pop.style.left = rect.left + 'px';
+        pop.style.top = (rect.bottom + 4) + 'px';
+        sel = 0; render(); pop.style.display = 'block';
+      });
+      document.addEventListener('keydown', function (e) {
+        if (pop.style.display !== 'block') return;
+        if (e.key === 'ArrowDown') { e.preventDefault(); sel = Math.min(items.length - 1, sel + 1); render(); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); sel = Math.max(0, sel - 1); render(); }
+        else if (e.key === 'Enter' || e.key === 'Tab') {
+          if (items[sel]) { e.preventDefault(); commit(sel); }
+        } else if (e.key === 'Escape') { hide(); }
+      });
+      document.addEventListener('click', function (e) {
+        if (!e.target.closest('#se-ac') && !e.target.closest('.se-line')) hide();
+      });
     },
 
     setMode: function (mode) {
@@ -6139,6 +6258,380 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       '</div>');
   };
 
+  // ══════════════════════════════════════════════════════════════════════════
+  //  SCRIPT STUDIO · V2 EXTENSIONS
+  //  ────────────────────────────────────────────────────────────────────────
+  //  Focus mode · Actor sides · Diff tool · Scene cards view · Session
+  //  timer + word goals · Format validator · Autocomplete for characters,
+  //  locations, and times · Rename character · Watermark on PDF ·
+  //  TTS read-along · Snapshots w/ restore.
+  // ══════════════════════════════════════════════════════════════════════════
+  var EditorX = {
+    session: { startTs: 0, startWords: 0, goal: 0, timer: null },
+
+    // -- Focus / typewriter mode ----------------------------------------------
+    toggleFocus: function () {
+      var s = Editor.state; s._focus = !s._focus;
+      document.body.classList.toggle('se-focus', !!s._focus);
+      toast('Focus mode · ' + (s._focus ? 'ON' : 'OFF'));
+    },
+    toggleTypewriter: function () {
+      var s = Editor.state; s._typewriter = !s._typewriter;
+      document.body.classList.toggle('se-typewriter', !!s._typewriter);
+      toast('Typewriter scrolling · ' + (s._typewriter ? 'ON' : 'OFF'));
+    },
+
+    // -- Session timer / word goal -------------------------------------------
+    startSession: function () {
+      AH.Modal.prompt('Writing session', 'Target word count', '1000', function (v) {
+        if (!v) return;
+        var goal = parseInt(v, 10) || 1000;
+        EditorX.session.startWords = EditorX._words();
+        EditorX.session.startTs = Date.now();
+        EditorX.session.goal = goal;
+        if (EditorX.session.timer) clearInterval(EditorX.session.timer);
+        EditorX.session.timer = setInterval(EditorX._tick, 1000);
+        EditorX._tick();
+        toast('Session · ' + goal + ' word goal');
+      });
+    },
+    stopSession: function () {
+      if (EditorX.session.timer) clearInterval(EditorX.session.timer);
+      EditorX.session.timer = null;
+      EditorX._tick();
+      toast('Session stopped');
+    },
+    _tick: function () {
+      var el = document.getElementById('se-session'); if (!el) return;
+      var words = EditorX._words();
+      var wrote = words - (EditorX.session.startWords || 0);
+      var elapsed = Math.max(0, Math.floor(((EditorX.session.startTs ? (Date.now() - EditorX.session.startTs) : 0) / 1000)));
+      var min = Math.floor(elapsed / 60), sec = elapsed % 60;
+      var goalPct = EditorX.session.goal ? Math.min(100, Math.round(wrote / EditorX.session.goal * 100)) : 0;
+      el.innerHTML = '<b>' + wrote + '</b> words · <b>' + pad(min) + ':' + pad(sec) + '</b>' + (EditorX.session.goal ? ' · <b>' + goalPct + '%</b> of ' + EditorX.session.goal : '');
+      if (EditorX.session.goal && wrote >= EditorX.session.goal && !EditorX.session._done) {
+        EditorX.session._done = true;
+        toast('🎯 Goal reached · ' + wrote + ' / ' + EditorX.session.goal);
+        AH.Notif.push('Writing goal hit · ' + wrote + ' words in ' + pad(min) + ':' + pad(sec));
+      }
+    },
+    _words: function () {
+      var s = Editor.state; if (!s || !s.lines) return 0;
+      return s.lines.reduce(function (a, l) { return a + ((l.x || '').split(/\s+/).filter(Boolean).length); }, 0);
+    },
+
+    // -- Scene cards view (pop-out) ------------------------------------------
+    openSceneCards: function () {
+      var s = Editor.state;
+      var scenes = [];
+      var cur = null;
+      s.lines.forEach(function (l, i) {
+        if (l.t === 'scene') { if (cur) scenes.push(cur); cur = { idx: i, heading: l.x || 'UNTITLED', lines: 0, chars: [], summary: '' }; }
+        else if (cur) {
+          cur.lines++;
+          if (l.t === 'char') { var nm = (l.x || '').replace(/\(.*\)/g,'').trim(); if (nm && cur.chars.indexOf(nm) < 0) cur.chars.push(nm); }
+          if (l.t === 'action' && cur.summary.length < 160) cur.summary += (cur.summary ? ' ' : '') + (l.x || '').slice(0, 200);
+        }
+      });
+      if (cur) scenes.push(cur);
+      AH.Modal.open('Scene Cards · ' + scenes.length, '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;max-height:62vh;overflow:auto;">' +
+        scenes.map(function (sc, i) {
+          return '<div style="padding:12px;border-radius:12px;background:var(--glass-1);border:1px solid var(--edge);cursor:pointer;" onclick="AH.Modal.close();AH.Editor.scrollToLine(' + sc.idx + ');">' +
+            '<div style="font-family:var(--f-mono);font-size:10px;letter-spacing:0.16em;color:var(--fg-60);">SCENE ' + (i + 1) + '</div>' +
+            '<div style="font-family:var(--f-display);font-weight:700;font-size:13px;margin:4px 0;text-transform:uppercase;">' + clean(sc.heading) + '</div>' +
+            '<div style="font-size:12px;line-height:1.55;color:var(--fg-80);min-height:40px;">' + clean(sc.summary || '(No action)') + '…</div>' +
+            (sc.chars.length ? '<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">' + sc.chars.slice(0, 6).map(function (c) { return '<span class="chip chip--aqua">' + clean(c) + '</span>'; }).join('') + '</div>' : '') +
+            '<div style="margin-top:8px;font-family:var(--f-mono);font-size:10px;letter-spacing:0.14em;color:var(--fg-45);">' + sc.lines + ' LINES</div>' +
+          '</div>';
+        }).join('') +
+      '</div>', { size: 'lg' });
+    },
+
+    // -- Actor Sides PDF -----------------------------------------------------
+    openActorSides: function () {
+      var s = Editor.state;
+      var chars = Array.from(new Set(s.lines.filter(function (l) { return l.t === 'char'; }).map(function (l) { return (l.x || '').replace(/\s*\(.*\)/g, '').trim().toUpperCase(); }))).filter(Boolean);
+      if (!chars.length) { toast('No characters found in script', 'warn'); return; }
+      AH.Modal.open('Actor Sides', (
+        '<div class="sh-modal__label">Pick a character — sides will include all of their lines, the scenes they appear in, and mask other characters\' dialogue as "[CUED LINE]".</div>' +
+        '<div class="sh-field"><label>Character</label><select id="sides-char">' + chars.map(function (c) { return '<option>' + clean(c) + '</option>'; }).join('') + '</select></div>' +
+        '<div class="sh-field"><label>Options</label>' +
+          '<div><label style="font-size:12px;"><input type="checkbox" id="sides-mask" checked/> Mask other dialogue as [CUED LINE]</label></div>' +
+          '<div><label style="font-size:12px;"><input type="checkbox" id="sides-scenes" checked/> Include full scene headings</label></div>' +
+          '<div><label style="font-size:12px;"><input type="checkbox" id="sides-action" checked/> Include action blocks</label></div>' +
+        '</div>'
+      ), {
+        size: 'md',
+        footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="sides-go">GENERATE PDF</button>',
+        onMount: function () {
+          $('#sides-go').onclick = function () {
+            var ch = $('#sides-char').value; var mask = $('#sides-mask').checked; var inclScenes = $('#sides-scenes').checked; var inclAction = $('#sides-action').checked;
+            EditorX._renderSidesPDF(ch, { mask: mask, scenes: inclScenes, action: inclAction });
+            AH.Modal.close();
+          };
+        }
+      });
+    },
+    _renderSidesPDF: function (targetChar, opts) {
+      var s = Editor.state;
+      var lines = s.lines.slice();
+      var out = [];
+      var includeThisScene = false;
+      var curChar = '';
+      var pendingBlock = [];
+      var flush = function () { pendingBlock.forEach(function (l) { out.push(l); }); pendingBlock = []; };
+      lines.forEach(function (l, i) {
+        if (l.t === 'scene') {
+          flush();
+          // Decide if this scene contains targetChar
+          var j = i + 1; var contains = false;
+          for (; j < lines.length; j++) {
+            if (lines[j].t === 'scene') break;
+            if (lines[j].t === 'char' && (lines[j].x || '').replace(/\s*\(.*\)/g,'').trim().toUpperCase() === targetChar) { contains = true; break; }
+          }
+          includeThisScene = contains;
+          curChar = '';
+          if (contains && opts.scenes) out.push({ t: 'scene', x: l.x });
+          return;
+        }
+        if (!includeThisScene) return;
+        if (l.t === 'char') {
+          curChar = (l.x || '').replace(/\s*\(.*\)/g,'').trim().toUpperCase();
+          out.push({ t: 'char', x: curChar });
+          return;
+        }
+        if (l.t === 'paren') { out.push({ t: 'paren', x: l.x }); return; }
+        if (l.t === 'dial') {
+          if (curChar === targetChar) out.push({ t: 'dial', x: l.x });
+          else out.push({ t: 'dial', x: opts.mask ? '[CUED LINE]' : l.x });
+          return;
+        }
+        if (l.t === 'trans') { out.push({ t: 'trans', x: l.x }); return; }
+        if (l.t === 'action' && opts.action) out.push({ t: 'action', x: l.x });
+      });
+      // Render via the same HTML-to-print pipeline.
+      var html = '<section class="title-page"><div class="tp-title">ACTOR SIDES · ' + clean(targetChar) + '</div><div class="tp-credit">' + clean(s.title || 'Untitled') + '</div></section>' +
+        '<section class="script-body">' + out.map(function (l) {
+          switch (l.t) {
+            case 'scene':  return '<div class="scene">' + clean((l.x || '').toUpperCase()) + '</div>';
+            case 'action': return '<div class="action">' + clean(l.x || '') + '</div>';
+            case 'char':   return '<div class="char">' + clean((l.x || '').toUpperCase()) + '</div>';
+            case 'paren':  return '<div class="paren">(' + clean(l.x || '') + ')</div>';
+            case 'dial':   return '<div class="dial">' + clean(l.x || '') + '</div>';
+            case 'trans':  return '<div class="trans">' + clean((l.x || '').toUpperCase()) + '</div>';
+            default:       return '<div class="empty">&nbsp;</div>';
+          }
+        }).join('') + '</section>';
+      var full = '<!doctype html><html><head><meta charset="utf-8"><title>' + clean(s.title + ' · Sides · ' + targetChar) + '</title>' +
+        '<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">' +
+        '<style>' +
+          '@page { size: letter; margin: 1in 1in 1in 1.5in; }' +
+          'body { background:#fff;color:#000;font-family:"Courier Prime","Courier New",Courier,monospace;font-size:12pt;line-height:1.4;margin:0; }' +
+          '.title-page { height: 9in; display:flex; flex-direction:column; justify-content:center; text-align:center; page-break-after: always; }' +
+          '.tp-title { font-size:22pt; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; }' +
+          '.tp-credit { font-size:14pt; margin-top:18pt; }' +
+          '.scene { font-weight:700; text-transform:uppercase; margin:18pt 0 8pt; }' +
+          '.action { margin:6pt 0; }' +
+          '.char { margin:12pt 0 0 2.2in; text-transform:uppercase; font-weight:700; max-width:3in; }' +
+          '.paren { margin:0 0 0 1.5in; font-style:italic; max-width:2in; }' +
+          '.dial { margin:0 1.5in 4pt 1in; max-width:3.5in; }' +
+          '.trans { text-align:right; text-transform:uppercase; font-weight:600; margin:12pt 0; }' +
+          '.empty { min-height:14pt; }' +
+          '.wm { position: fixed; bottom: 0.4in; right: 0.6in; color:#aaa; font-size:7pt; font-family:Courier; letter-spacing:1px; }' +
+        '</style></head><body>' + html + '<div class="wm">' + clean((AH.Firebase && AH.Firebase.user && (AH.Firebase.user.email || AH.Firebase.user.displayName)) || 'Guest') + ' · ' + new Date().toISOString().slice(0, 10) + '</div></body></html>';
+      var w = window.open('', '_blank'); if (!w) { toast('Popup blocked — allow popups for PDF', 'warn'); return; }
+      w.document.open(); w.document.write(full); w.document.close();
+      setTimeout(function () { try { w.focus(); w.print(); } catch (_) {} }, 500);
+      toast('Actor sides · ' + targetChar + ' · print / save as PDF');
+    },
+
+    // -- Snapshot / diff / compare ------------------------------------------
+    snapshot: function () {
+      var s = Editor.state; s._snapshots = s._snapshots || [];
+      AH.Modal.prompt('Snapshot label', 'Name for this revision', 'Draft ' + (s._snapshots.length + 1), function (v) {
+        if (!v) return;
+        s._snapshots.push({ name: v, ts: Date.now(), lines: JSON.parse(JSON.stringify(s.lines || [])) });
+        if (s._snapshots.length > 20) s._snapshots.shift();
+        Editor.markDirty && Editor.markDirty();
+        toast('Snapshot saved · ' + v);
+      });
+    },
+    openSnapshots: function () {
+      var s = Editor.state; var snaps = s._snapshots || [];
+      if (!snaps.length) { toast('No snapshots yet — take one with TAKE SNAPSHOT', 'warn'); return; }
+      AH.Modal.open('Snapshots · ' + snaps.length,
+        '<div class="sh-modal__label">Click to compare with the current draft. Restore overwrites the working script.</div>' +
+        snaps.map(function (sn, i) {
+          return '<div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:var(--glass-1);border:1px solid var(--edge);margin-bottom:6px;">' +
+            '<div style="flex:1;"><strong>' + clean(sn.name) + '</strong><div style="font-family:var(--f-mono);font-size:10px;color:var(--fg-60);letter-spacing:0.1em;">' + new Date(sn.ts).toLocaleString() + ' · ' + sn.lines.length + ' lines</div></div>' +
+            '<button class="btn btn--ghost" onclick="AH.EditorX.diff(' + i + ')">COMPARE</button>' +
+            '<button class="btn btn--ghost" onclick="AH.EditorX.restore(' + i + ')">RESTORE</button>' +
+          '</div>';
+        }).join(''), { size: 'lg' });
+    },
+    restore: function (i) {
+      var s = Editor.state; var sn = (s._snapshots || [])[i]; if (!sn) return;
+      AH.Modal.confirm('Restore snapshot', 'Overwrite current script with "' + sn.name + '"? Your current work will be lost unless you snapshot it first.', function () {
+        s.lines = JSON.parse(JSON.stringify(sn.lines));
+        Editor.pushHistory && Editor.pushHistory();
+        Editor.renderScript && Editor.renderScript();
+        Editor.markDirty && Editor.markDirty();
+        toast('Restored · ' + sn.name);
+      });
+    },
+    diff: function (i) {
+      var s = Editor.state; var sn = (s._snapshots || [])[i]; if (!sn) return;
+      var a = (sn.lines || []).map(function (l) { return (l.t || '') + ':' + (l.x || ''); });
+      var b = (s.lines || []).map(function (l) { return (l.t || '') + ':' + (l.x || ''); });
+      var rows = [];
+      var ai = 0, bi = 0;
+      var aSet = new Set(a);
+      var bSet = new Set(b);
+      // Simple LCS-style walk
+      while (ai < a.length || bi < b.length) {
+        if (ai < a.length && bi < b.length && a[ai] === b[bi]) { rows.push({ cls: 'same', a: a[ai], b: b[bi] }); ai++; bi++; continue; }
+        if (bi < b.length && !aSet.has(b[bi])) { rows.push({ cls: 'add', b: b[bi] }); bi++; continue; }
+        if (ai < a.length && !bSet.has(a[ai])) { rows.push({ cls: 'del', a: a[ai] }); ai++; continue; }
+        // Modified
+        rows.push({ cls: 'mod', a: a[ai] || '', b: b[bi] || '' });
+        if (ai < a.length) ai++; if (bi < b.length) bi++;
+      }
+      var adds = rows.filter(function (r) { return r.cls === 'add'; }).length;
+      var dels = rows.filter(function (r) { return r.cls === 'del'; }).length;
+      var mods = rows.filter(function (r) { return r.cls === 'mod'; }).length;
+      var html = '<div class="sh-modal__label">' + sn.name + ' → Current · <span style="color:var(--mint);">+' + adds + '</span> · <span style="color:var(--rose);">-' + dels + '</span> · ' + mods + ' changed</div>' +
+        '<div style="font-family:var(--f-mono);font-size:11px;line-height:1.55;max-height:60vh;overflow:auto;border:1px solid var(--edge);border-radius:8px;padding:8px;">' +
+          rows.map(function (r) {
+            if (r.cls === 'same') return '<div style="color:var(--fg-45);">  ' + clean((r.a || '').slice(0, 120)) + '</div>';
+            if (r.cls === 'add')  return '<div style="color:var(--mint);background:rgba(23,255,197,0.08);padding:1px 4px;border-radius:4px;">+ ' + clean((r.b || '').slice(0, 120)) + '</div>';
+            if (r.cls === 'del')  return '<div style="color:var(--rose);background:rgba(255,122,168,0.08);padding:1px 4px;border-radius:4px;">- ' + clean((r.a || '').slice(0, 120)) + '</div>';
+            return '<div style="color:var(--amber);background:rgba(247,184,107,0.08);padding:1px 4px;border-radius:4px;">~ ' + clean((r.a || '').slice(0, 60)) + ' → ' + clean((r.b || '').slice(0, 60)) + '</div>';
+          }).join('') +
+        '</div>';
+      AH.Modal.open('Compare · ' + sn.name, html, { size: 'lg' });
+    },
+
+    // -- Format validator ----------------------------------------------------
+    validateFormat: function () {
+      var s = Editor.state;
+      var issues = [];
+      var prev = null;
+      (s.lines || []).forEach(function (l, i) {
+        if (l.t === 'scene') {
+          var x = (l.x || '').trim();
+          if (x && !/^(INT\.|EXT\.|INT\/EXT\.|I\/E\.|EST\.)/i.test(x)) issues.push('Line ' + i + ' · scene heading missing INT./EXT. prefix: ' + x.slice(0, 60));
+          if (x && !/-\s*(DAY|NIGHT|MORNING|EVENING|CONTINUOUS|LATER|DUSK|DAWN)\s*$/i.test(x)) issues.push('Line ' + i + ' · scene heading missing time of day: ' + x.slice(0, 60));
+        }
+        if (l.t === 'dial' && prev && prev.t !== 'char' && prev.t !== 'paren' && prev.t !== 'dial') {
+          issues.push('Line ' + i + ' · dialogue not preceded by a character cue.');
+        }
+        if (l.t === 'paren') {
+          if (!/^\(.+\)$/.test('(' + (l.x || '') + ')')) issues.push('Line ' + i + ' · parenthetical missing wrap.');
+        }
+        if (l.t === 'char') {
+          var c = (l.x || '').trim();
+          if (c !== c.toUpperCase()) issues.push('Line ' + i + ' · character cue should be UPPERCASE: ' + c);
+        }
+        prev = l;
+      });
+      var html = issues.length
+        ? '<div class="sh-modal__label" style="color:var(--amber);">' + issues.length + ' formatting issue(s)</div><ul style="margin-left:18px;line-height:1.7;font-size:12.5px;max-height:60vh;overflow:auto;">' + issues.map(function (s) { return '<li>' + clean(s) + '</li>'; }).join('') + '</ul>'
+        : '<div style="color:var(--mint);font-weight:700;letter-spacing:0.12em;">✓ FORMAT CLEAN</div><div style="color:var(--fg-60);margin-top:8px;font-size:12px;">Industry-standard screenplay format checks passed.</div>';
+      AH.Modal.open('Format Validator', html, { size: 'md', footer: '<button class="btn btn--primary" onclick="AH.Modal.close()">OK</button>' });
+    },
+
+    // -- Rename character globally -------------------------------------------
+    renameCharacter: function () {
+      var s = Editor.state;
+      var chars = Array.from(new Set((s.lines || []).filter(function (l) { return l.t === 'char'; }).map(function (l) { return (l.x || '').replace(/\s*\(.*\)/g, '').trim().toUpperCase(); }))).filter(Boolean);
+      if (!chars.length) { toast('No characters in script', 'warn'); return; }
+      AH.Modal.open('Rename Character',
+        '<div class="sh-field"><label>From</label><select id="rc-from">' + chars.map(function (c) { return '<option>' + clean(c) + '</option>'; }).join('') + '</select></div>' +
+        '<div class="sh-field"><label>To</label><input id="rc-to" placeholder="NEW NAME"/></div>', {
+          size: 'md',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="rc-go">RENAME</button>',
+          onMount: function () {
+            $('#rc-go').onclick = function () {
+              var from = $('#rc-from').value; var to = ($('#rc-to').value || '').trim().toUpperCase();
+              if (!to) { toast('Enter a new name', 'warn'); return; }
+              var count = 0;
+              (s.lines || []).forEach(function (l) {
+                if (l.t === 'char') {
+                  var base = (l.x || '').replace(/\s*(\(.*\))/g, '').trim().toUpperCase();
+                  if (base === from) { l.x = l.x.replace(base, to); count++; }
+                }
+              });
+              // Update voices map and any stored character colors
+              if (s.voices && s.voices[from]) { s.voices[to] = s.voices[from]; delete s.voices[from]; }
+              Editor.pushHistory && Editor.pushHistory();
+              Editor.renderScript && Editor.renderScript();
+              Editor.markDirty && Editor.markDirty();
+              AH.Modal.close();
+              toast('Renamed · ' + from + ' → ' + to + ' · ' + count + ' cues updated');
+            };
+          }
+        });
+    },
+
+    // -- Scene navigator dropdown -------------------------------------------
+    openSceneNav: function () {
+      var s = Editor.state;
+      var scenes = (s.lines || []).map(function (l, i) { return { i: i, t: l.t, x: l.x }; }).filter(function (l) { return l.t === 'scene'; });
+      AH.Modal.open('Jump to Scene · ' + scenes.length,
+        '<div class="sh-field"><input id="sn-q" placeholder="Search scene headings…" autofocus/></div>' +
+        '<div id="sn-list" style="max-height:60vh;overflow:auto;">' +
+          scenes.map(function (sc, idx) {
+            return '<div data-idx="' + sc.i + '" class="sn-row" style="padding:8px 10px;border-radius:8px;cursor:pointer;font-family:var(--f-mono);font-size:12px;display:flex;gap:10px;">' +
+              '<span style="color:var(--fg-45);min-width:32px;">' + (idx + 1) + '.</span><span>' + clean(sc.x || 'UNTITLED') + '</span></div>';
+          }).join('') +
+        '</div>', {
+          size: 'md',
+          onMount: function () {
+            var q = $('#sn-q');
+            on(q, 'input', function () {
+              var v = q.value.toLowerCase();
+              $$('#sn-list .sn-row').forEach(function (r) { r.style.display = r.textContent.toLowerCase().indexOf(v) >= 0 ? '' : 'none'; });
+            });
+            $$('#sn-list .sn-row').forEach(function (r) {
+              on(r, 'click', function () { AH.Modal.close(); Editor.scrollToLine && Editor.scrollToLine(+r.getAttribute('data-idx')); });
+            });
+          }
+        });
+    },
+
+    // -- TTS read-along with line highlighting -------------------------------
+    playTTSRead: function () {
+      if (!window.speechSynthesis) { toast('Speech synthesis unavailable', 'warn'); return; }
+      window.speechSynthesis.cancel();
+      var s = Editor.state;
+      var voices = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
+      s.lines.forEach(function (l, i) {
+        if (l.t !== 'dial' && l.t !== 'action') return;
+        var u = new SpeechSynthesisUtterance(l.x || '');
+        if (l.t === 'dial') {
+          for (var j = i - 1; j >= 0; j--) {
+            if (s.lines[j].t === 'char') {
+              var cname = (s.lines[j].x || '').replace(/\(.+?\)/g, '').trim();
+              var vi = s.voices && s.voices[cname];
+              if (vi != null && voices[vi]) u.voice = voices[vi];
+              break;
+            }
+          }
+        }
+        u.onstart = function () {
+          // Highlight current line
+          $$('.se-line-row').forEach(function (r) { r.classList.remove('is-tts'); });
+          var row = document.querySelector('.se-line-row[data-idx="' + i + '"]');
+          if (row) { row.classList.add('is-tts'); row.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        };
+        u.onend = function () { var row = document.querySelector('.se-line-row[data-idx="' + i + '"]'); if (row) row.classList.remove('is-tts'); };
+        window.speechSynthesis.speak(u);
+      });
+      toast('Reading script · ' + s.lines.filter(function (l) { return l.t === 'dial' || l.t === 'action'; }).length + ' lines');
+    }
+  };
+  AH.EditorX = EditorX;
+
   // ═══════════════════════ Editor keyboard bindings ═════════════════════
   document.addEventListener('keydown', function (e) {
     if (AH.Router.current !== 'script-editor') return;
@@ -6147,6 +6640,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     if (e.target.matches && e.target.matches('input, textarea') && !e.target.closest('.se-line')) return;
     if (isCmd && (e.key === 's' || e.key === 'S')) { e.preventDefault(); Editor.save(); return; }
     if (isCmd && (e.key === 'f' || e.key === 'F')) { e.preventDefault(); Editor.openSearch(); return; }
+    if (isCmd && (e.key === 'p' || e.key === 'P')) { e.preventDefault(); EditorX.openSceneNav(); return; }
+    if (isCmd && e.shiftKey && (e.key === 'f' || e.key === 'F')) { e.preventDefault(); EditorX.toggleFocus(); return; }
     if (isCmd && (e.key === 'z' || e.key === 'Z') && !e.shiftKey) { e.preventDefault(); Editor.undo(); return; }
     if (isCmd && ((e.key === 'z' || e.key === 'Z') && e.shiftKey || e.key === 'y' || e.key === 'Y')) { e.preventDefault(); Editor.redo(); return; }
     if (!isCmd && !e.target.isContentEditable) {
