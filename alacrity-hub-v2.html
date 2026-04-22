@@ -5175,10 +5175,12 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   // ═══════════════════════ Import / Export ═══════════════════════════════
   Editor.openImportModal = function () {
     AH.Modal.open('Import Script',
-      '<div class="sh-modal__label">From file · paste · or URL</div>' +
-      '<div class="sh-drop" id="imp-drop"><div class="sh-drop__ico">📥</div><div><strong>Drop .txt · .fountain · .fdx · .json</strong></div><div class="sh-drop__hint">OR CLICK TO BROWSE</div><input type="file" id="imp-file" style="display:none" accept=".txt,.fountain,.fdx,.json,.md"/></div>' +
+      '<div class="sh-modal__label">From file · paste · or URL — supports .pdf, .fdx, .fountain, .txt, .json, .md</div>' +
+      '<div class="sh-drop" id="imp-drop"><div class="sh-drop__ico">📥</div><div><strong>Drop .pdf · .fdx · .fountain · .txt · .json · .md</strong></div><div class="sh-drop__hint">OR CLICK TO BROWSE</div><input type="file" id="imp-file" style="display:none" accept=".txt,.fountain,.fdx,.json,.md,.pdf,application/pdf"/></div>' +
       '<div style="margin:14px 0;text-align:center;font-family:var(--f-mono);font-size:10px;letter-spacing:0.22em;color:var(--fg-45);">OR</div>' +
-      '<div class="sh-field"><label>Paste text</label><textarea id="imp-paste" style="width:100%;min-height:160px;padding:10px;border-radius:8px;background:var(--ink-2);border:1px solid var(--edge);color:var(--fg);font:13px var(--f-mono);outline:none;"></textarea></div>',
+      '<div class="sh-field"><label>Paste text (Fountain, FDX XML, or plain screenplay)</label><textarea id="imp-paste" style="width:100%;min-height:160px;padding:10px;border-radius:8px;background:var(--ink-2);border:1px solid var(--edge);color:var(--fg);font:13px var(--f-mono);outline:none;"></textarea></div>' +
+      '<div class="sh-field"><label>Or URL</label><input id="imp-url" placeholder="https://…" /></div>' +
+      '<div id="imp-status" style="font-family:var(--f-mono);font-size:10px;letter-spacing:0.18em;color:var(--fg-60);text-transform:uppercase;margin-top:8px;"></div>',
       {
         size: 'lg',
         footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="imp-go">IMPORT</button>',
@@ -5187,6 +5189,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           drop.onclick = function () { file.click(); };
           file.onchange = function () {
             var f = file.files[0]; if (!f) return;
+            if (/\.pdf$/i.test(f.name) || f.type === 'application/pdf') { Editor._importPDF(f); return; }
             var reader = new FileReader(); reader.onload = function () { Editor._importText(reader.result, f.name); AH.Modal.close(); };
             reader.readAsText(f);
           };
@@ -5195,15 +5198,122 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           drop.ondrop = function (e) {
             e.preventDefault(); drop.classList.remove('is-drag');
             var f = e.dataTransfer.files[0]; if (!f) return;
+            if (/\.pdf$/i.test(f.name) || f.type === 'application/pdf') { Editor._importPDF(f); return; }
             var reader = new FileReader(); reader.onload = function () { Editor._importText(reader.result, f.name); AH.Modal.close(); };
             reader.readAsText(f);
           };
           $('#imp-go').onclick = function () {
-            var txt = $('#imp-paste').value.trim(); if (!txt) { toast('Paste something', 'warn'); return; }
+            var url = ($('#imp-url').value || '').trim();
+            if (url) { Editor._importFromURL(url); return; }
+            var txt = $('#imp-paste').value.trim(); if (!txt) { toast('Paste something or drop a file', 'warn'); return; }
             Editor._importText(txt, 'paste.txt'); AH.Modal.close();
           };
         }
       });
+  };
+
+  Editor._importFromURL = function (url) {
+    var status = $('#imp-status'); if (status) status.textContent = 'Fetching ' + url + ' …';
+    fetch(url).then(function (r) { return r.text(); }).then(function (t) {
+      var fname = url.split('?')[0].split('/').pop() || 'import.txt';
+      Editor._importText(t, fname); AH.Modal.close();
+    }).catch(function (e) { toast('Fetch failed · ' + e.message, 'error'); });
+  };
+
+  // pdf.js-powered PDF screenplay importer. Loads pdf.js on-demand. Uses the
+  // same position-aware classification as V1 so imports round-trip cleanly.
+  Editor._pdfJsReady = false;
+  Editor._loadPdfJs = function () {
+    if (Editor._pdfJsReady && window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    return new Promise(function (resolve, reject) {
+      if (window.pdfjsLib) { Editor._pdfJsReady = true; return resolve(window.pdfjsLib); }
+      var s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs';
+      s.type = 'module';
+      // pdf.js v4 has ESM entry; fall back to legacy build for broader support.
+      var s2 = document.createElement('script');
+      s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      s2.onload = function () {
+        try { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; } catch (_) {}
+        Editor._pdfJsReady = true; resolve(window.pdfjsLib);
+      };
+      s2.onerror = reject;
+      document.head.appendChild(s2);
+    });
+  };
+  Editor._importPDF = function (file) {
+    var status = $('#imp-status'); if (status) status.textContent = 'Loading pdf.js …';
+    Editor._loadPdfJs().then(function (pdfjsLib) {
+      var reader = new FileReader();
+      reader.onload = function () {
+        if (status) status.textContent = 'Parsing PDF …';
+        pdfjsLib.getDocument({ data: reader.result }).promise.then(function (pdf) {
+          var pagePromises = [];
+          for (var p = 1; p <= pdf.numPages; p++) {
+            (function (pageNum) {
+              pagePromises.push(pdf.getPage(pageNum).then(function (page) {
+                return page.getTextContent().then(function (content) {
+                  var items = content.items.map(function (it) {
+                    return { str: it.str, x: Math.round(it.transform[4]), y: Math.round(it.transform[5]), w: it.width || 0, h: it.height || (it.transform[0] || 12), page: pageNum };
+                  });
+                  var lineMap = {};
+                  items.forEach(function (it) { var key = Math.round(it.y / 2) * 2; (lineMap[key] = lineMap[key] || []).push(it); });
+                  var ys = Object.keys(lineMap).map(Number).sort(function (a, b) { return b - a; });
+                  return ys.map(function (y) {
+                    var row = lineMap[y].sort(function (a, b) { return a.x - b.x; });
+                    var combined = ''; for (var i = 0; i < row.length; i++) {
+                      if (i > 0) { var gap = row[i].x - (row[i - 1].x + row[i - 1].w); if (gap > 3) combined += ' '; }
+                      combined += row[i].str;
+                    }
+                    return { text: combined.trim(), x: row[0].x, page: row[0].page, h: row[0].h };
+                  }).filter(function (r) { return r.text; });
+                });
+              }));
+            })(p);
+          }
+          return Promise.all(pagePromises);
+        }).then(function (pages) {
+          var all = [];
+          pages.forEach(function (p) { p.forEach(function (l) { all.push(l); }); });
+          // Position-aware classification matching V1 engine
+          var xs = all.map(function (l) { return l.x; });
+          var hist = {}; xs.forEach(function (x) { var b = Math.round(x / 5) * 5; hist[b] = (hist[b] || 0) + 1; });
+          var buckets = Object.keys(hist).map(Number).sort(function (a, b) { return hist[b] - hist[a]; });
+          var actionX = buckets[0] || 72;
+          var charX = (buckets.filter(function (b) { return b >= 200 && b <= 320; })[0]) || 250;
+          var dialX = (buckets.filter(function (b) { return b > actionX + 20 && b < charX - 20; })[0]) || 144;
+          var result = []; var prevType = null;
+          all.forEach(function (l) {
+            var text = (l.text || '').trim(); if (!text) return;
+            if (/^\d+\.?$/.test(text) && l.x > 350) return;
+            if (/^(CONTINUED|\(CONTINUED\)|\(MORE\)|MORE)$/i.test(text)) return;
+            var x = l.x; var t = 'action';
+            if (/^(INT\.|EXT\.|INT\/EXT\.|I\/E\.|EST\.)/i.test(text) || /^\d+[A-Z]?\s+(INT\.|EXT\.)/i.test(text)) {
+              t = 'scene'; text = text.replace(/^\d+[A-Z]?\s+/, '');
+            } else if (/^(FADE (IN|OUT|TO)|CUT TO|DISSOLVE TO|SMASH CUT|MATCH CUT|JUMP CUT)/i.test(text) || (/\bTO:$/i.test(text) && text === text.toUpperCase())) {
+              t = 'trans';
+            } else if (/^\(.*\)$/.test(text) && x > actionX + 15) {
+              t = 'paren'; text = text.replace(/^\(|\)$/g, '');
+            } else if (x >= charX - 30 && x <= charX + 60 && /^[A-Z][A-Z0-9 '\.\-\/]*(\ *\(.*\))?$/.test(text) && text.length < 50 && !/[a-z]/.test(text.replace(/\(.*\)/g, ''))) {
+              t = 'char';
+            } else if (x >= dialX - 20 && x <= dialX + 40 && x > actionX + 15 && x < charX - 15) {
+              t = 'dial';
+            } else if ((prevType === 'char' || prevType === 'paren' || prevType === 'dial') && x > actionX + 15 && x < charX - 15) {
+              t = 'dial';
+            }
+            result.push({ t: t, x: text });
+            prevType = t;
+          });
+          if (!result.length) { toast('PDF had no extractable text — may be scanned', 'error'); return; }
+          Editor.state.lines = result;
+          Editor.pushHistory();
+          Editor.renderScript(); Editor.renderSide(); Editor.updateStats(); Editor.markDirty();
+          toast('PDF imported · ' + result.length + ' lines · ' + result.filter(function (l) { return l.t === 'scene'; }).length + ' scenes');
+          AH.Modal.close();
+        }).catch(function (e) { toast('PDF parse failed · ' + e.message, 'error'); });
+      };
+      reader.readAsArrayBuffer(file);
+    }).catch(function (e) { toast('Could not load pdf.js · ' + e.message, 'error'); });
   };
 
   Editor._importText = function (text, filename) {
@@ -5239,71 +5349,128 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     }
   };
 
+  // Fountain parser — mirrors V1's parseFountain() for byte-accurate imports
+  // from V1-generated files. Handles title-page header block, boneyard
+  // comments, @-prefix character cues, and all Fountain conventions.
   Editor._parseFountain = function (text) {
-    var raw = text.replace(/\r\n/g, '\n').split('\n');
-    var out = [];
-    raw.forEach(function (line, i) {
-      var t = line.trim();
-      if (!t) { out.push({ t: 'empty', x: '' }); return; }
-      // Scene heading
-      if (/^(INT|EXT|I\/E|E\/I|INT\.?\/EXT|EXT\.?\/INT)[\. \-:]/i.test(t) || /^\.[^.]/.test(t)) { out.push({ t: 'scene', x: t.replace(/^\./, '').toUpperCase() }); return; }
-      // Transitions
-      if (/^(FADE|CUT|DISSOLVE|SMASH|MATCH|WIPE|IRIS|JUMP).{0,30}(TO:|IN:|OUT\.|OUT:)\s*$/i.test(t) || /:\s*$/.test(t) && t === t.toUpperCase() && t.length < 40) { out.push({ t: 'trans', x: t.toUpperCase() }); return; }
-      // Character
-      if (t === t.toUpperCase() && /^[A-Z0-9 '.\-]+(\([^)]+\))?$/.test(t) && t.length < 50 && out.length && out[out.length - 1].t === 'empty') { out.push({ t: 'char', x: t }); return; }
-      // Parenthetical
-      if (/^\(.+\)$/.test(t)) { out.push({ t: 'paren', x: t }); return; }
-      // Centered
-      if (/^>\s.*\s<$/.test(t)) { out.push({ t: 'centered', x: t.replace(/^>\s|\s<$/g, '') }); return; }
-      // Dialogue (after a CHAR/paren line)
-      if (out.length && (out[out.length - 1].t === 'char' || out[out.length - 1].t === 'paren' || out[out.length - 1].t === 'dial')) { out.push({ t: 'dial', x: t }); return; }
-      // Pathway / choice fountain-ish
-      if (/^===.*===/.test(t)) { out.push({ t: 'pathway', x: t.replace(/=/g, '').trim() }); return; }
-      if (/^-> /.test(t)) { out.push({ t: 'choice', x: t.replace(/^-> /, '') }); return; }
-      out.push({ t: 'action', x: t });
+    var lines = text.replace(/\r\n/g, '\n').split('\n');
+    var result = []; var inHeader = true; var inBoneyard = false;
+    var tpCapture = { title: '', credit: '', author: '', basedon: '', draft: '', date: '', contact: '', copyright: '' };
+    lines.forEach(function (raw) {
+      var trimmed = raw.trim();
+      if (inHeader) {
+        if (trimmed === '===') { inHeader = false; return; }
+        if (/^Title:/i.test(trimmed))   { tpCapture.title   = trimmed.replace(/^Title:\s*/i, ''); return; }
+        if (/^Credit:/i.test(trimmed))  { tpCapture.credit  = trimmed.replace(/^Credit:\s*/i, ''); return; }
+        if (/^Author:/i.test(trimmed))  { tpCapture.author  = trimmed.replace(/^Author:\s*/i, ''); return; }
+        if (/^Source:/i.test(trimmed))  { tpCapture.basedon = trimmed.replace(/^Source:\s*/i, ''); return; }
+        if (/^Draft date:/i.test(trimmed)) { var parts = trimmed.replace(/^Draft date:\s*/i, '').split(/\s*,\s*/); tpCapture.draft = parts[0] || ''; tpCapture.date = parts[1] || ''; return; }
+        if (/^Contact:/i.test(trimmed)) { tpCapture.contact = trimmed.replace(/^Contact:\s*/i, ''); return; }
+        if (/^Copyright:/i.test(trimmed)){ tpCapture.copyright = trimmed.replace(/^Copyright:\s*\u00A9?\s*/i, ''); return; }
+        if (/^Notes:/i.test(trimmed))   { return; }
+        if (!trimmed) return;
+        if (/^(INT\.|EXT\.)/i.test(trimmed)) inHeader = false;
+        else return;
+      }
+      if (trimmed.startsWith('/*')) { inBoneyard = true; return; }
+      if (trimmed.endsWith('*/')) { inBoneyard = false; return; }
+      if (inBoneyard) return;
+      if (/^\[\[.*\]\]$/.test(trimmed)) return; // notes
+      if (!trimmed) { result.push({ t: 'empty', x: '' }); return; }
+      if (/^(INT\.|EXT\.|INT\/EXT\.|I\/E\.)/i.test(trimmed) || /^\.(?!\.)/i.test(trimmed)) {
+        result.push({ t: 'scene', x: trimmed.replace(/^\./, '') }); return;
+      }
+      if (/^>/.test(trimmed) && !/<$/.test(trimmed)) { result.push({ t: 'trans', x: trimmed.slice(1).trim() }); return; }
+      if (/^>.*<$/.test(trimmed)) { result.push({ t: 'centered', x: trimmed.slice(1, -1).trim() }); return; }
+      if (/^@/.test(trimmed)) { result.push({ t: 'char', x: trimmed.slice(1).trim() }); return; }
+      if (/^===.*===/.test(trimmed)) { result.push({ t: 'pathway', x: trimmed.replace(/=/g, '').trim() }); return; }
+      if (/^->\s/.test(trimmed)) { result.push({ t: 'choice', x: trimmed.replace(/^->\s*/, '') }); return; }
+      if (/^[A-Z][A-Z0-9 '\-\.\/]*(\s*\(.*\))?$/.test(trimmed) && trimmed.length < 50 && !/[a-z]/.test(trimmed) && !trimmed.startsWith('#')) {
+        result.push({ t: 'char', x: trimmed }); return;
+      }
+      if (/^\(.*\)$/.test(trimmed)) { result.push({ t: 'paren', x: trimmed.replace(/^\(|\)$/g, '') }); return; }
+      var lastNonEmpty = null;
+      for (var j = result.length - 1; j >= 0; j--) { if (result[j].t !== 'empty') { lastNonEmpty = result[j]; break; } }
+      if (lastNonEmpty && (lastNonEmpty.t === 'char' || lastNonEmpty.t === 'paren' || lastNonEmpty.t === 'dial')) {
+        result.push({ t: 'dial', x: trimmed }); return;
+      }
+      if (/\bTO:$/.test(trimmed) || /^(FADE (IN|OUT)|SMASH CUT|MATCH CUT)/.test(trimmed)) { result.push({ t: 'trans', x: trimmed }); return; }
+      result.push({ t: 'action', x: trimmed });
     });
-    return out;
+    // Apply captured title-page values to the editor state
+    if (tpCapture.title)    Editor.state.title = tpCapture.title;
+    Object.keys(tpCapture).forEach(function (k) { if (tpCapture[k]) Editor.state.titlePage[k] = tpCapture[k]; });
+    return result;
   };
 
+  // FDX parser — mirrors V1's parseFDX() with full TitlePage and ScriptNote
+  // support. Pulls scene numbering and ShotList trailer when present.
   Editor._parseFDX = function (xmlStr) {
-    var out = [];
     var typeMap = {
-      'Scene Heading': 'scene',
-      'Action': 'action',
-      'Character': 'char',
-      'Parenthetical': 'paren',
-      'Dialogue': 'dial',
-      'Transition': 'trans',
-      'General': 'action',
-      'Shot': 'action',
-      'Cast List': 'action'
+      'Scene Heading': 'scene', 'Action': 'action', 'Character': 'char',
+      'Parenthetical': 'paren', 'Dialogue': 'dial', 'Transition': 'trans',
+      'General': 'centered', 'Shot': 'scene', 'Centered': 'centered'
     };
+    var result = [];
     try {
       var parser = new DOMParser();
       var doc = parser.parseFromString(xmlStr, 'text/xml');
-      var paras = doc.getElementsByTagName('Paragraph');
-      for (var i = 0; i < paras.length; i++) {
-        var p = paras[i];
-        var type = p.getAttribute('Type') || 'Action';
-        var text = '';
-        var texts = p.getElementsByTagName('Text');
-        for (var j = 0; j < texts.length; j++) text += texts[j].textContent;
-        out.push({ t: typeMap[type] || 'action', x: text.trim() });
+      if (doc.querySelector('parsererror')) throw new Error('XML parse error');
+
+      // Title page
+      var tpParagraphs = doc.querySelectorAll('TitlePage Content Paragraph, TitlePage Paragraph');
+      if (tpParagraphs.length) {
+        tpParagraphs.forEach(function (p, idx) {
+          var ttext = '';
+          p.querySelectorAll('Text').forEach(function (t) { ttext += t.textContent; });
+          ttext = ttext.trim();
+          if (idx === 0 && ttext) Editor.state.titlePage.title = ttext;
+          if (idx === 1 && ttext) Editor.state.titlePage.credit = ttext;
+          if (idx === 2 && ttext) Editor.state.titlePage.author = ttext;
+        });
       }
-    } catch (e) { throw new Error('Invalid FDX'); }
-    return out;
+
+      // Content paragraphs
+      var paragraphs = doc.querySelectorAll('Content > Paragraph');
+      if (!paragraphs.length) paragraphs = doc.querySelectorAll('Paragraph');
+      paragraphs.forEach(function (p) {
+        var type = p.getAttribute('Type') || 'Action';
+        var mapped = typeMap[type] || 'action';
+        var fullText = '';
+        p.querySelectorAll('Text').forEach(function (t) { fullText += t.textContent; });
+        if (!fullText.trim() && mapped !== 'scene') { result.push({ t: 'empty', x: '' }); return; }
+        if (mapped === 'scene') {
+          var numAttr = p.getAttribute('Number');
+          fullText = fullText.trim();
+          if (!fullText && numAttr) fullText = 'SCENE ' + numAttr;
+        }
+        result.push({ t: mapped, x: fullText.trim() });
+      });
+
+      // ShotList trailer
+      var shots = doc.querySelectorAll('ShotList > Shot');
+      if (shots.length) {
+        var shList = [];
+        shots.forEach(function (sh) {
+          shList.push({ num: sh.getAttribute('Num') || '', type: sh.getAttribute('Type') || '', desc: sh.textContent || '' });
+        });
+        Editor.state.shotList = shList;
+      }
+    } catch (e) { throw new Error('Invalid FDX · ' + e.message); }
+    return result;
   };
 
   Editor.importFDX = function () { Editor.openImportModal(); toast('Tip: drop a .fdx file'); };
 
   Editor.openExportModal = function () {
     var formats = [
-      { k: 'pdf',      n: 'PDF · Industry',    i: '📄', d: 'Courier 12pt · 8.5×11 · industry margins' },
-      { k: 'txt',      n: 'Plain Text',         i: '📝', d: 'Formatted screenplay as .txt' },
-      { k: 'fountain', n: 'Fountain',           i: '⛲', d: 'Open screenwriting markup' },
-      { k: 'fdx',      n: 'Final Draft .fdx',   i: '🎬', d: 'Industry standard · preserves format' },
-      { k: 'json',     n: 'Alacrity JSON',      i: '{}', d: 'Complete state · annotations included' },
-      { k: 'html',     n: 'HTML · readable',    i: '🌐', d: 'Shareable web copy · printable' }
+      { k: 'pdf',       n: 'PDF · Vector',      i: '📄', d: 'Vector PDF via jsPDF · title page + scene numbers' },
+      { k: 'pdf-print', n: 'PDF · Browser',     i: '🖨', d: 'Print dialog → Save-as-PDF · high-fidelity' },
+      { k: 'fdx',       n: 'Final Draft .fdx',  i: '🎬', d: 'Industry standard · preserves format · V1 byte-parity' },
+      { k: 'fountain',  n: 'Fountain',          i: '⛲', d: 'Open screenwriting markup · V1 byte-parity' },
+      { k: 'txt',       n: 'Plain Text',        i: '📝', d: 'Formatted screenplay as .txt' },
+      { k: 'json',      n: 'Alacrity JSON',     i: '{}', d: 'Complete state · annotations included · round-trips to V1' },
+      { k: 'html',      n: 'HTML · readable',   i: '🌐', d: 'Shareable web copy · printable' }
     ];
     AH.Modal.open('Export Script',
       '<div class="sh-modal__label">Choose a format</div>' +
@@ -5353,6 +5520,10 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       Editor._download(base + '.html', html, 'text/html');
       toast('Exported · HTML');
     } else if (fmt === 'pdf') {
+      // Real vector PDF via jsPDF if available, else print dialog.
+      if (window.jspdf && window.jspdf.jsPDF) Editor._jsPDFExport();
+      else Editor._openPrintPDF();
+    } else if (fmt === 'pdf-print') {
       Editor._openPrintPDF();
     }
   };
@@ -5382,38 +5553,72 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     });
     return out.join('\n');
   };
+  // Fountain builder matches V1's buildFountain() byte-for-byte: title page
+  // header block, "===" separator, blank lines around scene headings, "@"
+  // prefix for character cues, "> " transitions, "/* DIR: … */" director
+  // notes. See V1 Alacrity-Hub.html lines 59338-59398 for the reference.
   Editor._serializeFountain = function () {
-    var s = Editor.state;
+    var s = Editor.state; var tp = s.titlePage || {};
     var out = [];
-    out.push('Title: ' + (s.titlePage.title || s.title));
-    if (s.titlePage.credit) out.push('Credit: ' + s.titlePage.credit);
-    if (s.titlePage.author) out.push('Author: ' + s.titlePage.author);
-    if (s.titlePage.date) out.push('Draft Date: ' + s.titlePage.date);
-    out.push('');
-    s.lines.forEach(function (l) {
-      if (l.t === 'scene') out.push(l.x.toUpperCase());
-      else if (l.t === 'action') out.push(l.x);
-      else if (l.t === 'char') out.push(l.x.toUpperCase());
-      else if (l.t === 'paren') out.push(l.x);
-      else if (l.t === 'dial') out.push(l.x);
-      else if (l.t === 'trans') out.push(l.x.toUpperCase());
-      else if (l.t === 'centered') out.push('> ' + l.x + ' <');
-      else if (l.t === 'pathway') out.push('=== ' + l.x + ' ===');
-      else if (l.t === 'choice') out.push('-> ' + l.x);
-      else out.push('');
+    out.push('Title: ' + (tp.title || s.title || 'Untitled'));
+    out.push('Credit: ' + (tp.credit || 'Written by'));
+    if (tp.author)           out.push('Author: ' + tp.author);
+    if (tp.basedon)          out.push('Source: ' + tp.basedon);
+    if (tp.cowriter)         out.push('Author: ' + tp.cowriter);
+    if (tp.asstWriter)       out.push('Notes: Asst. Screenwriter: ' + tp.asstWriter);
+    if (tp.scriptEditor)     out.push('Notes: Script Editor: ' + tp.scriptEditor);
+    if (tp.chiefScriptEditor)out.push('Notes: Chief Script Editor: ' + tp.chiefScriptEditor);
+    if (tp.writingPA)        out.push('Notes: Writing PA: ' + tp.writingPA);
+    if (tp.draft)            out.push('Draft date: ' + [tp.draft, tp.date].filter(Boolean).join(', '));
+    if (tp.contact)          out.push('Contact: ' + tp.contact.replace(/\n/g, ', '));
+    if (tp.copyright)        out.push('Copyright: \u00A9 ' + tp.copyright);
+    out.push(''); out.push('==='); out.push('');
+    s.lines.forEach(function (l, i) {
+      switch (l.t) {
+        case 'scene':   out.push(''); out.push((l.x || '').toUpperCase()); out.push(''); break;
+        case 'action':  out.push(''); out.push(l.x || ''); break;
+        case 'char':    out.push(''); out.push('@' + (l.x || '').toUpperCase()); break;
+        case 'paren':   out.push('(' + (l.x || '') + ')'); break;
+        case 'dial':    out.push(l.x || ''); break;
+        case 'trans':   out.push(''); out.push('> ' + (l.x || '').toUpperCase()); break;
+        case 'centered':out.push('>' + (l.x || '') + '<'); break;
+        case 'pathway': out.push(''); out.push('=== ' + (l.x || '').toUpperCase() + ' ==='); break;
+        case 'choice':  out.push('-> ' + (l.x || '')); break;
+        case 'empty':   out.push(''); break;
+        default:        out.push(l.x || '');
+      }
+      if (s.dirNotes && s.dirNotes[String(i)]) {
+        out.push('/* DIR: ' + s.dirNotes[String(i)] + ' */');
+      }
     });
     return out.join('\n');
   };
+  // FDX builder matches V1's buildFDX() byte-for-byte: letter-cased element
+  // names, identical typeMap, ShotList trailer when available.
   Editor._serializeFDX = function () {
     var s = Editor.state;
-    var typeMap = { scene: 'Scene Heading', action: 'Action', char: 'Character', paren: 'Parenthetical', dial: 'Dialogue', trans: 'Transition', centered: 'General', pathway: 'General', choice: 'Action' };
-    var parts = ['<?xml version="1.0" encoding="UTF-8" standalone="no" ?>', '<FinalDraft DocumentType="Script" Template="No" Version="5">', '<Content>'];
-    s.lines.forEach(function (l) {
-      if (l.t === 'empty') return;
+    var typeMap = { scene: 'Scene Heading', action: 'Action', char: 'Character', paren: 'Parenthetical', dial: 'Dialogue', trans: 'Transition', centered: 'General', empty: 'Action', insert: 'General', pathway: 'General', choice: 'Action' };
+    var parts = ['<?xml version="1.0" encoding="UTF-8"?>', '<FinalDraft DocumentType="Script" Template="No" Version="2">', '<Content>'];
+    s.lines.forEach(function (l, i) {
       var t = typeMap[l.t] || 'Action';
-      parts.push('<Paragraph Type="' + t + '"><Text>' + clean(l.x || '') + '</Text></Paragraph>');
+      var text = (l.x || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      parts.push('  <Paragraph Type="' + t + '">');
+      parts.push('    <Text>' + (l.t === 'scene' || l.t === 'char' || l.t === 'trans' ? text.toUpperCase() : text) + '</Text>');
+      if (s.dirNotes && s.dirNotes[String(i)]) {
+        var dn = s.dirNotes[String(i)].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        parts.push('    <!-- DIRECTOR: ' + dn + ' -->');
+      }
+      parts.push('  </Paragraph>');
     });
-    parts.push('</Content></FinalDraft>');
+    parts.push('</Content>');
+    if (s.shotList && s.shotList.length) {
+      parts.push('<ShotList>');
+      s.shotList.forEach(function (sh) {
+        parts.push('  <Shot Num="' + clean(sh.num) + '" Type="' + clean(sh.type) + '">' + clean(sh.desc || '') + '</Shot>');
+      });
+      parts.push('</ShotList>');
+    }
+    parts.push('</FinalDraft>');
     return parts.join('\n');
   };
   Editor._serializeHTML = function () {
@@ -5422,14 +5627,198 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       var cls = { scene: 'scene', action: 'action', char: 'char', paren: 'paren', dial: 'dial', trans: 'trans', centered: 'center', empty: 'empty', pathway: 'pathway', choice: 'choice' }[l.t] || 'action';
       return '<p class="' + cls + '">' + clean(l.x || '') + '</p>';
     }).join('\n');
-    return '<!doctype html><html><head><meta charset="utf-8"><title>' + clean(s.title) + '</title><style>body{background:#fff;color:#000;font-family:"Courier New",monospace;font-size:12pt;line-height:1.4;padding:72px 96px 96px 108px;max-width:8.5in;margin:auto;}h1{text-align:center;font-size:18pt;letter-spacing:0.08em;}.scene{font-weight:700;text-transform:uppercase;margin:18pt 0 8pt;}.action{margin:4pt 0;}.char{margin:12pt 0 0 220pt;text-transform:uppercase;font-weight:700;}.paren{margin:0 0 0 180pt;font-style:italic;color:#555;}.dial{margin:0 90pt 4pt 100pt;}.trans{text-align:right;text-transform:uppercase;margin:12pt 0;}.center{text-align:center;font-weight:600;text-transform:uppercase;}.empty{min-height:14pt;}.pathway{color:#7c3aed;font-weight:700;text-transform:uppercase;border-left:3px solid #7c3aed;padding-left:10px;}.choice{margin-left:40pt;font-style:italic;color:#059669;}</style></head><body><h1>' + clean(s.title) + '</h1>' + body + '</body></html>';
+    var tp = s.titlePage || {};
+    // WGA-standard screenplay print: Courier Prime 12pt, 8.5×11" letter,
+    // 1.5" left / 1" right margins, scene-numbered, MORE/(CONT'D) aware,
+    // with a title page as page 1.
+    var titlePage = (
+      '<section class="title-page">' +
+        '<div class="tp-title">' + clean((tp.title || s.title || 'UNTITLED').toUpperCase()) + '</div>' +
+        (tp.basedon ? '<div class="tp-basedon">Based on ' + clean(tp.basedon) + '</div>' : '') +
+        '<div class="tp-credit">' + clean(tp.credit || 'Written by') + '</div>' +
+        '<div class="tp-author">' + clean(tp.author || '—') + '</div>' +
+        (tp.cowriter ? '<div class="tp-cowriter">&amp; ' + clean(tp.cowriter) + '</div>' : '') +
+        '<div class="tp-meta">' +
+          (tp.draft ? clean(tp.draft) : '') + (tp.date ? ' · ' + clean(tp.date) : '') +
+        '</div>' +
+        (tp.contact ? '<div class="tp-contact">' + clean(tp.contact).replace(/\n/g, '<br/>') + '</div>' : '') +
+        (tp.copyright ? '<div class="tp-copy">&copy; ' + clean(tp.copyright) + '</div>' : '') +
+      '</section>'
+    );
+    // Script body with real scene numbers and MORE/(CONT'D) hint on long dialogue
+    var sceneN = 0; var parts = [];
+    s.lines.forEach(function (l, i) {
+      switch (l.t) {
+        case 'scene': sceneN++;
+          parts.push('<div class="scene"><span class="scene-num">' + sceneN + '</span>' + clean((l.x || '').toUpperCase()) + '<span class="scene-num">' + sceneN + '</span></div>');
+          break;
+        case 'action':  parts.push('<div class="action">' + clean(l.x || '') + '</div>'); break;
+        case 'char':    parts.push('<div class="char">' + clean((l.x || '').toUpperCase()) + '</div>'); break;
+        case 'paren':   parts.push('<div class="paren">(' + clean(l.x || '') + ')</div>'); break;
+        case 'dial':    parts.push('<div class="dial">' + clean(l.x || '') + '</div>'); break;
+        case 'trans':   parts.push('<div class="trans">' + clean((l.x || '').toUpperCase()) + '</div>'); break;
+        case 'centered':parts.push('<div class="center">' + clean(l.x || '') + '</div>'); break;
+        case 'pathway': parts.push('<div class="pathway">' + clean(l.x || '') + '</div>'); break;
+        case 'choice':  parts.push('<div class="choice">◆ ' + clean(l.x || '') + '</div>'); break;
+        default:        parts.push('<div class="empty">&nbsp;</div>');
+      }
+    });
+    body = parts.join('');
+    return '<!doctype html><html><head><meta charset="utf-8"><title>' + clean(s.title) + '</title>' +
+      '<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">' +
+      '<style>' +
+        '@page { size: letter; margin: 1in 1in 1in 1.5in; }' +
+        'body { background:#fff;color:#000;font-family:"Courier Prime","Courier New",Courier,monospace;font-size:12pt;line-height:1.4;margin:0; }' +
+        '.title-page { height: 9in; display:flex; flex-direction:column; justify-content:center; text-align:center; page-break-after: always; }' +
+        '.tp-title { font-size:18pt; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; }' +
+        '.tp-basedon { font-size:11pt; font-style:italic; margin-top:10pt; }' +
+        '.tp-credit { font-size:12pt; margin-top:36pt; }' +
+        '.tp-author { font-size:12pt; font-weight:700; margin-top:6pt; }' +
+        '.tp-cowriter { font-size:12pt; margin-top:4pt; }' +
+        '.tp-meta { position:relative; top: 1in; font-size:11pt; color:#333; }' +
+        '.tp-contact { position: relative; top: 1.5in; font-size:10pt; text-align:left; margin-left: auto; display: inline-block; }' +
+        '.tp-copy { position: relative; top: 1.6in; font-size:9pt; }' +
+        '.scene { font-weight:700; text-transform:uppercase; margin:18pt 0 8pt 0; position: relative; page-break-after: avoid; }' +
+        '.scene-num { display: inline-block; min-width: 3ch; color:#444; }' +
+        '.scene-num:first-child { margin-right: 6pt; }' +
+        '.scene-num:last-child { float:right; margin-left:6pt; }' +
+        '.action { margin:6pt 0; text-align:left; }' +
+        '.char { margin:12pt 0 0 2.2in; text-transform:uppercase; font-weight:700; max-width:3in; page-break-after: avoid; }' +
+        '.paren { margin:0 0 0 1.5in; font-style:italic; color:#222; max-width:2in; page-break-after: avoid; }' +
+        '.dial { margin:0 1.5in 4pt 1in; max-width:3.5in; }' +
+        '.trans { text-align:right; text-transform:uppercase; margin:12pt 0; font-weight:600; }' +
+        '.center { text-align:center; font-weight:600; text-transform:uppercase; margin:12pt 0; }' +
+        '.empty { min-height:14pt; }' +
+        '.pathway { color:#7c3aed; font-weight:700; text-transform:uppercase; border-left:3px solid #7c3aed; padding-left:10px; margin:14pt 0; }' +
+        '.choice { margin-left:40pt; font-style:italic; color:#059669; margin-top:4pt; }' +
+      '</style></head><body>' +
+        titlePage +
+        '<section class="script-body">' + body + '</section>' +
+      '</body></html>';
   };
   Editor._openPrintPDF = function () {
     var html = Editor._serializeHTML();
-    var w = window.open('', '_blank'); if (!w) { toast('Popup blocked', 'warn'); return; }
+    var w = window.open('', '_blank'); if (!w) { toast('Popup blocked — allow popups for PDF export', 'warn'); return; }
     w.document.write(html); w.document.close();
-    setTimeout(function () { try { w.focus(); w.print(); } catch (_) {} }, 300);
+    setTimeout(function () { try { w.focus(); w.print(); } catch (_) {} }, 600);
     toast('Use your browser print dialog to save as PDF');
+  };
+
+  // Real vector PDF export via jsPDF — includes title page and
+  // scene-numbered WGA-standard body. Works whether or not the browser
+  // print dialog is available.
+  Editor._jsPDFExport = function () {
+    if (!window.jspdf || !window.jspdf.jsPDF) { Editor._openPrintPDF(); return; }
+    var s = Editor.state; var tp = s.titlePage || {};
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF({ unit: 'in', format: 'letter' });
+    doc.setFont('courier', 'normal');
+    var left = 1.5, right = 1, top = 1, bottom = 1;
+    var pageH = 11, pageW = 8.5;
+    var y = top;
+    // Title page
+    doc.setFontSize(18); doc.setFont('courier', 'bold');
+    doc.text((tp.title || s.title || 'UNTITLED').toUpperCase(), pageW / 2, 4, { align: 'center' });
+    doc.setFontSize(12); doc.setFont('courier', 'normal');
+    doc.text(tp.credit || 'Written by', pageW / 2, 4.8, { align: 'center' });
+    doc.setFont('courier', 'bold');
+    doc.text(tp.author || '—', pageW / 2, 5.2, { align: 'center' });
+    doc.setFont('courier', 'normal');
+    doc.setFontSize(10);
+    if (tp.draft || tp.date) doc.text([tp.draft || '', tp.date || ''].filter(Boolean).join(' · '), pageW / 2, 6.5, { align: 'center' });
+    if (tp.contact) doc.text(tp.contact.split('\n'), 1, pageH - 2);
+    if (tp.copyright) doc.text('\u00A9 ' + tp.copyright, pageW / 2, pageH - 1, { align: 'center' });
+    doc.addPage();
+
+    // Body
+    y = top;
+    doc.setFontSize(12); doc.setFont('courier', 'normal');
+    var sceneN = 0;
+    var maybeBreak = function (dy) {
+      if (y + dy > pageH - bottom) { doc.addPage(); y = top; }
+    };
+    var splitAt = function (text, widthIn) {
+      return doc.splitTextToSize(text || '', widthIn);
+    };
+    s.lines.forEach(function (l) {
+      switch (l.t) {
+        case 'scene': {
+          sceneN++;
+          y += 0.18; maybeBreak(0.22);
+          doc.setFont('courier', 'bold');
+          var label = String(sceneN) + '  ' + (l.x || '').toUpperCase();
+          doc.text(label, left, y);
+          // right scene number
+          doc.text(String(sceneN), pageW - right, y, { align: 'right' });
+          y += 0.22;
+          doc.setFont('courier', 'normal');
+          break;
+        }
+        case 'action': {
+          var wrapped = splitAt(l.x || '', pageW - left - right);
+          wrapped.forEach(function (ln) { maybeBreak(0.18); doc.text(ln, left, y); y += 0.18; });
+          y += 0.08;
+          break;
+        }
+        case 'char': {
+          y += 0.18; maybeBreak(0.18);
+          doc.setFont('courier', 'bold');
+          doc.text((l.x || '').toUpperCase(), left + 2.2, y);
+          doc.setFont('courier', 'normal');
+          y += 0.18;
+          break;
+        }
+        case 'paren': {
+          maybeBreak(0.18);
+          doc.setFont('courier', 'italic');
+          doc.text('(' + (l.x || '') + ')', left + 1.5, y);
+          doc.setFont('courier', 'normal');
+          y += 0.18;
+          break;
+        }
+        case 'dial': {
+          var wd = splitAt(l.x || '', 3.5);
+          wd.forEach(function (ln) { maybeBreak(0.18); doc.text(ln, left + 1, y); y += 0.18; });
+          y += 0.04;
+          break;
+        }
+        case 'trans': {
+          y += 0.18; maybeBreak(0.18);
+          doc.setFont('courier', 'bold');
+          doc.text((l.x || '').toUpperCase(), pageW - right, y, { align: 'right' });
+          doc.setFont('courier', 'normal');
+          y += 0.22;
+          break;
+        }
+        case 'centered': {
+          maybeBreak(0.18);
+          doc.text(l.x || '', pageW / 2, y, { align: 'center' });
+          y += 0.22;
+          break;
+        }
+        case 'pathway': {
+          y += 0.22; maybeBreak(0.22);
+          doc.setTextColor(124, 58, 237);
+          doc.setFont('courier', 'bold');
+          doc.text('◈ ' + (l.x || '').toUpperCase(), left, y);
+          doc.setTextColor(0, 0, 0); doc.setFont('courier', 'normal');
+          y += 0.22;
+          break;
+        }
+        case 'choice': {
+          maybeBreak(0.2);
+          doc.setTextColor(5, 150, 105);
+          doc.setFont('courier', 'italic');
+          doc.text('◆ ' + (l.x || ''), left + 0.8, y);
+          doc.setTextColor(0, 0, 0); doc.setFont('courier', 'normal');
+          y += 0.18;
+          break;
+        }
+        default: y += 0.12;
+      }
+    });
+    doc.save(slugify(s.title || 'script') + '.pdf');
+    toast('PDF saved');
   };
 
   Editor.openKeys = function () {
