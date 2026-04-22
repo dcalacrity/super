@@ -3164,17 +3164,25 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
         (items.length ? items.map(function(b, i){
           var cats = BREAKDOWN_CATEGORIES.map(function(c){
             var els = (b[c.id]||[]);
-            if (!els.length) return '';
+            var chips = els.map(function(e, ei){
+              return '<span class="chip ' + ({mint:'chip--mint',aqua:'chip--aqua',amber:'chip--amber',rose:'chip--rose',violet:'chip--violet',lime:'chip--lime'}[c.color]||'') + '" style="cursor:pointer;" data-bd-del="' + i + ':' + c.id + ':' + ei + '" title="Remove">' + esc(e) + ' ×</span>';
+            }).join('');
             return '<div style="margin-top:10px;">' +
-              '<div class="stat__lbl" style="margin-bottom:6px;">' + c.icon + ' ' + esc(c.name) + '</div>' +
-              '<div style="display:flex;gap:6px;flex-wrap:wrap;">' + els.map(function(e){ return chipFor(c.color, e); }).join('') + '</div></div>';
+              '<div class="stat__lbl" style="margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">' +
+                '<span>' + c.icon + ' ' + esc(c.name) + '</span>' +
+                '<button class="icon-btn" style="width:22px;height:22px;" data-bd-add="' + i + ':' + c.id + '">' + ICONS.plus + '</button>' +
+              '</div>' +
+              '<div style="display:flex;gap:6px;flex-wrap:wrap;">' + (chips || '<span style="color:var(--fg-45);font-size:11px;">None</span>') + '</div></div>';
           }).join('');
           return '<div class="card">' +
-            '<div class="card-header" style="border-bottom:1px solid var(--edge);padding-bottom:10px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">' +
+            '<div class="card-header" style="border-bottom:1px solid var(--edge);padding-bottom:10px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;">' +
               '<div><div class="card-title">Scene ' + esc(b.scene || (i+1)) + '</div>' +
               '<div class="stat__lbl">' + esc(b.title||'') + '</div></div>' +
-              (b.intext ? chipFor(b.intext==='INT'?'aqua':'amber', b.intext) : '') +
-            '</div>' + (cats || '<div style="color:var(--fg-60);font-size:13px;">No elements tagged yet.</div>') +
+              '<div style="display:flex;gap:6px;align-items:center;">' +
+                (b.intext ? chipFor(b.intext==='INT'?'aqua':'amber', b.intext) : '') +
+                '<button class="icon-btn" style="width:28px;height:28px;" data-del-path="breakdowns" data-del-idx="' + i + '">' + ICONS.trash + '</button>' +
+              '</div>' +
+            '</div>' + cats +
           '</div>';
         }).join('') : emptyState('No breakdowns yet','Create your first breakdown sheet.','<button class="btn btn--primary" data-action="add-breakdown">NEW SHEET ' + ICONS.plus + '</button>')) +
       '</div></div>'
@@ -3589,7 +3597,17 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
         }
       }
     });
-    page.addEventListener('input', function(){ pushSave(); });
+    page.addEventListener('input', function(e){
+      var span = currentSpan();
+      if (span) {
+        var t = (span.className.match(/sx__line--(\w+)/) || [])[1];
+        // If user just typed INT./EXT. auto-tag as scene
+        if (t === 'action' && /^(int|ext|int\/ext|est)\./i.test(span.textContent.trim())) {
+          applyType(span, 'scene');
+        }
+      }
+      pushSave();
+    });
     $$('[data-sx-set-type]').forEach(function(b){
       b.onclick = function(){
         var span = currentSpan();
@@ -4063,6 +4081,27 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
       });
     });
 
+    if (id === 'schedule') {
+      var list = $('#stripboard-list');
+      if (list) {
+        $$('.strip', list).forEach(function(row, i){
+          row.setAttribute('draggable','true');
+          row.addEventListener('dragstart', function(e){ e.dataTransfer.setData('text/plain', String(i)); row.style.opacity = '0.5'; });
+          row.addEventListener('dragend',   function(){ row.style.opacity = '1'; });
+          row.addEventListener('dragover',  function(e){ e.preventDefault(); });
+          row.addEventListener('drop', function(e){
+            e.preventDefault();
+            var src = +e.dataTransfer.getData('text/plain');
+            var tgt = +row.getAttribute('data-strip-idx');
+            if (isNaN(src) || isNaN(tgt) || src === tgt) return;
+            var arr = Core.data.schedule.strips;
+            var moved = arr.splice(src, 1)[0];
+            arr.splice(tgt, 0, moved);
+            Core.save(); rerender();
+          });
+        });
+      }
+    }
     if (id === 'script-editor') setTimeout(wireScriptEditor, 40);
     if (id === 'script-import') wireScriptImport();
     if (id === 'notes') {
@@ -4115,6 +4154,40 @@ html[data-theme="light"] .sx__tool-btn.is-active { color: #fff; }
         var i = +el.getAttribute('data-ms-toggle');
         Core.data.milestones[i].complete = !Core.data.milestones[i].complete;
         Core.save(); rerender();
+      });
+    });
+
+    // Breakdown element remove
+    $$('#workspace [data-bd-del]').forEach(function(el){
+      el.addEventListener('click', function(){
+        var parts = el.getAttribute('data-bd-del').split(':');
+        var sheet = Core.data.breakdowns[+parts[0]];
+        if (!sheet || !sheet[parts[1]]) return;
+        sheet[parts[1]].splice(+parts[2], 1);
+        Core.save(); rerender();
+      });
+    });
+
+    // Breakdown element add
+    $$('#workspace [data-bd-add]').forEach(function(el){
+      el.addEventListener('click', function(){
+        var parts = el.getAttribute('data-bd-add').split(':');
+        var sheetIdx = +parts[0];
+        var catId = parts[1];
+        var cat = BREAKDOWN_CATEGORIES.find(function(c){ return c.id === catId; });
+        openModal('Add ' + (cat ? cat.name : catId) + ' element', (
+          '<div class="form-field"><label class="form-label">Element</label><input class="form-input" id="bd-el" placeholder="e.g. burner phone, rain coat"/></div>'
+        ), function(m, close){
+          $('[data-modal-save]', m).onclick = function(){
+            var v = ($('#bd-el').value || '').trim();
+            if (!v) { close(); return; }
+            var sheet = Core.data.breakdowns[sheetIdx];
+            if (!sheet) return;
+            sheet[catId] = sheet[catId] || [];
+            sheet[catId].push(v);
+            Core.save(); close(); rerender();
+          };
+        });
       });
     });
 
