@@ -6073,7 +6073,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     scs.forEach(function (s) { (byDay[s.day] = byDay[s.day] || []).push(s); });
     var days = Object.keys(byDay).sort();
     return (
-      AH.Views.renderHero(m, { primary: 'EXPORT CALL SHEET', primaryFn: 'AH.Schedule.exportCall()' }) +
+      AH.Views.renderHero(m, { primary: 'EXPORT CALL SHEET', primaryFn: 'AH.Schedule.exportCall()', secondary: 'EXPORT STRIPBOARD PDF', secondaryFn: 'AH.Schedule.exportPDF()' }) +
       '<div class="section">' +
         '<div class="section__head">' +
           '<div><div class="section__title">Stripboard · ' + (getActiveProd().title) + '</div><div class="section__sub">DRAG TO REORDER · CLICK CELLS TO EDIT</div></div>' +
@@ -6178,12 +6178,15 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       scs.forEach(function (s, i) { s.day = 'D' + pad(Math.floor(i / 3) + 1, 2); });
       saveScenes(scs); AH.Router.go('schedule'); toast('Days auto-assigned');
     },
-    exportCall: function () {
+    exportCall: function () { AH.Docs.gen('callSheet'); },
+    exportPDF: function () {
       var scs = loadScenes();
-      var lines = ['CALL SHEET · ' + getActiveProd().title.toUpperCase(), ''];
-      scs.forEach(function (s) { lines.push(s.n + ' · ' + (s.int ? 'INT' : 'EXT') + ' · ' + s.title + ' · ' + s.loc + ' · ' + s.pages + ' pg · ' + s.day); });
-      Editor._download('call-sheet.txt', lines.join('\n'));
-      toast('Call sheet exported');
+      var rows = scs.map(function (s) { return '<tr><td>' + clean(s.n) + '</td><td>' + (s.int ? 'INT' : 'EXT') + '</td><td>' + clean(s.title) + '</td><td>' + clean(s.loc) + '</td><td>' + clean(s.pages) + '</td><td>' + clean(s.day) + '</td></tr>'; }).join('');
+      var body = PDF.header('Stripboard', getActiveProd().title) +
+        PDF.section('Scenes · ' + scs.length, '<table class="pdf-table"><thead><tr><th>#</th><th>Type</th><th>Slug</th><th>Location</th><th>Pages</th><th>Day</th></tr></thead><tbody>' + rows + '</tbody></table>') +
+        PDF.footer();
+      PDF.openDoc(body, 'Stripboard_' + slugify(prodTitle()));
+      toast('Stripboard PDF generated');
     }
   };
 
@@ -6611,21 +6614,72 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       '</div></div>'
     );
   });
+  function loadLedger() {
+    var k = 'ah_led_' + STATE.activeProdId;
+    var d = AH.Storage.local.get(k, null);
+    if (!d) {
+      d = [
+        { id: uid('tx'), date: '2026-04-18', vendor: 'Cinelease',      cat: 'Production', amt: 32100 },
+        { id: uid('tx'), date: '2026-04-17', vendor: 'Arri Rental',    cat: 'Production', amt: 12400 },
+        { id: uid('tx'), date: '2026-04-15', vendor: 'SAG-AFTRA',      cat: 'ATL',        amt: 18200 },
+        { id: uid('tx'), date: '2026-04-14', vendor: 'Catering Co',    cat: 'Production', amt: 2140 },
+        { id: uid('tx'), date: '2026-04-12', vendor: 'Insurance Pool', cat: 'Insurance',  amt: 4500 },
+        { id: uid('tx'), date: '2026-04-10', vendor: 'Post House',     cat: 'Post',       amt: 8000 },
+        { id: uid('tx'), date: '2026-04-08', vendor: 'Talent Agency',  cat: 'ATL',        amt: 24000 },
+        { id: uid('tx'), date: '2026-04-05', vendor: 'Location Hold',  cat: 'Production', amt: 3800 }
+      ];
+      AH.Storage.local.set(k, d);
+    }
+    return d;
+  }
+  function saveLedger(d) { AH.Storage.local.set('ah_led_' + STATE.activeProdId, d); }
   AH.Fin = {
     openLedger: function () {
-      AH.Modal.open('Ledger · Last 20 txns',
-        '<table class="table"><thead><tr><th>Date</th><th>Vendor</th><th>Category</th><th>Amount</th></tr></thead><tbody>' +
-          [
-            ['2026-04-18','Cinelease','Production','$32,100'],
-            ['2026-04-17','Arri Rental','Production','$12,400'],
-            ['2026-04-15','SAG-AFTRA','ATL','$18,200'],
-            ['2026-04-14','Catering Co','Production','$2,140'],
-            ['2026-04-12','Insurance Pool','Insurance','$4,500'],
-            ['2026-04-10','Post House','Post','$8,000'],
-            ['2026-04-08','Talent Agency','ATL','$24,000'],
-            ['2026-04-05','Location Hold','Production','$3,800']
-          ].map(function (r) { return '<tr><td class="num">' + r[0] + '</td><td><strong>' + r[1] + '</strong></td><td><span class="chip">' + r[2] + '</span></td><td class="num">' + r[3] + '</td></tr>'; }).join('') +
+      var L = loadLedger();
+      var fmt = function (n) { return '$' + (n || 0).toLocaleString(); };
+      AH.Modal.open('Ledger · ' + L.length + ' transactions',
+        '<div style="display:flex;gap:6px;margin-bottom:10px;">' +
+          '<button class="btn btn--primary" onclick="AH.Fin.addTx()">+ TRANSACTION</button>' +
+          '<button class="btn btn--ghost" onclick="AH.Fin.exportCSV()">EXPORT CSV</button>' +
+          '<button class="btn btn--ghost" onclick="AH.Fin.exportPDF()">EXPORT PDF</button>' +
+        '</div>' +
+        '<table class="table"><thead><tr><th>Date</th><th>Vendor</th><th>Category</th><th>Amount</th><th></th></tr></thead><tbody id="fin-ledger-body">' +
+          L.map(function (r) {
+            return '<tr><td class="num">' + clean(r.date) + '</td><td><strong>' + clean(r.vendor) + '</strong></td><td><span class="chip">' + clean(r.cat) + '</span></td><td class="num">' + fmt(r.amt) + '</td>' +
+              '<td style="text-align:right;"><button class="btn btn--ghost" onclick="AH.Fin.delTx(\'' + r.id + '\')">×</button></td></tr>';
+          }).join('') +
         '</tbody></table>', { size: 'lg' });
+    },
+    addTx: function () {
+      AH.Modal.close();
+      AH.Modal.prompt('New transaction', 'Date · Vendor · Category · Amount', new Date().toISOString().slice(0,10) + ' · Vendor · Production · 0', function (v) {
+        if (!v) return;
+        var p = v.split(/\s*·\s*/);
+        var d = loadLedger();
+        d.unshift({ id: uid('tx'), date: p[0] || new Date().toISOString().slice(0,10), vendor: p[1] || 'Vendor', cat: p[2] || 'Production', amt: parseFloat((p[3] || '0').replace(/[$,]/g, '')) });
+        saveLedger(d);
+        AH.Fin.openLedger();
+      });
+    },
+    delTx: function (id) { saveLedger(loadLedger().filter(function (r) { return r.id !== id; })); AH.Fin.openLedger(); },
+    exportCSV: function () {
+      var L = loadLedger();
+      var rows = [['date','vendor','category','amount']].concat(L.map(function (r) { return [r.date, r.vendor, r.cat, r.amt]; }));
+      var csv = rows.map(function (row) { return row.map(function (c) { var s = String(c == null ? '' : c); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(','); }).join('\n');
+      Editor._download('ledger_' + slugify(prodTitle()) + '.csv', csv, 'text/csv');
+      toast('Ledger CSV exported');
+    },
+    exportPDF: function () {
+      var L = loadLedger();
+      var fmt = function (n) { return '$' + (n || 0).toLocaleString(); };
+      var total = L.reduce(function (a, r) { return a + (r.amt || 0); }, 0);
+      var rows = L.map(function (r) { return '<tr><td>' + clean(r.date) + '</td><td>' + clean(r.vendor) + '</td><td>' + clean(r.cat) + '</td><td style="text-align:right;">' + fmt(r.amt) + '</td></tr>'; }).join('') +
+        '<tr><td colspan="3" style="text-align:right;font-weight:700;">Total</td><td style="text-align:right;font-weight:700;">' + fmt(total) + '</td></tr>';
+      var body = PDF.header('Ledger · Transactions', getActiveProd().title) +
+        PDF.section('Transactions · ' + L.length, '<table class="pdf-table"><thead><tr><th>Date</th><th>Vendor</th><th>Category</th><th>Amount</th></tr></thead><tbody>' + rows + '</tbody></table>') +
+        PDF.footer();
+      PDF.openDoc(body, 'Ledger_' + slugify(prodTitle()));
+      toast('Ledger PDF generated');
     },
     applyScale: function (k) {
       var sc = BUDGET_SCALES[k];
