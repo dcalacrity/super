@@ -2866,6 +2866,73 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
 
 .dag-zoom-ind { position: absolute; left: 12px; bottom: 12px; padding: 4px 10px; border-radius: 999px; background: var(--glass-2); border: 1px solid var(--edge); font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.14em; color: var(--fg-60); pointer-events: none; }
 
+.dag-search-row {
+  display: flex; gap: 8px; align-items: center;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--glass-1); border: 1px solid var(--edge);
+  margin-bottom: 10px;
+}
+.dag-search-input {
+  flex: 1; height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--ink-2); border: 1px solid var(--edge);
+  color: var(--fg); font-family: var(--f-body); font-size: 12.5px;
+  outline: none;
+}
+.dag-search-input:focus { border-color: var(--mint); box-shadow: 0 0 0 2px rgba(23,255,197,0.14); }
+
+/* Multi-select highlight + faded when query/tag filter */
+.dag-node.is-selected-multi { outline: 2px solid var(--mint); outline-offset: 3px; }
+.dag-node.is-faded { opacity: 0.25; filter: grayscale(0.7); }
+.dag-node__tags { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 3px; }
+.dag-node__tag {
+  font-family: var(--f-mono); font-size: 8.5px; letter-spacing: 0.06em;
+  padding: 1px 5px; border-radius: 4px;
+  background: rgba(167,148,255,0.15); color: var(--violet);
+  border: 1px solid rgba(167,148,255,0.3);
+}
+
+/* Groups */
+.dag-group {
+  position: absolute;
+  border-radius: 12px;
+  border: 2px dashed;
+  background: rgba(255,255,255,0.02);
+  pointer-events: none;
+}
+.dag-group__label {
+  position: absolute; top: -24px; left: 0;
+  font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--fg-60);
+  padding: 2px 8px; border-radius: 6px;
+  background: var(--glass-2); border: 1px solid var(--edge);
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* Context menu */
+.sm-ctx {
+  position: fixed; z-index: 4000;
+  background: var(--glass-2); border: 1px solid var(--edge);
+  border-radius: 10px; padding: 6px;
+  box-shadow: var(--sh-2);
+  min-width: 200px;
+  backdrop-filter: saturate(160%) blur(14px);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+}
+.sm-ctx__item {
+  padding: 7px 12px; border-radius: 6px;
+  font-family: var(--f-body); font-size: 12.5px; color: var(--fg);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.sm-ctx__item:hover { background: rgba(23,255,197,0.1); color: var(--mint); }
+.sm-ctx__item--danger:hover { color: var(--rose); background: rgba(255,122,168,0.1); }
+.sm-ctx__kbd { font-family: var(--f-mono); font-size: 10px; color: var(--fg-45); letter-spacing: 0.12em; }
+.sm-ctx__sep { height: 1px; background: var(--edge); margin: 4px 0; }
+
 /* Dialer keypad */
 .dialer-pad { display: grid; grid-template-columns: repeat(3, 80px); gap: 10px; justify-content: center; margin-top: 18px; }
 .dialer-key {
@@ -9425,7 +9492,15 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         AH.Firebase.pushProductionData(STATE.activeProdId, { storyMap: StoryMap.state, storyMapUpdatedAt: Date.now() });
       }
     },
-    dirty: function () { StoryMap.save(); StoryMap.render(); },
+    // Every mutation flows through here. We snapshot the PRE-current state
+    // into history so undo rolls back one complete user operation.
+    dirty: function () {
+      // Snapshot is taken at the START of each mutation via StoryMapX.snapshot
+      // calls placed in the StoryMapX wrapper functions. Native StoryMap
+      // mutations route through _beforeMutate to also snapshot.
+      StoryMap.save(); StoryMap.render();
+    },
+    _beforeMutate: function () { if (AH.StoryMapX) AH.StoryMapX.snapshot(); },
 
     nodeById: function (id) { return StoryMap.state.nodes.find(function (n) { return n.id === id; }); },
     linkById: function (id) { return StoryMap.state.links.find(function (l) { return l.id === id; }); },
@@ -9435,27 +9510,56 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       var canvas = $('#dag-canvas'); if (!canvas) return;
       var svg = $('#dag-svg'); var view = StoryMap.view;
       canvas.style.transform = 'translate(' + view.tx + 'px,' + view.ty + 'px) scale(' + view.scale + ')';
+      var q  = (AH.StoryMapX ? AH.StoryMapX.getQuery()      : '').toLowerCase();
+      var tf = (AH.StoryMapX ? AH.StoryMapX.getTagFilter()   : '').toLowerCase();
+      var selMultiNodes = (AH.StoryMapX ? AH.StoryMapX.selected.nodes : []) || [];
+      var selMultiLinks = (AH.StoryMapX ? AH.StoryMapX.selected.links : []) || [];
+      var startId = StoryMap.state.startNodeId || '';
+
+      // Group rectangles (drawn under nodes)
+      var groupsHTML = (StoryMap.state.groups || []).map(function (g) {
+        var ms = StoryMap.state.nodes.filter(function (n) { return g.members.indexOf(n.id) >= 0; });
+        if (!ms.length) return '';
+        var minX = Math.min.apply(null, ms.map(function (n) { return n.x; })) - 18;
+        var minY = Math.min.apply(null, ms.map(function (n) { return n.y; })) - 32;
+        var maxX = Math.max.apply(null, ms.map(function (n) { return n.x + 170; })) + 18;
+        var maxY = Math.max.apply(null, ms.map(function (n) { return n.y + 60; })) + 18;
+        return '<div class="dag-group" data-gid="' + g.id + '" style="left:' + minX + 'px;top:' + minY + 'px;width:' + (maxX - minX) + 'px;height:' + (maxY - minY) + 'px;border-color:' + clean(g.color || '#a794ff') + ';">' +
+          '<div class="dag-group__label" oncontextmenu="AH.StoryMapX.ctxGroup(event,\'' + g.id + '\');return false;">' + clean(g.name) + ' · ' + g.members.length + '</div>' +
+        '</div>';
+      }).join('');
+
       // Nodes
-      canvas.innerHTML = StoryMap.state.nodes.map(function (n) {
+      var nodesHTML = StoryMap.state.nodes.map(function (n) {
         var t = StoryMap.trackById(n.trackId);
         var color = t ? t.color : '#888';
         var visible = !t || t.visible !== false;
-        return '<div class="dag-node dag-node--' + (n.nodeType || 'scene') + (StoryMap.sel.nodeId === n.id ? ' is-selected' : '') + '"' +
+        var matchQ = !q || (n.label || '').toLowerCase().indexOf(q) >= 0 || (n.note || '').toLowerCase().indexOf(q) >= 0 || (n.tags || []).join(' ').toLowerCase().indexOf(q) >= 0;
+        var matchT = !tf || ((n.tags || []).map(function (x) { return (x || '').toLowerCase(); }).indexOf(tf) >= 0);
+        var faded = (!matchQ || !matchT) ? ' is-faded' : '';
+        var tagsHTML = (n.tags || []).length ? '<div class="dag-node__tags">' + (n.tags || []).map(function (tg) { return '<span class="dag-node__tag">#' + clean(tg) + '</span>'; }).join('') + '</div>' : '';
+        var isStart = (n.id === startId);
+        return '<div class="dag-node dag-node--' + (n.nodeType || 'scene') + (StoryMap.sel.nodeId === n.id ? ' is-selected' : '') + (selMultiNodes.indexOf(n.id) >= 0 ? ' is-selected-multi' : '') + faded + '"' +
           ' data-nid="' + n.id + '"' +
+          ' oncontextmenu="AH.StoryMapX.ctxNode(event,\'' + n.id + '\');return false;"' +
           ' style="left:' + n.x + 'px;top:' + n.y + 'px;' + (visible ? '' : 'opacity:0.35;filter:grayscale(0.6);') + '">' +
           '<div class="dag-node__port dag-node__port--in"></div>' +
           '<div class="dag-node__port dag-node__port--out" data-out="' + n.id + '"></div>' +
           '<div class="dag-node__hdr">' +
-            '<div class="dag-node__label">' + clean(n.label || '') + '</div>' +
+            '<div class="dag-node__label">' + (isStart ? '▶ ' : '') + clean(n.label || '') + '</div>' +
             '<span class="dag-node__track" style="background:' + color + ';"></span>' +
           '</div>' +
           '<div class="dag-node__meta">' +
             ((n.nodeType || 'scene').toUpperCase()) +
             (typeof n.sceneLineIdx === 'number' ? ' · L' + n.sceneLineIdx : '') +
             (n.phaseId ? ' · ' + clean((StoryMap.state.phases.find(function (p) { return p.id === n.phaseId; }) || { label: '' }).label) : '') +
+            (n.videoUrl ? ' · ▶' : '') +
           '</div>' +
+          tagsHTML +
         '</div>';
       }).join('');
+
+      canvas.innerHTML = groupsHTML + nodesHTML;
 
       // Links (edges) as SVG
       svg.innerHTML = StoryMap.state.links.map(function (l) {
@@ -9465,8 +9569,10 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         var dx = Math.max(40, Math.abs(x2 - x1) * 0.45);
         var d = 'M ' + x1 + ' ' + y1 + ' C ' + (x1 + dx) + ' ' + y1 + ', ' + (x2 - dx) + ' ' + y2 + ', ' + x2 + ' ' + y2;
         var cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
-        var label = l.label ? '<text class="dag-link-label" x="' + cx + '" y="' + (cy - 4) + '" text-anchor="middle">' + clean(l.label) + '</text>' : '';
-        return '<path class="dag-link dag-link--' + (l.type || 'standard') + '" data-lid="' + l.id + '" d="' + d + '"/>' + label;
+        var cond = (l.conditions || []).length ? ' 🔒' : '';
+        var label = (l.label || l.choiceText) ? '<text class="dag-link-label" x="' + cx + '" y="' + (cy - 4) + '" text-anchor="middle">' + clean((l.label || l.choiceText) + cond) + '</text>' : (cond ? '<text class="dag-link-label" x="' + cx + '" y="' + (cy - 4) + '" text-anchor="middle">🔒</text>' : '');
+        var selClass = selMultiLinks.indexOf(l.id) >= 0 ? ' is-selected' : '';
+        return '<path class="dag-link dag-link--' + (l.type || 'standard') + selClass + '" data-lid="' + l.id + '" d="' + d + '" oncontextmenu="AH.StoryMapX.ctxLink(event,\'' + l.id + '\');return false;"/>' + label;
       }).join('');
 
       StoryMap._wireDrag();
@@ -9483,10 +9589,24 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         var nid = el.getAttribute('data-nid');
         el.onmousedown = function (e) {
           if (e.target.classList.contains('dag-node__port')) return;
+          if (e.button === 2) return; // let contextmenu handler fire
           var n = StoryMap.nodeById(nid); if (!n) return;
           StoryMap.sel = { nodeId: nid, linkId: null };
+          // Shift-click adds to multi-selection; plain click replaces it.
+          if (AH.StoryMapX) {
+            if (e.shiftKey) AH.StoryMapX.select([nid], [], true);
+            else if (AH.StoryMapX.selected.nodes.indexOf(nid) < 0) AH.StoryMapX.select([nid], [], false);
+          }
           StoryMap._dragNode = n;
           StoryMap._dragOff = { x: e.clientX / StoryMap.view.scale - n.x, y: e.clientY / StoryMap.view.scale - n.y };
+          // Record offsets for all other selected nodes so they drag together.
+          StoryMap._dragGroup = null;
+          if (AH.StoryMapX && AH.StoryMapX.selected.nodes.length > 1) {
+            StoryMap._dragGroup = AH.StoryMapX.selected.nodes.filter(function (id) { return id !== nid; }).map(function (id) {
+              var nn = StoryMap.nodeById(id);
+              return { node: nn, dx: nn.x - n.x, dy: nn.y - n.y };
+            });
+          }
           StoryMap.render();
           e.preventDefault(); e.stopPropagation();
         };
@@ -9501,17 +9621,46 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       // Click an edge
       $$('path.dag-link').forEach(function (p) {
         p.style.pointerEvents = 'stroke'; p.style.cursor = 'pointer';
-        p.onclick = function () { StoryMap.sel = { nodeId: null, linkId: p.getAttribute('data-lid') }; StoryMap.render(); };
+        p.onclick = function (e) {
+          var lid = p.getAttribute('data-lid');
+          StoryMap.sel = { nodeId: null, linkId: lid };
+          if (AH.StoryMapX && e.shiftKey) AH.StoryMapX.select([], [lid], true);
+          else if (AH.StoryMapX) AH.StoryMapX.select([], [lid], false);
+          StoryMap.render();
+        };
       });
     },
 
     _bindGlobalDrag: function () {
       var vp = $('#dag-viewport'); if (!vp || vp._dagBound) return; vp._dagBound = true;
-      // Pan (middle click or space-hold — we use plain click on empty)
+      // Empty-canvas mousedown: shift = marquee, else = pan
       vp.addEventListener('mousedown', function (e) {
+        var emptyArea = e.target === vp || e.target.id === 'dag-svg' || e.target.id === 'dag-canvas';
+        if (!emptyArea) return;
+        if (e.shiftKey && AH.StoryMapX) {
+          AH.StoryMapX._beginMarquee(e, vp);
+          e.preventDefault();
+          return;
+        }
+        StoryMap._panning = true; StoryMap._panStart = { x: e.clientX - StoryMap.view.tx, y: e.clientY - StoryMap.view.ty };
+        if (!e.shiftKey) { StoryMap.sel = { nodeId: null, linkId: null }; if (AH.StoryMapX) AH.StoryMapX.selected = { nodes: [], links: [] }; }
+        StoryMap.render();
+      });
+      // Prevent default context menu on the empty canvas
+      vp.addEventListener('contextmenu', function (e) {
         if (e.target === vp || e.target.id === 'dag-svg' || e.target.id === 'dag-canvas') {
-          StoryMap._panning = true; StoryMap._panStart = { x: e.clientX - StoryMap.view.tx, y: e.clientY - StoryMap.view.ty };
-          StoryMap.sel = { nodeId: null, linkId: null }; StoryMap.render();
+          e.preventDefault();
+          var html =
+            '<div class="sm-ctx__item" onclick="AH.StoryMap.add();AH.StoryMapX._closeCtx();">+ New scene node<span class="sm-ctx__kbd">N</span></div>' +
+            '<div class="sm-ctx__item" onclick="AH.StoryMap.addFork();AH.StoryMapX._closeCtx();">+ Fork node<span class="sm-ctx__kbd">F</span></div>' +
+            '<div class="sm-ctx__item" onclick="AH.StoryMap.addMerge();AH.StoryMapX._closeCtx();">+ Merge node<span class="sm-ctx__kbd">M</span></div>' +
+            '<div class="sm-ctx__sep"></div>' +
+            '<div class="sm-ctx__item" onclick="AH.StoryMapX.paste();AH.StoryMapX._closeCtx();">Paste<span class="sm-ctx__kbd">⌘V</span></div>' +
+            '<div class="sm-ctx__item" onclick="AH.StoryMapX.selectAll();AH.StoryMapX._closeCtx();">Select all<span class="sm-ctx__kbd">⌘A</span></div>' +
+            '<div class="sm-ctx__sep"></div>' +
+            '<div class="sm-ctx__item" onclick="AH.StoryMap.autoLayout();AH.StoryMapX._closeCtx();">Auto layout</div>' +
+            '<div class="sm-ctx__item" onclick="AH.StoryMap.validate();AH.StoryMapX._closeCtx();">Validate</div>';
+          AH.StoryMapX._openCtx(e, html);
         }
       });
       vp.addEventListener('wheel', function (e) {
@@ -9522,15 +9671,23 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         StoryMap.render();
       }, { passive: false });
       document.addEventListener('mousemove', function (e) {
+        if (AH.StoryMapX && AH.StoryMapX.marquee) { AH.StoryMapX._updateMarquee(e, vp); return; }
         if (StoryMap._dragNode) {
           var n = StoryMap._dragNode;
-          n.x = Math.round((e.clientX / StoryMap.view.scale) - StoryMap._dragOff.x);
-          n.y = Math.round((e.clientY / StoryMap.view.scale) - StoryMap._dragOff.y);
-          // Snap to 20px grid while shift-held
-          if (e.shiftKey) { n.x = Math.round(n.x / 20) * 20; n.y = Math.round(n.y / 20) * 20; }
-          var el = document.querySelector('.dag-node[data-nid="' + n.id + '"]');
-          if (el) { el.style.left = n.x + 'px'; el.style.top = n.y + 'px'; }
-          // redraw edges
+          var nx = Math.round((e.clientX / StoryMap.view.scale) - StoryMap._dragOff.x);
+          var ny = Math.round((e.clientY / StoryMap.view.scale) - StoryMap._dragOff.y);
+          if (e.shiftKey) { nx = Math.round(nx / 20) * 20; ny = Math.round(ny / 20) * 20; }
+          n.x = nx; n.y = ny;
+          if (StoryMap._dragGroup) {
+            StoryMap._dragGroup.forEach(function (g) { if (g.node) { g.node.x = n.x + g.dx; g.node.y = n.y + g.dy; } });
+          }
+          // Update DOM positions cheaply
+          (StoryMap._dragGroup || []).concat([{ node: n, dx: 0, dy: 0 }]).forEach(function (g) {
+            if (!g.node) return;
+            var el = document.querySelector('.dag-node[data-nid="' + g.node.id + '"]');
+            if (el) { el.style.left = g.node.x + 'px'; el.style.top = g.node.y + 'px'; }
+          });
+          // Redraw edges
           var svg = $('#dag-svg');
           if (svg) svg.innerHTML = StoryMap.state.links.map(function (l) {
             var a = StoryMap.nodeById(l.source), b = StoryMap.nodeById(l.target);
@@ -9544,12 +9701,11 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           StoryMap.view.tx = e.clientX - StoryMap._panStart.x;
           StoryMap.view.ty = e.clientY - StoryMap._panStart.y;
           var c = $('#dag-canvas'); if (c) c.style.transform = 'translate(' + StoryMap.view.tx + 'px,' + StoryMap.view.ty + 'px) scale(' + StoryMap.view.scale + ')';
-        } else if (StoryMap._linking) {
-          // ghost line follows cursor (handled lightly — full connection completes on mouseup over a node)
         }
       });
       document.addEventListener('mouseup', function (e) {
-        if (StoryMap._dragNode) { StoryMap._dragNode = null; StoryMap.save(); StoryMap.render(); }
+        if (AH.StoryMapX && AH.StoryMapX.marquee) { AH.StoryMapX._endMarquee(vp, e.shiftKey); return; }
+        if (StoryMap._dragNode) { StoryMap._dragNode = null; StoryMap._dragGroup = null; StoryMap.save(); StoryMap.render(); }
         StoryMap._panning = false; StoryMap._panStart = null;
         if (StoryMap._linking) {
           var tgt = (e.target && e.target.closest && e.target.closest('.dag-node'));
@@ -9595,6 +9751,11 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           '<div><label>Note · beat</label><textarea id="ins-note">' + clean(n.note || '') + '</textarea></div>' +
           '<div><label>Scene line reference</label><input id="ins-line" type="number" value="' + (typeof n.sceneLineIdx === 'number' ? n.sceneLineIdx : '') + '" placeholder="Line index in script"/></div>' +
           '<div><label>Video URL · Alacrity Player</label><input id="ins-video" value="' + clean(n.videoUrl || '') + '" placeholder="StreamingAssets/Films/&lt;film&gt;/scene_01.mp4"/></div>' +
+          '<div><label>Audio URL (ambient)</label><input id="ins-audio" value="' + clean(n.audioUrl || '') + '" placeholder="StreamingAssets/Audio/ambient_01.wav"/></div>' +
+          '<div><label>Thumbnail URL</label><input id="ins-thumb" value="' + clean(n.thumb || '') + '" placeholder="https://…"/></div>' +
+          '<div><label>Tags (comma separated)</label><input id="ins-tags" value="' + clean((n.tags || []).join(', ')) + '" placeholder="act1, mystery, hero"/></div>' +
+          (n.thumb ? '<div style="margin:6px 0;"><img src="' + clean(n.thumb) + '" alt="thumb" style="max-width:100%;border-radius:8px;border:1px solid var(--edge);"/></div>' : '') +
+          (n.videoUrl ? '<div style="margin:6px 0;"><a href="' + clean(n.videoUrl) + '" target="_blank" rel="noreferrer" style="color:var(--mint);font-size:11px;">▶ Preview video asset</a></div>' : '') +
           '<div style="display:flex;gap:6px;margin-top:6px;">' +
             '<button class="btn btn--primary" style="flex:1;" onclick="AH.StoryMap.saveNode()">SAVE</button>' +
             '<button class="btn btn--ghost"  onclick="AH.StoryMap.deleteNode()">DELETE</button>' +
@@ -9602,6 +9763,9 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           '<div style="display:flex;gap:6px;margin-top:6px;">' +
             '<button class="btn btn--ghost" style="flex:1;" onclick="AH.StoryMap.setStart()">SET AS START</button>' +
             '<button class="btn btn--ghost" style="flex:1;" onclick="AH.StoryMap.gotoScriptLine()">GO TO SCRIPT</button>' +
+          '</div>' +
+          '<div style="display:flex;gap:6px;margin-top:6px;">' +
+            '<button class="btn btn--ghost" style="flex:1;" onclick="AH.StoryMapX.editLinkCondition(\'\');" disabled title="Select an edge to edit">Edit edge condition…</button>' +
           '</div>';
       } else if (l) {
         el.innerHTML =
@@ -9674,6 +9838,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     addFork: function () { StoryMap.addNodeType('fork'); },
     addMerge: function () { StoryMap.addNodeType('merge'); },
     addNodeType: function (kind) {
+      StoryMap._beforeMutate();
       var s = StoryMap.state;
       var id = 'n' + (++s.nodeCounter);
       s.nodes.push({
@@ -9681,12 +9846,13 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         trackId: (s.tracks[0] && s.tracks[0].id) || 't1',
         phaseId: (s.phases[0] && s.phases[0].id) || 'p1',
         x: 120 + Math.random() * 600, y: 120 + Math.random() * 300,
-        nodeType: kind
+        nodeType: kind, tags: []
       });
       StoryMap.sel = { nodeId: id, linkId: null };
       StoryMap.dirty(); toast('Node added · ' + id);
     },
     addLink: function (srcId, tgtId) {
+      StoryMap._beforeMutate();
       var s = StoryMap.state;
       var id = 'l' + (++s.linkCounter);
       s.links.push({ id: id, source: srcId, target: tgtId, type: 'standard' });
@@ -9696,6 +9862,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     editNode: function (id) { StoryMap.sel = { nodeId: id, linkId: null }; StoryMap.render(); },
     saveNode: function () {
       var n = StoryMap.nodeById(StoryMap.sel.nodeId); if (!n) return;
+      StoryMap._beforeMutate();
       var v = function (id) { return ($('#' + id) || {}).value; };
       n.label = v('ins-label') || n.label;
       n.nodeType = v('ins-type') || n.nodeType;
@@ -9704,10 +9871,15 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       n.note = v('ins-note') || '';
       var li = v('ins-line'); n.sceneLineIdx = li === '' ? null : Number(li);
       n.videoUrl = v('ins-video') || '';
+      n.audioUrl = v('ins-audio') || '';
+      n.thumb    = v('ins-thumb') || '';
+      var tagsRaw = v('ins-tags') || '';
+      n.tags = tagsRaw.split(/\s*,\s*/).filter(Boolean);
       StoryMap.dirty(); toast('Node saved');
     },
     deleteNode: function () {
       var id = StoryMap.sel.nodeId; if (!id) return;
+      StoryMap._beforeMutate();
       var s = StoryMap.state;
       s.nodes = s.nodes.filter(function (n) { return n.id !== id; });
       s.links = s.links.filter(function (l) { return l.source !== id && l.target !== id; });
@@ -9716,6 +9888,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     },
     saveLink: function () {
       var l = StoryMap.linkById(StoryMap.sel.linkId); if (!l) return;
+      StoryMap._beforeMutate();
       var v = function (id) { return ($('#' + id) || {}).value; };
       l.type = v('ins-ltype') || 'standard';
       l.label = v('ins-llabel') || '';
@@ -9724,12 +9897,14 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     },
     deleteLink: function () {
       var id = StoryMap.sel.linkId; if (!id) return;
+      StoryMap._beforeMutate();
       StoryMap.state.links = StoryMap.state.links.filter(function (l) { return l.id !== id; });
       StoryMap.sel = { nodeId: null, linkId: null };
       StoryMap.dirty(); toast('Edge deleted');
     },
     setStart: function () {
       if (!StoryMap.sel.nodeId) return;
+      StoryMap._beforeMutate();
       StoryMap.state.startNodeId = StoryMap.sel.nodeId;
       StoryMap.dirty(); toast('Start node · ' + StoryMap.sel.nodeId);
     },
@@ -10019,14 +10194,753 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   };
   AH.StoryMap = StoryMap;
 
+  // ══════════════════════════════════════════════════════════════════════════
+  //  STORY MAP · V2 EXTENSIONS (Alacrity Player first-class support)
+  //  ────────────────────────────────────────────────────────────────────────
+  //  Adds:
+  //    • Undo / redo stack (50-step)
+  //    • Multi-select (Shift-click + marquee lasso)
+  //    • Copy / cut / paste of subgraphs (preserves edges between copied nodes)
+  //    • Groups — named clusters of nodes with a bounding rectangle
+  //    • Right-click context menus on canvas, nodes, edges, groups
+  //    • Tag system + tag filter
+  //    • Per-node video URL + audio URL + thumbnail + preview pane
+  //    • Conditional edges (requires flags / inventory, gates playthrough)
+  //    • Flags and inventory state editor
+  //    • Playthrough simulator — walk the graph as a player would,
+  //      evaluates conditional edges, tracks visited nodes, prints
+  //      reachable endings
+  //    • Ending analytics (ending count, reachable / unreachable nodes,
+  //      longest / shortest path to end)
+  //    • Search within map + tag filter
+  //    • History snapshots (named checkpoints) with restore
+  //    • Structure templates: Hero's Journey, Save the Cat, 3-Act, Branching Choose
+  //    • Import: Twine (Twee), Ink (Inkle JSON), CSV nodes + edges
+  // ══════════════════════════════════════════════════════════════════════════
+  var StoryMapX = {
+    // Selection model — parallel to StoryMap.sel
+    selected: { nodes: [], links: [] },
+    clipboard: null,
+    history: [],
+    future: [],
+    marquee: null,
+    templates: {},
+    flagState: {},
+
+    // ---- History ------------------------------------------------------------
+    snapshot: function () {
+      try {
+        StoryMapX.history.push(JSON.stringify(StoryMap.state));
+        if (StoryMapX.history.length > 50) StoryMapX.history.shift();
+        StoryMapX.future.length = 0;
+      } catch (_) {}
+    },
+    undo: function () {
+      if (!StoryMapX.history.length) { toast('Nothing to undo', 'warn'); return; }
+      StoryMapX.future.push(JSON.stringify(StoryMap.state));
+      try { StoryMap.state = JSON.parse(StoryMapX.history.pop()); } catch (_) {}
+      StoryMap.save(); StoryMap.render(); toast('Undo · ' + StoryMapX.history.length + ' left');
+    },
+    redo: function () {
+      if (!StoryMapX.future.length) { toast('Nothing to redo', 'warn'); return; }
+      StoryMapX.history.push(JSON.stringify(StoryMap.state));
+      try { StoryMap.state = JSON.parse(StoryMapX.future.pop()); } catch (_) {}
+      StoryMap.save(); StoryMap.render();
+    },
+
+    // ---- Multi-select + clipboard ------------------------------------------
+    select: function (nodeIds, linkIds, additive) {
+      if (!additive) StoryMapX.selected = { nodes: [], links: [] };
+      (nodeIds || []).forEach(function (id) { if (StoryMapX.selected.nodes.indexOf(id) < 0) StoryMapX.selected.nodes.push(id); });
+      (linkIds || []).forEach(function (id) { if (StoryMapX.selected.links.indexOf(id) < 0) StoryMapX.selected.links.push(id); });
+      StoryMap.render();
+    },
+    clear: function () { StoryMapX.selected = { nodes: [], links: [] }; StoryMap.render(); },
+    selectAll: function () {
+      StoryMapX.selected = {
+        nodes: StoryMap.state.nodes.map(function (n) { return n.id; }),
+        links: StoryMap.state.links.map(function (l) { return l.id; })
+      };
+      StoryMap.render(); toast('Selected all · ' + StoryMapX.selected.nodes.length + ' nodes');
+    },
+    copy: function () {
+      var sel = StoryMapX.selected;
+      if (!sel.nodes.length) { toast('Nothing selected', 'warn'); return; }
+      var nodeSet = {}; sel.nodes.forEach(function (id) { nodeSet[id] = 1; });
+      var nodes = StoryMap.state.nodes.filter(function (n) { return nodeSet[n.id]; });
+      // Include edges that connect two selected nodes
+      var links = StoryMap.state.links.filter(function (l) { return nodeSet[l.source] && nodeSet[l.target]; });
+      StoryMapX.clipboard = { nodes: JSON.parse(JSON.stringify(nodes)), links: JSON.parse(JSON.stringify(links)) };
+      toast('Copied · ' + nodes.length + ' node(s), ' + links.length + ' edge(s)');
+    },
+    cut: function () {
+      StoryMapX.copy();
+      StoryMapX.deleteSelected();
+    },
+    paste: function () {
+      if (!StoryMapX.clipboard) { toast('Clipboard empty', 'warn'); return; }
+      StoryMapX.snapshot();
+      var s = StoryMap.state;
+      var remap = {};
+      StoryMapX.clipboard.nodes.forEach(function (n) {
+        var nid = 'n' + (++s.nodeCounter);
+        remap[n.id] = nid;
+        s.nodes.push(Object.assign({}, n, { id: nid, x: n.x + 40, y: n.y + 40, label: n.label + ' (copy)' }));
+      });
+      StoryMapX.clipboard.links.forEach(function (l) {
+        var lid = 'l' + (++s.linkCounter);
+        s.links.push(Object.assign({}, l, { id: lid, source: remap[l.source], target: remap[l.target] }));
+      });
+      StoryMapX.selected = { nodes: Object.values(remap), links: [] };
+      StoryMap.save(); StoryMap.render();
+      toast('Pasted · ' + StoryMapX.clipboard.nodes.length + ' nodes');
+    },
+    duplicate: function () {
+      if (!StoryMapX.selected.nodes.length) { toast('Nothing selected', 'warn'); return; }
+      StoryMapX.copy(); StoryMapX.paste();
+    },
+    deleteSelected: function () {
+      var sel = StoryMapX.selected;
+      if (!sel.nodes.length && !sel.links.length) { toast('Nothing selected', 'warn'); return; }
+      StoryMapX.snapshot();
+      var kill = {}; sel.nodes.forEach(function (id) { kill[id] = 1; });
+      var killL = {}; sel.links.forEach(function (id) { killL[id] = 1; });
+      var s = StoryMap.state;
+      s.nodes = s.nodes.filter(function (n) { return !kill[n.id]; });
+      s.links = s.links.filter(function (l) { return !killL[l.id] && !kill[l.source] && !kill[l.target]; });
+      StoryMapX.clear(); StoryMap.save(); StoryMap.render();
+      toast('Deleted · ' + sel.nodes.length + ' nodes, ' + sel.links.length + ' edges');
+    },
+
+    // ---- Alignment / distribution ------------------------------------------
+    alignLeft:  function () { StoryMapX._align('left'); },
+    alignRight: function () { StoryMapX._align('right'); },
+    alignTop:   function () { StoryMapX._align('top'); },
+    alignBottom:function () { StoryMapX._align('bottom'); },
+    distributeH:function () { StoryMapX._distribute('h'); },
+    distributeV:function () { StoryMapX._distribute('v'); },
+    _align: function (edge) {
+      var ids = StoryMapX.selected.nodes; if (ids.length < 2) return;
+      StoryMapX.snapshot();
+      var ns = StoryMap.state.nodes.filter(function (n) { return ids.indexOf(n.id) >= 0; });
+      if (edge === 'left')   { var mnx = Math.min.apply(null, ns.map(function (n){return n.x;})); ns.forEach(function (n){n.x=mnx;}); }
+      if (edge === 'right')  { var mxx = Math.max.apply(null, ns.map(function (n){return n.x;})); ns.forEach(function (n){n.x=mxx;}); }
+      if (edge === 'top')    { var mny = Math.min.apply(null, ns.map(function (n){return n.y;})); ns.forEach(function (n){n.y=mny;}); }
+      if (edge === 'bottom') { var mxy = Math.max.apply(null, ns.map(function (n){return n.y;})); ns.forEach(function (n){n.y=mxy;}); }
+      StoryMap.save(); StoryMap.render();
+    },
+    _distribute: function (axis) {
+      var ids = StoryMapX.selected.nodes; if (ids.length < 3) return;
+      StoryMapX.snapshot();
+      var ns = StoryMap.state.nodes.filter(function (n) { return ids.indexOf(n.id) >= 0; }).slice();
+      ns.sort(function (a, b) { return axis === 'h' ? a.x - b.x : a.y - b.y; });
+      var first = ns[0], last = ns[ns.length - 1];
+      var step = axis === 'h' ? (last.x - first.x) / (ns.length - 1) : (last.y - first.y) / (ns.length - 1);
+      ns.forEach(function (n, i) { if (axis === 'h') n.x = Math.round(first.x + i * step); else n.y = Math.round(first.y + i * step); });
+      StoryMap.save(); StoryMap.render();
+    },
+
+    // ---- Groups / clusters --------------------------------------------------
+    groupSelected: function () {
+      var ids = StoryMapX.selected.nodes; if (ids.length < 2) { toast('Select 2+ nodes to group', 'warn'); return; }
+      AH.Modal.prompt('Group name', 'Name for this cluster', 'Act I', function (name) {
+        if (!name) return;
+        StoryMapX.snapshot();
+        var s = StoryMap.state;
+        s.groups = s.groups || [];
+        s.groups.push({ id: 'g' + (Date.now()), name: name, members: ids.slice(), color: DAG_PALETTE[s.groups.length % DAG_PALETTE.length] });
+        StoryMap.save(); StoryMap.render(); toast('Group · ' + name);
+      });
+    },
+    ungroup: function (gid) {
+      StoryMapX.snapshot();
+      StoryMap.state.groups = (StoryMap.state.groups || []).filter(function (g) { return g.id !== gid; });
+      StoryMap.save(); StoryMap.render();
+    },
+
+    // ---- Tags --------------------------------------------------------------
+    tagSelected: function () {
+      var ids = StoryMapX.selected.nodes; if (!ids.length) { toast('No nodes selected', 'warn'); return; }
+      AH.Modal.prompt('Add tag', 'Tag name', 'act1', function (t) {
+        if (!t) return;
+        StoryMapX.snapshot();
+        StoryMap.state.nodes.forEach(function (n) {
+          if (ids.indexOf(n.id) < 0) return;
+          n.tags = n.tags || []; if (n.tags.indexOf(t) < 0) n.tags.push(t);
+        });
+        StoryMap.save(); StoryMap.render(); toast('Tagged ' + ids.length + ' nodes · ' + t);
+      });
+    },
+    untagAll: function (tag) {
+      StoryMapX.snapshot();
+      StoryMap.state.nodes.forEach(function (n) { if (n.tags) n.tags = n.tags.filter(function (t) { return t !== tag; }); });
+      StoryMap.save(); StoryMap.render();
+    },
+    setTagFilter: function (tag) {
+      AH.Storage.local.set('ah_dag_tag_filter', tag || '');
+      StoryMap.render();
+    },
+    getTagFilter: function () { return AH.Storage.local.get('ah_dag_tag_filter', ''); },
+
+    // ---- Search in map -----------------------------------------------------
+    search: function (q) {
+      AH.Storage.local.set('ah_dag_query', q || '');
+      StoryMap.render();
+    },
+    getQuery: function () { return AH.Storage.local.get('ah_dag_query', ''); },
+
+    // ---- Flags / inventory / conditional edges -----------------------------
+    editFlags: function () {
+      var s = StoryMap.state;
+      s.flags = s.flags || {}; s.inventory = s.inventory || [];
+      AH.Modal.open('Flags & Inventory', (
+        '<div class="sh-modal__label">Flags — boolean variables (comma separated key=value pairs, e.g. <code>hasKey=false, metEmma=true</code>)</div>' +
+        '<div class="sh-field"><label>Flags</label><textarea id="sm-flags" rows="3">' + clean(Object.keys(s.flags).map(function (k) { return k + '=' + (s.flags[k] ? 'true' : 'false'); }).join(', ')) + '</textarea></div>' +
+        '<div class="sh-field"><label>Inventory (comma separated)</label><textarea id="sm-inv" rows="3">' + clean((s.inventory || []).join(', ')) + '</textarea></div>'
+      ), {
+        size: 'md',
+        footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="sm-flags-save">SAVE</button>',
+        onMount: function () {
+          $('#sm-flags-save').onclick = function () {
+            StoryMapX.snapshot();
+            var raw = ($('#sm-flags').value || '').trim();
+            var out = {};
+            if (raw) raw.split(/\s*,\s*/).forEach(function (p) {
+              var kv = p.split(/\s*=\s*/);
+              if (!kv[0]) return;
+              out[kv[0]] = /^(1|true|yes|on)$/i.test((kv[1] || '').trim());
+            });
+            StoryMap.state.flags = out;
+            StoryMap.state.inventory = ($('#sm-inv').value || '').split(/\s*,\s*/).filter(Boolean);
+            StoryMap.save(); StoryMap.render();
+            AH.Modal.close(); toast('Flags saved');
+          };
+        }
+      });
+    },
+    editLinkCondition: function (lid) {
+      var l = StoryMap.linkById(lid); if (!l) return;
+      AH.Modal.open('Edge condition · ' + clean(lid), (
+        '<div class="sh-modal__label">Guard this edge with conditions. Condition types:<br/>• <code>flag:hasKey</code> — flag must be true<br/>• <code>!flag:alarmTriggered</code> — flag must be false<br/>• <code>has:coin</code> — must be in inventory<br/>• <code>!has:blade</code> — must NOT be in inventory</div>' +
+        '<div class="sh-field"><label>Conditions (comma separated — ALL must pass)</label><input id="sm-lcond" value="' + clean((l.conditions || []).join(', ')) + '" placeholder="flag:hasKey, has:map"/></div>' +
+        '<div class="sh-field"><label>Choice text shown to player</label><input id="sm-lchoice" value="' + clean(l.choiceText || '') + '" placeholder="Use the key"/></div>' +
+        '<div class="sh-field"><label>Side-effects on traverse (comma separated — e.g. <code>+flag:hasKey, -has:coin, +has:map</code>)</label><input id="sm-lfx" value="' + clean((l.effects || []).join(', ')) + '"/></div>'
+      ), {
+        size: 'md',
+        footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="sm-lcond-save">SAVE</button>',
+        onMount: function () {
+          $('#sm-lcond-save').onclick = function () {
+            StoryMapX.snapshot();
+            l.conditions = ($('#sm-lcond').value || '').split(/\s*,\s*/).filter(Boolean);
+            l.choiceText = ($('#sm-lchoice').value || '').trim();
+            l.effects    = ($('#sm-lfx').value || '').split(/\s*,\s*/).filter(Boolean);
+            StoryMap.save(); StoryMap.render();
+            AH.Modal.close(); toast('Edge condition saved');
+          };
+        }
+      });
+    },
+
+    // ---- Playthrough simulator ---------------------------------------------
+    simulate: function (startId) {
+      var s = StoryMap.state;
+      var start = startId || s.startNodeId || (s.nodes[0] && s.nodes[0].id);
+      if (!start) { toast('No start node', 'warn'); return; }
+      var flags = Object.assign({}, s.flags || {});
+      var inv = (s.inventory || []).slice();
+      var visited = [];
+      var current = start;
+      StoryMapX._renderSim(current, flags, inv, visited);
+    },
+    _evalCond: function (cond, flags, inv) {
+      if (!cond) return true;
+      return cond.every(function (c) {
+        var neg = c.charAt(0) === '!';
+        if (neg) c = c.slice(1);
+        var m = c.match(/^flag:(.+)$/);
+        if (m) { var v = !!flags[m[1]]; return neg ? !v : v; }
+        m = c.match(/^has:(.+)$/);
+        if (m) { var h = inv.indexOf(m[1]) >= 0; return neg ? !h : h; }
+        return true;
+      });
+    },
+    _applyFx: function (effects, flags, inv) {
+      (effects || []).forEach(function (fx) {
+        var sign = fx.charAt(0) === '-' ? '-' : '+';
+        if (fx.charAt(0) === '+' || fx.charAt(0) === '-') fx = fx.slice(1);
+        var m = fx.match(/^flag:(.+)$/);
+        if (m) { flags[m[1]] = sign === '+'; return; }
+        m = fx.match(/^has:(.+)$/);
+        if (m) {
+          if (sign === '+' && inv.indexOf(m[1]) < 0) inv.push(m[1]);
+          if (sign === '-') { var i = inv.indexOf(m[1]); if (i >= 0) inv.splice(i, 1); }
+        }
+      });
+    },
+    _renderSim: function (curId, flags, inv, visited) {
+      var s = StoryMap.state;
+      var node = StoryMap.nodeById(curId);
+      if (!node) { toast('Node missing · ' + curId, 'warn'); return; }
+      visited = visited.concat([curId]);
+      var outs = s.links.filter(function (l) { return l.source === curId; });
+      var open = outs.filter(function (l) { return StoryMapX._evalCond(l.conditions || [], flags, inv); });
+      var closed = outs.filter(function (l) { return !StoryMapX._evalCond(l.conditions || [], flags, inv); });
+      var nodeTypeCls = (node.nodeType || 'scene');
+      var isEnd = !outs.length || node.nodeType === 'end';
+      var html =
+        '<div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(200px,1fr);gap:14px;">' +
+          '<div>' +
+            '<div style="font-family:var(--f-mono);font-size:10px;letter-spacing:0.22em;color:var(--fg-45);text-transform:uppercase;">NODE · ' + clean(curId) + ' · ' + nodeTypeCls.toUpperCase() + '</div>' +
+            '<div style="font-family:var(--f-display);font-size:22px;font-weight:800;margin:4px 0 10px;">' + clean(node.label || '—') + '</div>' +
+            (node.note ? '<div style="font-size:13px;line-height:1.6;color:var(--fg-80);margin-bottom:12px;">' + clean(node.note) + '</div>' : '') +
+            (node.videoUrl ? '<div class="sh-modal__label">Video · <code>' + clean(node.videoUrl) + '</code></div>' : '') +
+            (isEnd
+              ? '<div style="padding:16px;border-radius:12px;background:linear-gradient(135deg,rgba(23,255,197,0.18),rgba(20,175,223,0.12));border:1px solid var(--edge-mint);margin-top:12px;"><strong>END REACHED.</strong><br/>Visited ' + visited.length + ' nodes · ' + inv.length + ' inventory items · ' + Object.keys(flags).filter(function (k) { return flags[k]; }).length + ' flags set.</div>'
+              : '<div class="sh-modal__label" style="margin-top:14px;">Available paths</div>' +
+                '<div style="display:flex;flex-direction:column;gap:8px;">' +
+                open.map(function (l) {
+                  var tgt = StoryMap.nodeById(l.target) || {};
+                  return '<button class="btn btn--primary" onclick="AH.StoryMapX._step(\'' + l.id + '\', ' + JSON.stringify(visited).replace(/"/g, '&quot;') + ')" style="justify-content:flex-start;">' +
+                    '<span style="flex:1;text-align:left;">' + clean(l.choiceText || l.label || (tgt.label || l.target)) + '</span>' +
+                    '<span style="font-family:var(--f-mono);font-size:10px;letter-spacing:0.14em;color:var(--fg-60);">→ ' + clean(l.target) + '</span>' +
+                  '</button>';
+                }).join('') +
+                closed.map(function (l) {
+                  return '<div class="btn btn--ghost" style="opacity:0.4;cursor:not-allowed;justify-content:flex-start;">🔒 ' + clean(l.choiceText || l.label || l.target) + ' <span style="font-family:var(--f-mono);font-size:9.5px;margin-left:8px;color:var(--rose);">· CONDITION: ' + clean((l.conditions || []).join(', ')) + '</span></div>';
+                }).join('') +
+                '</div>'
+            ) +
+          '</div>' +
+          '<div>' +
+            '<div class="sh-modal__label">State</div>' +
+            '<div style="font-family:var(--f-mono);font-size:11px;line-height:1.7;color:var(--fg-80);background:var(--ink-2);border:1px solid var(--edge);border-radius:10px;padding:10px;">' +
+              '<div><strong>Flags</strong></div>' +
+              (Object.keys(flags).length ? Object.keys(flags).map(function (k) { return k + ' = <span style="color:' + (flags[k] ? 'var(--mint)' : 'var(--rose)') + ';">' + flags[k] + '</span>'; }).join('<br/>') : '<em>none</em>') +
+              '<div style="margin-top:8px;"><strong>Inventory</strong></div>' +
+              (inv.length ? inv.join(' · ') : '<em>empty</em>') +
+              '<div style="margin-top:8px;"><strong>Visited</strong></div>' +
+              (visited.length + ' / ' + s.nodes.length) +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      AH.Modal.open('Playthrough Simulator', html, {
+        size: 'lg',
+        footer: (isEnd
+          ? '<button class="btn btn--ghost" onclick="AH.Modal.close()">Close</button><button class="btn btn--primary" onclick="AH.StoryMapX.simulate(\'' + clean(s.startNodeId || '') + '\')">RESTART</button>'
+          : '<button class="btn btn--ghost" onclick="AH.Modal.close()">Abandon</button>'
+        )
+      });
+      StoryMapX._simState = { current: curId, flags: flags, inv: inv, visited: visited };
+    },
+    _step: function (lid) {
+      var sim = StoryMapX._simState; if (!sim) return;
+      var link = StoryMap.linkById(lid); if (!link) return;
+      StoryMapX._applyFx(link.effects || [], sim.flags, sim.inv);
+      StoryMapX._renderSim(link.target, sim.flags, sim.inv, sim.visited);
+    },
+
+    // ---- Ending analytics --------------------------------------------------
+    analytics: function () {
+      var s = StoryMap.state;
+      var start = s.startNodeId || (s.nodes[0] && s.nodes[0].id);
+      if (!start) { toast('No start node', 'warn'); return; }
+      var adj = {}; s.nodes.forEach(function (n) { adj[n.id] = []; });
+      s.links.forEach(function (l) { (adj[l.source] = adj[l.source] || []).push(l.target); });
+      // BFS reachable from start
+      var reach = {}; var q = [start]; reach[start] = 0;
+      while (q.length) {
+        var cur = q.shift();
+        (adj[cur] || []).forEach(function (n) { if (!(n in reach)) { reach[n] = reach[cur] + 1; q.push(n); } });
+      }
+      var all = s.nodes.map(function (n) { return n.id; });
+      var unreachable = all.filter(function (id) { return !(id in reach); });
+      var endings = s.nodes.filter(function (n) { return (adj[n.id] || []).length === 0 || n.nodeType === 'end'; });
+      var paths = Object.keys(reach).length;
+      var longestDepth = Math.max.apply(null, [0].concat(Object.values(reach)));
+      var html =
+        '<div class="sh-grid-3" style="gap:10px;">' +
+          '<div class="card" style="padding:14px;"><div class="stat__lbl">Total nodes</div><div class="stat__val stat__val--plain" style="font-size:28px;">' + all.length + '</div></div>' +
+          '<div class="card" style="padding:14px;"><div class="stat__lbl">Reachable from start</div><div class="stat__val stat__val--plain" style="font-size:28px;">' + paths + '</div></div>' +
+          '<div class="card" style="padding:14px;"><div class="stat__lbl">Unreachable</div><div class="stat__val stat__val--plain" style="font-size:28px;color:' + (unreachable.length ? 'var(--rose)' : 'var(--mint)') + ';">' + unreachable.length + '</div></div>' +
+          '<div class="card" style="padding:14px;"><div class="stat__lbl">Endings</div><div class="stat__val stat__val--plain" style="font-size:28px;">' + endings.length + '</div></div>' +
+          '<div class="card" style="padding:14px;"><div class="stat__lbl">Longest shortest-path</div><div class="stat__val stat__val--plain" style="font-size:28px;">' + longestDepth + '</div></div>' +
+          '<div class="card" style="padding:14px;"><div class="stat__lbl">Total edges</div><div class="stat__val stat__val--plain" style="font-size:28px;">' + s.links.length + '</div></div>' +
+        '</div>' +
+        (unreachable.length ? '<div class="sh-modal__label" style="margin-top:12px;">Unreachable</div><div style="font-family:var(--f-mono);font-size:11px;color:var(--fg-60);">' + unreachable.map(clean).join(' · ') + '</div>' : '') +
+        '<div class="sh-modal__label" style="margin-top:12px;">Endings</div>' +
+        (endings.length
+          ? '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' + endings.map(function (n) { return '<div style="padding:10px;border:1px solid var(--edge);border-radius:8px;"><strong>' + clean(n.label) + '</strong> <span style="font-family:var(--f-mono);font-size:10px;color:var(--fg-60);">· depth ' + (reach[n.id] != null ? reach[n.id] : '∞') + '</span></div>'; }).join('') + '</div>'
+          : '<div style="color:var(--fg-45);">No endings detected. Add nodes with nodeType=end or leaf nodes.</div>');
+      AH.Modal.open('Story Analytics', html, { size: 'lg', footer: '<button class="btn btn--primary" onclick="AH.Modal.close()">OK</button>' });
+    },
+
+    // ---- Structure templates -----------------------------------------------
+    applyTemplate: function (key) {
+      var TPL = StoryMapX.templates;
+      if (!TPL[key]) { toast('Unknown template', 'warn'); return; }
+      AH.Modal.confirm('Apply template · ' + TPL[key].name, 'This replaces the current map with the template. Your work is saved in history (undo). Continue?', function () {
+        StoryMapX.snapshot();
+        StoryMap.state = JSON.parse(JSON.stringify(TPL[key].state));
+        StoryMap.save(); StoryMap.render();
+        toast('Template applied · ' + TPL[key].name);
+      });
+    },
+
+    // ---- Twine / Ink / CSV import ------------------------------------------
+    importTwine: function () {
+      var inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.tw,.twee,.twine,.html,.txt';
+      inp.onchange = function () {
+        var f = inp.files[0]; if (!f) return;
+        var rd = new FileReader();
+        rd.onload = function () {
+          try {
+            var res = StoryMapX._parseTwine(rd.result);
+            StoryMapX.snapshot();
+            StoryMap.state = res;
+            StoryMap.save(); StoryMap.render();
+            toast('Twine imported · ' + res.nodes.length + ' nodes');
+          } catch (e) { toast('Twine parse failed · ' + e.message, 'error'); }
+        };
+        rd.readAsText(f);
+      };
+      inp.click();
+    },
+    _parseTwine: function (text) {
+      // Supports both Twee (::Passage blocks) and Twine HTML (tw-passagedata).
+      var s = { tracks: [{ id:'t1', label:'Main', color:'#17FFC5', visible:true }], phases: [{ id:'p1', label:'Act I' }], nodes: [], links: [], nodeCounter:0, linkCounter:0, trackCounter:1, phaseCounter:1, startNodeId: '' };
+      var passages = [];
+      if (/<tw-passagedata/.test(text)) {
+        var dom = new DOMParser().parseFromString(text, 'text/html');
+        var ps = dom.querySelectorAll('tw-passagedata');
+        var startId = '';
+        ps.forEach(function (p) {
+          passages.push({ name: p.getAttribute('name'), body: p.textContent || '', pid: p.getAttribute('pid'), pos: (p.getAttribute('position') || '').split(',').map(Number) });
+        });
+        var storyEl = dom.querySelector('tw-storydata');
+        if (storyEl) startId = storyEl.getAttribute('startnode') || '';
+      } else {
+        var blocks = text.split(/\n(?=::\s)/);
+        blocks.forEach(function (b) {
+          var m = b.match(/^::\s*([^\[\n]+?)(?:\s*\[[^\]]*\])?\s*\n([\s\S]*)/);
+          if (!m) return;
+          passages.push({ name: m[1].trim(), body: m[2].trim() });
+        });
+      }
+      var nameToId = {};
+      passages.forEach(function (p, i) {
+        var id = 'n' + (++s.nodeCounter);
+        nameToId[p.name] = id;
+        var pos = p.pos || [100 + (i % 6) * 220, 100 + Math.floor(i / 6) * 160];
+        s.nodes.push({
+          id: id, label: p.name, note: (p.body || '').slice(0, 300).replace(/\[\[.*?\]\]/g, '').trim(),
+          trackId: 't1', phaseId: 'p1', x: pos[0], y: pos[1], nodeType: 'scene'
+        });
+      });
+      if (passages.length) s.startNodeId = nameToId[passages[0].name] || '';
+      passages.forEach(function (p) {
+        var src = nameToId[p.name];
+        var rx = /\[\[(.*?)\]\]/g; var m;
+        while ((m = rx.exec(p.body)) !== null) {
+          var raw = m[1]; var label = raw; var target = raw;
+          if (raw.indexOf('->') >= 0) { var parts = raw.split('->'); label = parts[0].trim(); target = parts[1].trim(); }
+          else if (raw.indexOf('|') >= 0) { var ps = raw.split('|'); label = ps[0].trim(); target = ps[1].trim(); }
+          var dst = nameToId[target] || nameToId[label];
+          if (dst) {
+            s.links.push({ id: 'l' + (++s.linkCounter), source: src, target: dst, type: 'standard', label: (label !== target ? label : ''), choiceText: label });
+          }
+        }
+      });
+      return s;
+    },
+    importInk: function () {
+      var inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.ink,.json';
+      inp.onchange = function () {
+        var f = inp.files[0]; if (!f) return;
+        var rd = new FileReader();
+        rd.onload = function () {
+          try {
+            var data = JSON.parse(rd.result);
+            var s = StoryMapX._parseInk(data);
+            StoryMapX.snapshot();
+            StoryMap.state = s;
+            StoryMap.save(); StoryMap.render();
+            toast('Ink imported · ' + s.nodes.length + ' nodes');
+          } catch (e) { toast('Ink parse failed — try the ink-compiled JSON · ' + e.message, 'error'); }
+        };
+        rd.readAsText(f);
+      };
+      inp.click();
+    },
+    _parseInk: function (data) {
+      // Very light Ink JSON heuristic — reads the "main" namespace keys as
+      // knots/stitches, builds scene nodes, and draws divert edges when found.
+      var s = { tracks: [{ id:'t1', label:'Main', color:'#14AFDF', visible:true }], phases: [{ id:'p1', label:'Act I' }], nodes: [], links: [], nodeCounter:0, linkCounter:0, trackCounter:1, phaseCounter:1, startNodeId: '' };
+      var root = data.root || data;
+      var knotNames = Object.keys(root).filter(function (k) { return !k.startsWith('#') && !k.startsWith('@'); });
+      var nameToId = {};
+      knotNames.forEach(function (name, i) {
+        var id = 'n' + (++s.nodeCounter);
+        nameToId[name] = id;
+        s.nodes.push({ id: id, label: name, note: '', trackId: 't1', phaseId: 'p1', x: 100 + (i % 5) * 220, y: 80 + Math.floor(i / 5) * 160, nodeType: 'scene' });
+      });
+      if (knotNames.length) s.startNodeId = nameToId[knotNames[0]];
+      // naive scan for "->Name" divert strings
+      knotNames.forEach(function (name) {
+        var payload = JSON.stringify(root[name] || '');
+        var rx = /"->\s*([A-Za-z_][A-Za-z0-9_.]*)"/g; var m;
+        while ((m = rx.exec(payload)) !== null) {
+          var target = m[1].split('.')[0];
+          if (nameToId[target] && target !== name) {
+            s.links.push({ id: 'l' + (++s.linkCounter), source: nameToId[name], target: nameToId[target], type: 'standard' });
+          }
+        }
+      });
+      return s;
+    },
+    importCSV: function () {
+      var inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.csv,text/csv';
+      inp.onchange = function () {
+        var f = inp.files[0]; if (!f) return;
+        var rd = new FileReader();
+        rd.onload = function () {
+          try {
+            var s = StoryMapX._parseCSV(rd.result);
+            StoryMapX.snapshot();
+            StoryMap.state = s;
+            StoryMap.save(); StoryMap.render();
+            toast('CSV imported · ' + s.nodes.length + ' nodes');
+          } catch (e) { toast('CSV parse failed · ' + e.message, 'error'); }
+        };
+        rd.readAsText(f);
+      };
+      inp.click();
+    },
+    _parseCSV: function (text) {
+      // Expect two sections separated by a blank line:
+      //   id,label,type,track,phase,x,y,note
+      //   [blank]
+      //   source,target,type,label,choiceText
+      // Or a single section of the first shape; edges will be auto-chained.
+      var s = { tracks: [{ id:'t1', label:'Main', color:'#17FFC5', visible:true }], phases: [{ id:'p1', label:'Act I' }], nodes: [], links: [], nodeCounter:0, linkCounter:0, trackCounter:1, phaseCounter:1, startNodeId: '' };
+      var sections = text.split(/\n\s*\n/);
+      function parseRow(r) { var out = []; var cur = ''; var inQ = false; for (var i = 0; i < r.length; i++) { var c = r[i]; if (inQ) { if (c === '"' && r[i+1] === '"') { cur += '"'; i++; } else if (c === '"') { inQ = false; } else cur += c; } else { if (c === '"') inQ = true; else if (c === ',') { out.push(cur); cur = ''; } else cur += c; } } out.push(cur); return out; }
+      var nodeLines = sections[0].split(/\n/).slice(1).filter(Boolean);
+      nodeLines.forEach(function (ln, i) {
+        var row = parseRow(ln);
+        var id = row[0] || ('n' + (++s.nodeCounter));
+        s.nodeCounter = Math.max(s.nodeCounter, i + 1);
+        s.nodes.push({
+          id: id, label: row[1] || id, nodeType: row[2] || 'scene',
+          trackId: 't1', phaseId: 'p1',
+          x: +row[5] || (100 + (i % 5) * 220), y: +row[6] || (100 + Math.floor(i / 5) * 160),
+          note: row[7] || ''
+        });
+      });
+      if (s.nodes[0]) s.startNodeId = s.nodes[0].id;
+      if (sections[1]) {
+        var edgeLines = sections[1].split(/\n/).slice(1).filter(Boolean);
+        edgeLines.forEach(function (ln) {
+          var row = parseRow(ln);
+          s.links.push({ id: 'l' + (++s.linkCounter), source: row[0], target: row[1], type: row[2] || 'standard', label: row[3] || '', choiceText: row[4] || '' });
+        });
+      } else if (s.nodes.length > 1) {
+        for (var i = 0; i < s.nodes.length - 1; i++) {
+          s.links.push({ id: 'l' + (++s.linkCounter), source: s.nodes[i].id, target: s.nodes[i + 1].id, type: 'standard' });
+        }
+      }
+      return s;
+    },
+
+    // ---- Marquee selection -------------------------------------------------
+    _beginMarquee: function (e, vp) {
+      var r = vp.getBoundingClientRect();
+      StoryMapX.marquee = { x0: e.clientX - r.left, y0: e.clientY - r.top, x1: e.clientX - r.left, y1: e.clientY - r.top };
+      var box = document.createElement('div');
+      box.id = 'dag-marquee';
+      box.style.cssText = 'position:absolute;border:1px dashed var(--mint);background:rgba(23,255,197,0.08);pointer-events:none;z-index:20;';
+      vp.appendChild(box);
+    },
+    _updateMarquee: function (e, vp) {
+      if (!StoryMapX.marquee) return;
+      var r = vp.getBoundingClientRect();
+      StoryMapX.marquee.x1 = e.clientX - r.left;
+      StoryMapX.marquee.y1 = e.clientY - r.top;
+      var mb = $('#dag-marquee'); if (!mb) return;
+      var x = Math.min(StoryMapX.marquee.x0, StoryMapX.marquee.x1);
+      var y = Math.min(StoryMapX.marquee.y0, StoryMapX.marquee.y1);
+      var w = Math.abs(StoryMapX.marquee.x1 - StoryMapX.marquee.x0);
+      var h = Math.abs(StoryMapX.marquee.y1 - StoryMapX.marquee.y0);
+      mb.style.left = x + 'px'; mb.style.top = y + 'px'; mb.style.width = w + 'px'; mb.style.height = h + 'px';
+    },
+    _endMarquee: function (vp, additive) {
+      var mb = $('#dag-marquee'); if (!mb || !StoryMapX.marquee) return;
+      var x = Math.min(StoryMapX.marquee.x0, StoryMapX.marquee.x1);
+      var y = Math.min(StoryMapX.marquee.y0, StoryMapX.marquee.y1);
+      var w = Math.abs(StoryMapX.marquee.x1 - StoryMapX.marquee.x0);
+      var h = Math.abs(StoryMapX.marquee.y1 - StoryMapX.marquee.y0);
+      var sc = StoryMap.view.scale; var tx = StoryMap.view.tx; var ty = StoryMap.view.ty;
+      var wx0 = (x - tx) / sc, wy0 = (y - ty) / sc;
+      var wx1 = wx0 + w / sc, wy1 = wy0 + h / sc;
+      var hits = StoryMap.state.nodes.filter(function (n) {
+        return n.x + 170 >= wx0 && n.x <= wx1 && n.y + 56 >= wy0 && n.y <= wy1;
+      }).map(function (n) { return n.id; });
+      StoryMapX.select(hits, [], additive);
+      mb.remove();
+      StoryMapX.marquee = null;
+    },
+
+    // ---- Context menus ----------------------------------------------------
+    _closeCtx: function () { var el = document.getElementById('sm-ctx'); if (el) el.remove(); },
+    _openCtx: function (e, html) {
+      StoryMapX._closeCtx();
+      var m = document.createElement('div'); m.id = 'sm-ctx'; m.className = 'sm-ctx'; m.innerHTML = html;
+      m.style.left = (e.clientX || 0) + 'px'; m.style.top = (e.clientY || 0) + 'px';
+      document.body.appendChild(m);
+      setTimeout(function () {
+        // Close on any click outside
+        document.addEventListener('click', StoryMapX._closeCtxOnClick = function () {
+          StoryMapX._closeCtx();
+          document.removeEventListener('click', StoryMapX._closeCtxOnClick);
+        });
+      }, 0);
+    },
+    ctxNode: function (e, nid) {
+      e.preventDefault(); e.stopPropagation();
+      // If this node isn't selected, select it alone
+      if (StoryMapX.selected.nodes.indexOf(nid) < 0) StoryMapX.select([nid], [], false);
+      var isStart = StoryMap.state.startNodeId === nid;
+      var html =
+        '<div class="sm-ctx__item" onclick="AH.StoryMap.editNode(\'' + nid + '\');AH.StoryMapX._closeCtx();">Edit properties<span class="sm-ctx__kbd">DblClk</span></div>' +
+        '<div class="sm-ctx__item" onclick="AH.StoryMapX.duplicate();AH.StoryMapX._closeCtx();">Duplicate<span class="sm-ctx__kbd">⌘D</span></div>' +
+        '<div class="sm-ctx__item" onclick="AH.StoryMap.sel={nodeId:\'' + nid + '\',linkId:null};AH.StoryMap.setStart();AH.StoryMapX._closeCtx();">' + (isStart ? '✓ Start node' : 'Set as start') + '</div>' +
+        '<div class="sm-ctx__item" onclick="AH.StoryMapX.tagSelected();">Add tag…</div>' +
+        '<div class="sm-ctx__item" onclick="AH.StoryMap.sel={nodeId:\'' + nid + '\',linkId:null};AH.StoryMap.gotoScriptLine();AH.StoryMapX._closeCtx();">Go to script line</div>' +
+        '<div class="sm-ctx__sep"></div>' +
+        '<div class="sm-ctx__item" onclick="AH.StoryMapX.copy();AH.StoryMapX._closeCtx();">Copy<span class="sm-ctx__kbd">⌘C</span></div>' +
+        '<div class="sm-ctx__item" onclick="AH.StoryMapX.cut();AH.StoryMapX._closeCtx();">Cut<span class="sm-ctx__kbd">⌘X</span></div>' +
+        '<div class="sm-ctx__item" onclick="AH.StoryMapX.paste();AH.StoryMapX._closeCtx();">Paste<span class="sm-ctx__kbd">⌘V</span></div>' +
+        '<div class="sm-ctx__sep"></div>' +
+        '<div class="sm-ctx__item sm-ctx__item--danger" onclick="AH.StoryMapX.deleteSelected();AH.StoryMapX._closeCtx();">Delete<span class="sm-ctx__kbd">Del</span></div>';
+      StoryMapX._openCtx(e, html);
+    },
+    ctxLink: function (e, lid) {
+      e.preventDefault(); e.stopPropagation();
+      StoryMap.sel = { nodeId: null, linkId: lid }; StoryMap.render();
+      var html =
+        '<div class="sm-ctx__item" onclick="AH.StoryMap.sel={nodeId:null,linkId:\'' + lid + '\'};AH.StoryMap.saveLink ? 0 : 0;AH.StoryMapX._closeCtx();">Edit label in inspector</div>' +
+        '<div class="sm-ctx__item" onclick="AH.StoryMapX.editLinkCondition(\'' + lid + '\');AH.StoryMapX._closeCtx();">Condition + effects…</div>' +
+        '<div class="sm-ctx__sep"></div>' +
+        '<div class="sm-ctx__item sm-ctx__item--danger" onclick="AH.StoryMap.sel={nodeId:null,linkId:\'' + lid + '\'};AH.StoryMap.deleteLink();AH.StoryMapX._closeCtx();">Delete edge</div>';
+      StoryMapX._openCtx(e, html);
+    },
+    ctxGroup: function (e, gid) {
+      e.preventDefault(); e.stopPropagation();
+      var html =
+        '<div class="sm-ctx__item" onclick="AH.StoryMapX._renameGroup(\'' + gid + '\');AH.StoryMapX._closeCtx();">Rename group</div>' +
+        '<div class="sm-ctx__item sm-ctx__item--danger" onclick="AH.StoryMapX.ungroup(\'' + gid + '\');AH.StoryMapX._closeCtx();">Ungroup</div>';
+      StoryMapX._openCtx(e, html);
+    },
+    _renameGroup: function (gid) {
+      var g = (StoryMap.state.groups || []).find(function (g) { return g.id === gid; }); if (!g) return;
+      AH.Modal.prompt('Rename group', 'Group name', g.name, function (v) { if (v) { StoryMapX.snapshot(); g.name = v; StoryMap.save(); StoryMap.render(); } });
+    }
+  };
+  AH.StoryMapX = StoryMapX;
+
+  // Prebuild structure templates (dynamic but keep it concise).
+  (function () {
+    function mk(name, beats, branching) {
+      var s = {
+        _version: 1, _app: 'DC ALACRITY Story Map',
+        tracks: [{ id:'t1', label:'Main', color:'#17FFC5', visible:true }, { id:'t2', label:'B-Story', color:'#a794ff', visible:true }],
+        phases: [{ id:'p1', label:'Act I' }, { id:'p2', label:'Act II' }, { id:'p3', label:'Act III' }],
+        nodes: [], links: [], nodeCounter: 0, linkCounter: 0, trackCounter: 2, phaseCounter: 3, startNodeId: ''
+      };
+      beats.forEach(function (b, i) {
+        var id = 'n' + (++s.nodeCounter);
+        s.nodes.push({ id: id, label: b.label, note: b.note, trackId: b.track || 't1', phaseId: b.phase || 'p1', x: 80 + i * 240, y: 80 + (b.row || 0) * 180, nodeType: b.type || (i === 0 ? 'start' : (i === beats.length - 1 ? 'end' : 'scene')) });
+        if (i === 0) s.startNodeId = id;
+      });
+      for (var i = 0; i < beats.length - 1; i++) {
+        s.links.push({ id: 'l' + (++s.linkCounter), source: s.nodes[i].id, target: s.nodes[i + 1].id, type: 'standard' });
+      }
+      if (branching) {
+        branching.forEach(function (br) {
+          s.links.push({ id: 'l' + (++s.linkCounter), source: s.nodes[br.from].id, target: s.nodes[br.to].id, type: br.type || 'custom', label: br.label || '', choiceText: br.label || '' });
+        });
+      }
+      return { name: name, state: s };
+    }
+    StoryMapX.templates = {
+      heroJourney: mk("Hero's Journey · 12 beats", [
+        { label: 'ORDINARY WORLD',     note: 'Hero in their normal life',                phase:'p1', type:'start' },
+        { label: 'CALL TO ADVENTURE',  note: 'Inciting incident',                         phase:'p1' },
+        { label: 'REFUSAL',            note: 'Hesitation',                                 phase:'p1' },
+        { label: 'MENTOR',             note: 'Aid and advice',                             phase:'p1' },
+        { label: 'CROSSING',           note: 'Leave the known',                            phase:'p2' },
+        { label: 'TESTS / ALLIES',     note: 'Trials and new bonds',                       phase:'p2' },
+        { label: 'APPROACH',           note: 'Prepare for the challenge',                  phase:'p2' },
+        { label: 'ORDEAL',             note: 'Midpoint confrontation',                     phase:'p2' },
+        { label: 'REWARD',             note: 'Hero gains the prize',                       phase:'p2' },
+        { label: 'ROAD BACK',          note: 'Consequences arrive',                        phase:'p3' },
+        { label: 'RESURRECTION',       note: 'Final test',                                 phase:'p3' },
+        { label: 'RETURN',             note: 'Home transformed',                           phase:'p3', type:'end' }
+      ]),
+      saveTheCat: mk('Save the Cat · 15 beats', [
+        { label: 'OPENING IMAGE',    note: 'Tone / before snapshot',             phase:'p1', type:'start' },
+        { label: 'THEME STATED',     note: 'Message surfaces',                    phase:'p1' },
+        { label: 'SET-UP',           note: 'Characters and stakes',               phase:'p1' },
+        { label: 'CATALYST',         note: 'Life-changing event',                 phase:'p1' },
+        { label: 'DEBATE',           note: 'What should I do?',                   phase:'p1' },
+        { label: 'BREAK INTO 2',     note: 'Choice is made',                      phase:'p2' },
+        { label: 'B STORY',          note: 'New friend / love',                   phase:'p2' },
+        { label: 'FUN AND GAMES',    note: 'Promise of premise',                  phase:'p2' },
+        { label: 'MIDPOINT',         note: 'High or low',                         phase:'p2' },
+        { label: 'BAD GUYS CLOSE IN',note: 'Tension mounts',                      phase:'p2' },
+        { label: 'ALL IS LOST',      note: 'False defeat',                        phase:'p2' },
+        { label: 'DARK NIGHT',       note: 'Reflection',                          phase:'p3' },
+        { label: 'BREAK INTO 3',     note: 'Solution arrives',                    phase:'p3' },
+        { label: 'FINALE',           note: 'Execute the new plan',                phase:'p3' },
+        { label: 'FINAL IMAGE',      note: 'After snapshot',                      phase:'p3', type:'end' }
+      ]),
+      threeAct: mk('3-Act Structure', [
+        { label: 'OPENING',    note: 'Introduce world',  phase:'p1', type:'start' },
+        { label: 'INCITING',   note: 'Inciting event',   phase:'p1' },
+        { label: 'PLOT POINT 1', note: 'End of Act I',   phase:'p1' },
+        { label: 'RISING ACTION', note: 'Complications', phase:'p2' },
+        { label: 'MIDPOINT',   note: 'Midpoint reversal',phase:'p2' },
+        { label: 'CRISIS',     note: 'All is lost',      phase:'p2' },
+        { label: 'CLIMAX',     note: 'Confrontation',    phase:'p3' },
+        { label: 'RESOLUTION', note: 'New equilibrium',  phase:'p3', type:'end' }
+      ]),
+      branchingChoose: mk('Branching · Choose Your Path', [
+        { label: 'START',        note: 'Player begins', phase:'p1', type:'start' },
+        { label: 'CHOICE POINT', note: 'Fork · 3 options', phase:'p1', type:'fork' },
+        { label: 'PATH A',       note: 'Left path',     phase:'p2', row: 0 },
+        { label: 'PATH B',       note: 'Middle path',   phase:'p2', row: 1 },
+        { label: 'PATH C',       note: 'Right path',    phase:'p2', row: 2 },
+        { label: 'CONVERGE',     note: 'Paths reunite', phase:'p2', type:'merge' },
+        { label: 'ENDING A',     note: 'Happy ending',  phase:'p3', row: 0, type:'end' },
+        { label: 'ENDING B',     note: 'Bitter ending', phase:'p3', row: 1, type:'end' }
+      ], [
+        { from: 1, to: 3, label: 'Take middle path', type: 'custom' },
+        { from: 1, to: 4, label: 'Take right path',  type: 'custom' },
+        { from: 5, to: 6, type: 'standard' },
+        { from: 5, to: 7, label: 'Secret ending', type: 'jump' }
+      ])
+    };
+  })();
+
   AH.register('storymap', function (m) {
     StoryMap.load();
+    var q = StoryMapX.getQuery();
+    var tf = StoryMapX.getTagFilter();
     return (
       AH.Views.renderHero(m, {
         primary: 'EXPORT ALACRITY BUNDLE',
         primaryFn: 'AH.StoryMap.exportAlacrityBundle()',
-        secondary: 'SYNC FROM SCRIPT',
-        secondaryFn: 'AH.StoryMap.syncFromScript()'
+        secondary: '▶ SIMULATE PLAYTHROUGH',
+        secondaryFn: 'AH.StoryMapX.simulate()'
       }) +
       '<div class="section">' +
         '<div class="dag-toolbar">' +
@@ -10034,22 +10948,56 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
             '<button class="dag-tbtn" onclick="AH.StoryMap.add()">+ SCENE</button>' +
             '<button class="dag-tbtn" onclick="AH.StoryMap.addFork()">+ FORK</button>' +
             '<button class="dag-tbtn" onclick="AH.StoryMap.addMerge()">+ MERGE</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMapX.groupSelected()" title="Group selected nodes">GROUP</button>' +
+          '</div>' +
+          '<div class="dag-toolbar__group">' +
+            '<button class="dag-tbtn" onclick="AH.StoryMapX.undo()" title="Undo (⌘Z)">↶</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMapX.redo()" title="Redo (⌘⇧Z)">↷</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMapX.duplicate()" title="Duplicate">DUP</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMapX.deleteSelected()" title="Delete (Del)">DEL</button>' +
+          '</div>' +
+          '<div class="dag-toolbar__group">' +
+            '<button class="dag-tbtn" onclick="AH.StoryMapX.alignLeft()">⇤</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMapX.alignRight()">⇥</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMapX.alignTop()">⇡</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMapX.alignBottom()">⇣</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMapX.distributeH()">⇔</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMapX.distributeV()">⇕</button>' +
           '</div>' +
           '<div class="dag-toolbar__group">' +
             '<button class="dag-tbtn" onclick="AH.StoryMap.autoLayout()">AUTO LAYOUT</button>' +
             '<button class="dag-tbtn" onclick="AH.StoryMap.validate()">VALIDATE</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMapX.analytics()">ANALYTICS</button>' +
             '<button class="dag-tbtn" onclick="AH.StoryMap.syncFromScript()">SYNC ⇄ SCRIPT</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMapX.editFlags()">FLAGS</button>' +
           '</div>' +
           '<div class="dag-toolbar__group">' +
-            '<button class="dag-tbtn" onclick="AH.StoryMap.exportJSON()">EXPORT JSON</button>' +
-            '<button class="dag-tbtn" onclick="AH.StoryMap.exportMarkdown()">MARKDOWN</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.exportJSON()">JSON</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.exportMarkdown()">MD</button>' +
             '<button class="dag-tbtn" onclick="AH.StoryMap.exportSVG()">SVG</button>' +
             '<button class="dag-tbtn" onclick="AH.StoryMap.exportCSV()">CSV</button>' +
           '</div>' +
           '<div class="dag-toolbar__group">' +
-            '<button class="dag-tbtn" onclick="AH.StoryMap.importJSON()">IMPORT JSON</button>' +
-            '<button class="dag-tbtn" onclick="AH.StoryMap.exportAlacrityBundle()" style="color:var(--violet);border-color:rgba(167,148,255,0.45);">ALACRITY PLAYER BUNDLE ↗</button>' +
+            '<select class="dag-tbtn" id="sm-template-sel" onchange="if(this.value)AH.StoryMapX.applyTemplate(this.value);this.value=\'\';">' +
+              '<option value="">TEMPLATES…</option>' +
+              Object.keys(StoryMapX.templates).map(function (k) { return '<option value="' + k + '">' + clean(StoryMapX.templates[k].name) + '</option>'; }).join('') +
+            '</select>' +
+            '<select class="dag-tbtn" id="sm-import-sel" onchange="var v=this.value;this.value=\'\';if(v===\'json\')AH.StoryMap.importJSON();else if(v===\'twine\')AH.StoryMapX.importTwine();else if(v===\'ink\')AH.StoryMapX.importInk();else if(v===\'csv\')AH.StoryMapX.importCSV();">' +
+              '<option value="">IMPORT…</option>' +
+              '<option value="json">JSON (DCA)</option>' +
+              '<option value="twine">Twine / Twee</option>' +
+              '<option value="ink">Ink (compiled JSON)</option>' +
+              '<option value="csv">CSV (nodes + edges)</option>' +
+            '</select>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.exportAlacrityBundle()" style="color:var(--violet);border-color:rgba(167,148,255,0.45);">ALACRITY PLAYER ↗</button>' +
           '</div>' +
+        '</div>' +
+        '<div class="dag-search-row">' +
+          '<input id="sm-search" class="dag-search-input" value="' + clean(q) + '" placeholder="Search nodes by label, note, tag…" oninput="AH.StoryMapX.search(this.value)"/>' +
+          '<input id="sm-tag-filter" class="dag-search-input" value="' + clean(tf) + '" placeholder="Filter by tag" oninput="AH.StoryMapX.setTagFilter(this.value)" style="max-width:200px;"/>' +
+          '<button class="dag-tbtn" onclick="AH.StoryMapX.tagSelected()">TAG SELECTED</button>' +
+          '<button class="dag-tbtn" onclick="AH.StoryMapX.selectAll()">SELECT ALL</button>' +
+          '<button class="dag-tbtn" onclick="AH.StoryMapX.clear()">CLEAR</button>' +
         '</div>' +
         '<div class="dag-root">' +
           '<div class="dag-tracks" id="dag-tracks"></div>' +
@@ -10068,6 +11016,28 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     StoryMap.load();
     StoryMap.render();
     StoryMap._bindGlobalDrag();
+    // Extended keyboard shortcuts on the Story Map view
+    if (!document._smKeysBound) {
+      document._smKeysBound = true;
+      document.addEventListener('keydown', function (e) {
+        if (AH.Router.current !== 'storymap') return;
+        var tag = (document.activeElement && document.activeElement.tagName) || '';
+        var inInput = tag === 'INPUT' || tag === 'TEXTAREA' || (document.activeElement && document.activeElement.isContentEditable);
+        if (inInput) return;
+        if ((e.metaKey || e.ctrlKey) && e.key === 'z') { e.preventDefault(); if (e.shiftKey) StoryMapX.redo(); else StoryMapX.undo(); return; }
+        if ((e.metaKey || e.ctrlKey) && e.key === 'y') { e.preventDefault(); StoryMapX.redo(); return; }
+        if ((e.metaKey || e.ctrlKey) && e.key === 'a') { e.preventDefault(); StoryMapX.selectAll(); return; }
+        if ((e.metaKey || e.ctrlKey) && e.key === 'c') { StoryMapX.copy(); return; }
+        if ((e.metaKey || e.ctrlKey) && e.key === 'x') { StoryMapX.cut(); return; }
+        if ((e.metaKey || e.ctrlKey) && e.key === 'v') { StoryMapX.paste(); return; }
+        if ((e.metaKey || e.ctrlKey) && e.key === 'd') { e.preventDefault(); StoryMapX.duplicate(); return; }
+        if (e.key === 'Delete' || e.key === 'Backspace') { StoryMapX.deleteSelected(); return; }
+        if (e.key === 'n' || e.key === 'N') { StoryMap.add(); return; }
+        if (e.key === 'f' || e.key === 'F') { StoryMap.addFork(); return; }
+        if (e.key === 'm' || e.key === 'M') { StoryMap.addMerge(); return; }
+        if (e.key === 'Escape') { StoryMapX.clear(); }
+      });
+    }
   };
 
   // ══════════════════════════════════════════════════════════════════════════
