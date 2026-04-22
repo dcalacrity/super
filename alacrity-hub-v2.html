@@ -448,6 +448,112 @@ body:not(.rail-open) .rail__item:hover::after { opacity: 1; }
   .rail__item::after { display: none; }
 }
 
+/* ── NESTED NAV (parents + children) ─────────────────────────────────── */
+.rail__parent {
+  margin: 0 10px 2px;
+  position: relative;
+}
+.rail__parent__btn {
+  display: flex; align-items: center; gap: 14px;
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 14px;
+  color: var(--fg-60);
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  transition: background 0.22s var(--ease), color 0.22s var(--ease);
+}
+.rail__parent__btn:hover { color: var(--fg); background: rgba(23,255,197,0.07); }
+.rail__parent__btn__icon { flex-shrink: 0; width: 24px; height: 24px; display:flex; align-items:center; justify-content:center; }
+.rail__parent__btn__icon svg { width: 20px; height: 20px; }
+.rail__parent__btn__label {
+  font-family: var(--f-body);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  flex: 1;
+  opacity: 0; max-width: 0; overflow: hidden;
+  transition: opacity 0.3s var(--ease), max-width 0.3s var(--ease);
+}
+body.rail-open .rail__parent__btn__label { opacity: 1; max-width: 200px; }
+.rail__parent__btn__chev {
+  width: 14px; height: 14px;
+  opacity: 0.5;
+  transform: rotate(0deg);
+  transition: transform 0.22s var(--ease), opacity 0.22s var(--ease);
+}
+.rail__parent.is-open > .rail__parent__btn__chev,
+.rail__parent.is-open .rail__parent__btn__chev { transform: rotate(90deg); opacity: 0.95; }
+body:not(.rail-open) .rail__parent__btn__chev { display: none; }
+.rail__parent.is-active > .rail__parent__btn,
+.rail__parent.is-active .rail__parent__btn { color: var(--fg); }
+.rail__parent.is-active > .rail__parent__btn::before,
+.rail__parent.is-active .rail__parent__btn::before {
+  content: "";
+  position: absolute;
+  left: -2px; top: 10px; bottom: 10px; width: 3px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--mint), var(--aqua));
+}
+
+.rail__children {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s var(--ease);
+  padding-left: 10px;
+}
+.rail__parent.is-open .rail__children { max-height: 720px; }
+body:not(.rail-open) .rail__children { max-height: 0 !important; padding-left: 0; }
+
+.rail__child {
+  display: flex; align-items: center; gap: 12px;
+  height: 34px;
+  padding: 0 10px;
+  margin: 2px 0;
+  border-radius: 10px;
+  color: var(--fg-60);
+  cursor: pointer;
+  position: relative;
+  font-family: var(--f-body);
+  font-size: 12.5px;
+  transition: background 0.18s var(--ease), color 0.18s var(--ease);
+  white-space: nowrap;
+}
+.rail__child__icon { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.6; }
+.rail__child__icon svg { width: 16px; height: 16px; }
+.rail__child:hover { color: var(--fg); background: rgba(23,255,197,0.06); }
+.rail__child:hover .rail__child__icon { opacity: 1; }
+.rail__child.is-active {
+  color: var(--ink-0);
+  background: linear-gradient(135deg, rgba(23,255,197,0.9), rgba(20,175,223,0.9));
+  font-weight: 600;
+}
+.rail__child.is-active .rail__child__icon { opacity: 1; }
+
+/* When rail is collapsed, parent buttons fan out children on hover */
+body:not(.rail-open) .rail__parent:hover .rail__children {
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 0;
+  min-width: 220px;
+  max-height: 720px;
+  padding: 8px;
+  border-radius: 14px;
+  background: var(--glass-2);
+  border: 1px solid var(--edge);
+  box-shadow: var(--sh-2);
+  z-index: 60;
+  backdrop-filter: saturate(160%) blur(16px);
+  -webkit-backdrop-filter: saturate(160%) blur(16px);
+}
+body:not(.rail-open) .rail__parent:hover .rail__children .rail__child {
+  height: 36px;
+  padding: 0 10px;
+  font-size: 12.5px;
+}
+
 .rail__toggle {
   position: absolute;
   top: 50%;
@@ -2579,6 +2685,56 @@ html[data-theme="light"] .board-strip__cell { background: #ffffff; }
 .kanban__card__m { font-family: var(--f-mono); font-size: 10px; color: var(--fg-60); letter-spacing: 0.14em; text-transform: uppercase; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   BEAT BOARD — corkboard outliner
+   ═══════════════════════════════════════════════════════════════════════════ */
+.bb-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.bb-card {
+  display: flex; flex-direction: column; gap: 8px;
+  background: var(--glass-1); border: 1px solid var(--edge);
+  border-radius: var(--r-sm);
+  padding: 12px 14px 14px;
+  transition: transform 0.2s var(--ease), border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+  cursor: grab;
+  position: relative;
+}
+html[data-theme="light"] .bb-card { background: #fff; }
+.bb-card:hover { transform: translateY(-1px); border-color: var(--mint); box-shadow: var(--sh-mint); }
+.bb-card.is-drag { opacity: 0.5; }
+.bb-card__head { display: flex; align-items: center; gap: 8px; }
+.bb-card__act { font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.14em; color: var(--fg-45); text-transform: uppercase; flex: 1; }
+.bb-card__x {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 1px solid var(--edge); background: transparent; color: var(--fg-45);
+  cursor: pointer; font-size: 16px; line-height: 1;
+}
+.bb-card__x:hover { color: var(--rose); border-color: var(--rose); }
+.bb-card__head-input {
+  font-family: var(--f-display); font-weight: 700; font-size: 13px;
+  letter-spacing: 0.04em; text-transform: uppercase; outline: none;
+  color: var(--fg); padding: 2px 0;
+  border-bottom: 1px solid transparent; transition: border-color 0.2s;
+}
+.bb-card__head-input:focus { border-color: var(--edge-mint); }
+.bb-card__body {
+  width: 100%; min-height: 80px; padding: 8px 10px;
+  border-radius: 8px; background: var(--ink-2); border: 1px solid var(--edge);
+  color: var(--fg); font-family: var(--f-body); font-size: 12.5px; line-height: 1.5;
+  resize: vertical; outline: none;
+}
+.bb-card__foot { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.bb-card__num, .bb-card__sel {
+  height: 28px; padding: 0 8px; font-size: 11px;
+  border-radius: 6px; background: var(--ink-2); border: 1px solid var(--edge); color: var(--fg);
+  font-family: var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase;
+}
+.bb-card__num { width: 64px; text-align: right; }
+.bb-card__color { width: 28px; height: 28px; border: 1px solid var(--edge); border-radius: 6px; background: transparent; cursor: pointer; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
    STORY MAP / DAG — V1-feature-parity node-graph editor
    ═══════════════════════════════════════════════════════════════════════════ */
 .dag-root { display: grid; grid-template-columns: 240px 1fr 300px; gap: 10px; min-height: 72vh; }
@@ -3407,48 +3563,81 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   };
   AH.icons = ICONS;
 
+  // Module catalog. `parent` maps each module into a collapsible nav section
+  // so the rail shows only 7 parent rows by default; children expand on click.
+  // `group` is retained for legacy callers. `crumb` is the breadcrumb label.
   var MODULES = [
-    { id: 'dashboard',           label: 'Dashboard',         group: 'OVERVIEW',    icon: 'grid',    crumb: 'MODULE · 01', img: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'production-library',  label: 'Productions',       group: 'OVERVIEW',    icon: 'library', crumb: 'MODULE · 02', img: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'script-editor',       label: 'Script Studio',     group: 'PRODUCTION',  icon: 'script',  crumb: 'MODULE · 03', img: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'storymap',            label: 'Story Map',         group: 'PRODUCTION',  icon: 'node',    crumb: 'MODULE · 04', img: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'schedule',            label: 'Stripboard',        group: 'PRODUCTION',  icon: 'calendar',crumb: 'MODULE · 05', img: 'https://images.unsplash.com/photo-1533073526757-2c8ca1df9f1c?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'breakdown',           label: 'Breakdown',         group: 'PRODUCTION',  icon: 'layers',  crumb: 'MODULE · 06', img: 'https://images.unsplash.com/photo-1560472355-536de3962603?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'shotlist',            label: 'Shot List',         group: 'PRODUCTION',  icon: 'camera',  crumb: 'MODULE · 07', img: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'cast-crew',           label: 'Cast & Crew',       group: 'PRODUCTION',  icon: 'users',   crumb: 'MODULE · 08', img: 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'contacts',            label: 'Contacts',          group: 'PRODUCTION',  icon: 'phone',   crumb: 'MODULE · 09', img: 'https://images.unsplash.com/photo-1587560699334-cc4ff634909a?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'continuity',          label: 'Continuity',        group: 'PRODUCTION',  icon: 'eye',     crumb: 'MODULE · 10', img: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'tech',                label: 'Equipment',         group: 'PRODUCTION',  icon: 'wrench',  crumb: 'MODULE · 11', img: 'https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'shopping',            label: 'Shopping',          group: 'PRODUCTION',  icon: 'cart',    crumb: 'MODULE · 12', img: 'https://images.unsplash.com/photo-1556742400-b5e9a7adbd4a?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'risk',                label: 'Risk Matrix',       group: 'PRODUCTION',  icon: 'flag',    crumb: 'MODULE · 13', img: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'locations',           label: 'Locations',         group: 'PRODUCTION',  icon: 'location',crumb: 'MODULE · 14', img: 'https://images.unsplash.com/photo-1487958449943-2429e8be8625?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'onset',               label: 'On-Set',            group: 'PRODUCTION',  icon: 'radio',   crumb: 'MODULE · 15', img: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'walkie',              label: 'Walkie Log',        group: 'PRODUCTION',  icon: 'radio',   crumb: 'MODULE · 16', img: 'https://images.unsplash.com/photo-1498925008800-019c7d59d903?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'financials',          label: 'Financials',        group: 'PRODUCTION',  icon: 'dollar',  crumb: 'MODULE · 17', img: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'vault',               label: 'Vault',             group: 'PRODUCTION',  icon: 'vault',   crumb: 'MODULE · 18', img: 'https://images.unsplash.com/photo-1616530940355-351fabd9524b?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'gantt',               label: 'Timeline',          group: 'PRODUCTION',  icon: 'timeline',crumb: 'MODULE · 19', img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'milestones',          label: 'Milestones',        group: 'PRODUCTION',  icon: 'check',   crumb: 'MODULE · 20', img: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'documents',           label: 'Documents',         group: 'PRODUCTION',  icon: 'doc',     crumb: 'MODULE · 21', img: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'notes',               label: 'Notes',             group: 'PRODUCTION',  icon: 'chat',    crumb: 'MODULE · 22', img: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'hotsheet',            label: 'Hot Sheet',         group: 'PRODUCTION',  icon: 'bolt',    crumb: 'MODULE · 23', img: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'storyboard',          label: 'Storyboard',        group: 'PRODUCTION',  icon: 'camera',  crumb: 'MODULE · 24', img: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'days',                label: 'Shoot Days',        group: 'PRODUCTION',  icon: 'calendar',crumb: 'MODULE · 25', img: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'music',               label: 'Music',             group: 'PRODUCTION',  icon: 'bolt',    crumb: 'MODULE · 26', img: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'post',                label: 'Post-Prod',         group: 'PRODUCTION',  icon: 'film',    crumb: 'MODULE · 27', img: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'crm-prod',            label: 'Production CRM',    group: 'GLOBAL',      icon: 'target',  crumb: 'GLOBAL · 01', img: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'crm-biz',             label: 'Business CRM',      group: 'GLOBAL',      icon: 'target',  crumb: 'GLOBAL · 02', img: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'dialer',              label: 'Dialer',            group: 'GLOBAL',      icon: 'phone',   crumb: 'GLOBAL · 03', img: 'https://images.unsplash.com/photo-1565374394096-35dbb58cdfc9?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'calendar',            label: 'Calendar',          group: 'GLOBAL',      icon: 'calendar',crumb: 'GLOBAL · 04', img: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'integrations',        label: 'Integration Hub',   group: 'GLOBAL',      icon: 'integrations', crumb: 'GLOBAL · 05', img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'export',              label: 'Export & Backup',   group: 'GLOBAL',      icon: 'download',crumb: 'GLOBAL · 06', img: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'platform',            label: 'Platform',          group: 'SYSTEM',      icon: 'gear',    crumb: 'SYSTEM · 01', img: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'privacy',             label: 'Privacy',           group: 'SYSTEM',      icon: 'shield',  crumb: 'SYSTEM · 02', img: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'security',            label: 'Zero-Trust Stack',  group: 'SYSTEM',      icon: 'shield',  crumb: 'SYSTEM · 03', img: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1800&q=80' }
+    // OVERVIEW
+    { id: 'dashboard',           label: 'Dashboard',         group: 'OVERVIEW',  parent: 'overview', icon: 'grid',    crumb: 'OVERVIEW · COMMAND',    img: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'production-library',  label: 'Productions',       group: 'OVERVIEW',  parent: 'overview', icon: 'library', crumb: 'OVERVIEW · CATALOG',    img: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'calendar',            label: 'Calendar',          group: 'OVERVIEW',  parent: 'overview', icon: 'calendar',crumb: 'OVERVIEW · TIME',       img: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=1800&q=80' },
+
+    // STORY ROOM — writing + narrative
+    { id: 'script-editor',       label: 'Script Studio',     group: 'STORY',     parent: 'story',    icon: 'script',  crumb: 'STORY · STUDIO',        img: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'storymap',            label: 'Story Map',         group: 'STORY',     parent: 'story',    icon: 'node',    crumb: 'STORY · MAP',           img: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'beatboard',           label: 'Beat Board',        group: 'STORY',     parent: 'story',    icon: 'layers',  crumb: 'STORY · OUTLINE',       img: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'storyboard',          label: 'Storyboard',        group: 'STORY',     parent: 'story',    icon: 'camera',  crumb: 'STORY · BOARD',         img: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'shotlist',            label: 'Shot List',         group: 'STORY',     parent: 'story',    icon: 'camera',  crumb: 'STORY · SHOTS',         img: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=1800&q=80' },
+
+    // PRE-PROD — planning
+    { id: 'schedule',            label: 'Stripboard',        group: 'PRE',       parent: 'pre',      icon: 'calendar',crumb: 'PRE-PROD · STRIPS',     img: 'https://images.unsplash.com/photo-1533073526757-2c8ca1df9f1c?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'breakdown',           label: 'Breakdown',         group: 'PRE',       parent: 'pre',      icon: 'layers',  crumb: 'PRE-PROD · ELEMENTS',   img: 'https://images.unsplash.com/photo-1560472355-536de3962603?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'days',                label: 'Shoot Days',        group: 'PRE',       parent: 'pre',      icon: 'calendar',crumb: 'PRE-PROD · DAYS',       img: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'locations',           label: 'Locations',         group: 'PRE',       parent: 'pre',      icon: 'location',crumb: 'PRE-PROD · LOCATIONS',  img: 'https://images.unsplash.com/photo-1487958449943-2429e8be8625?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'cast-crew',           label: 'Cast & Crew',       group: 'PRE',       parent: 'pre',      icon: 'users',   crumb: 'PRE-PROD · PEOPLE',     img: 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'contacts',            label: 'Contacts',          group: 'PRE',       parent: 'pre',      icon: 'phone',   crumb: 'PRE-PROD · CONTACTS',   img: 'https://images.unsplash.com/photo-1587560699334-cc4ff634909a?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'tech',                label: 'Equipment',         group: 'PRE',       parent: 'pre',      icon: 'wrench',  crumb: 'PRE-PROD · EQUIPMENT',  img: 'https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'shopping',            label: 'Shopping',          group: 'PRE',       parent: 'pre',      icon: 'cart',    crumb: 'PRE-PROD · REQ',        img: 'https://images.unsplash.com/photo-1556742400-b5e9a7adbd4a?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'risk',                label: 'Risk Matrix',       group: 'PRE',       parent: 'pre',      icon: 'flag',    crumb: 'PRE-PROD · RISK',       img: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1800&q=80' },
+
+    // ON-SET
+    { id: 'onset',               label: 'On-Set Hub',        group: 'SET',       parent: 'set',      icon: 'radio',   crumb: 'SET · HUB',             img: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'continuity',          label: 'Continuity',        group: 'SET',       parent: 'set',      icon: 'eye',     crumb: 'SET · CONTINUITY',      img: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'walkie',              label: 'Walkie Log',        group: 'SET',       parent: 'set',      icon: 'radio',   crumb: 'SET · COMMS',           img: 'https://images.unsplash.com/photo-1498925008800-019c7d59d903?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'hotsheet',            label: 'Hot Sheet',         group: 'SET',       parent: 'set',      icon: 'bolt',    crumb: 'SET · HOT SHEET',       img: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=1800&q=80' },
+
+    // POST & DELIVERY
+    { id: 'post',                label: 'Post Suite',        group: 'POST',      parent: 'post',     icon: 'film',    crumb: 'POST · SUITE',          img: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'music',               label: 'Music',             group: 'POST',      parent: 'post',     icon: 'bolt',    crumb: 'POST · MUSIC',          img: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'vault',               label: 'Vault',             group: 'POST',      parent: 'post',     icon: 'vault',   crumb: 'POST · VAULT',          img: 'https://images.unsplash.com/photo-1616530940355-351fabd9524b?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'export',              label: 'Export & Backup',   group: 'POST',      parent: 'post',     icon: 'download',crumb: 'POST · EXPORTS',        img: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1800&q=80' },
+
+    // BUSINESS
+    { id: 'financials',          label: 'Financials',        group: 'BIZ',       parent: 'biz',      icon: 'dollar',  crumb: 'BIZ · FINANCIALS',      img: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'gantt',               label: 'Timeline',          group: 'BIZ',       parent: 'biz',      icon: 'timeline',crumb: 'BIZ · TIMELINE',        img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'milestones',          label: 'Milestones',        group: 'BIZ',       parent: 'biz',      icon: 'check',   crumb: 'BIZ · MILESTONES',      img: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'documents',           label: 'Documents',         group: 'BIZ',       parent: 'biz',      icon: 'doc',     crumb: 'BIZ · DOCUMENTS',       img: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'crm-prod',            label: 'Production CRM',    group: 'BIZ',       parent: 'biz',      icon: 'target',  crumb: 'BIZ · PROD CRM',        img: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'crm-biz',             label: 'Business CRM',      group: 'BIZ',       parent: 'biz',      icon: 'target',  crumb: 'BIZ · BIZ CRM',         img: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'dialer',              label: 'Dialer',            group: 'BIZ',       parent: 'biz',      icon: 'phone',   crumb: 'BIZ · DIALER',          img: 'https://images.unsplash.com/photo-1565374394096-35dbb58cdfc9?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'notes',               label: 'Notes',             group: 'BIZ',       parent: 'biz',      icon: 'chat',    crumb: 'BIZ · NOTES',           img: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1800&q=80' },
+
+    // SYSTEM
+    { id: 'integrations',        label: 'Integrations',      group: 'SYS',       parent: 'sys',      icon: 'integrations', crumb: 'SYSTEM · INTEGRATIONS', img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'platform',            label: 'Platform',          group: 'SYS',       parent: 'sys',      icon: 'gear',    crumb: 'SYSTEM · PLATFORM',     img: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'security',            label: 'Zero-Trust Stack',  group: 'SYS',       parent: 'sys',      icon: 'shield',  crumb: 'SYSTEM · SECURITY',     img: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'privacy',             label: 'Privacy',           group: 'SYS',       parent: 'sys',      icon: 'shield',  crumb: 'SYSTEM · PRIVACY',      img: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1800&q=80' }
   ];
+
+  // Parent nav categories — order defines rail order.
+  var NAV_PARENTS = [
+    { id: 'overview', label: 'Overview',    icon: 'grid',      accent: 'mint'   },
+    { id: 'story',    label: 'Story Room',  icon: 'script',    accent: 'violet' },
+    { id: 'pre',      label: 'Pre-Prod',    icon: 'layers',    accent: 'aqua'   },
+    { id: 'set',      label: 'On-Set',      icon: 'radio',     accent: 'rose'   },
+    { id: 'post',     label: 'Post',        icon: 'film',      accent: 'amber'  },
+    { id: 'biz',      label: 'Business',    icon: 'dollar',    accent: 'lime'   },
+    { id: 'sys',      label: 'System',      icon: 'shield',    accent: 'aqua'   }
+  ];
+
   var MODULE_BY_ID = {};
   MODULES.forEach(function (m) { MODULE_BY_ID[m.id] = m; });
+  var MODULES_BY_PARENT = {};
+  NAV_PARENTS.forEach(function (p) { MODULES_BY_PARENT[p.id] = MODULES.filter(function (m) { return m.parent === p.id; }); });
   AH.modules = MODULES;
   AH.moduleById = MODULE_BY_ID;
+  AH.navParents = NAV_PARENTS;
+  AH.modulesByParent = MODULES_BY_PARENT;
 
   // ────────────────────────────────────────────────────────────────────────
   // THEME
@@ -3546,32 +3735,62 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   var RENDERERS = {};
   AH.register = function (id, fn) { RENDERERS[id] = fn; };
 
+  // Nested rail — parents expand to reveal children. This collapses a
+  // previously-unwieldy flat list of 36 modules into 7 parent rows that
+  // expand on demand. Keyboard + hover + click are all wired.
   function renderRail() {
     var nav = $('#rail-nav');
+    if (!nav) return;
+    var openParent = AH.Storage.local.get('ah_rail_open', 'story');
     nav.innerHTML = '';
-    var currentGroup = null;
-    MODULES.forEach(function (m) {
-      if (m.group !== currentGroup) {
-        currentGroup = m.group;
-        var lbl = document.createElement('div');
-        lbl.className = 'rail__group-label' + (m.group === 'GLOBAL' ? ' rail__group-label--accent' : '');
-        lbl.textContent = m.group;
-        nav.appendChild(lbl);
-      }
-      var item = document.createElement('div');
-      item.className = 'rail__item';
-      item.setAttribute('data-view', m.id);
-      item.setAttribute('data-label', m.label);
-      item.setAttribute('role', 'button');
-      item.setAttribute('tabindex', '0');
-      item.innerHTML =
-        '<span class="rail__item__icon">' + ICONS[m.icon] + '</span>' +
-        '<span class="rail__item__label">' + m.label + '</span>';
-      item.addEventListener('click', function () { AH.Router.go(m.id); });
-      item.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); AH.Router.go(m.id); }
+    NAV_PARENTS.forEach(function (p) {
+      var children = MODULES_BY_PARENT[p.id] || [];
+      if (!children.length) return;
+      var parentEl = document.createElement('div');
+      parentEl.className = 'rail__parent' + (openParent === p.id ? ' is-open' : '');
+      parentEl.setAttribute('data-parent', p.id);
+
+      var btn = document.createElement('div');
+      btn.className = 'rail__parent__btn';
+      btn.setAttribute('role', 'button');
+      btn.setAttribute('tabindex', '0');
+      btn.setAttribute('data-label', p.label);
+      btn.innerHTML =
+        '<span class="rail__parent__btn__icon">' + ICONS[p.icon] + '</span>' +
+        '<span class="rail__parent__btn__label">' + clean(p.label) + '</span>' +
+        '<svg class="rail__parent__btn__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
+      // Click on parent: toggle expand AND navigate to first child.
+      btn.addEventListener('click', function () {
+        var wasOpen = parentEl.classList.contains('is-open');
+        $$('.rail__parent').forEach(function (el) { el.classList.remove('is-open'); });
+        if (!wasOpen) { parentEl.classList.add('is-open'); AH.Storage.local.set('ah_rail_open', p.id); }
+        else { AH.Storage.local.set('ah_rail_open', null); }
+        if (!wasOpen && children[0]) AH.Router.go(children[0].id);
       });
-      nav.appendChild(item);
+      btn.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); }
+      });
+      parentEl.appendChild(btn);
+
+      var kids = document.createElement('div');
+      kids.className = 'rail__children';
+      children.forEach(function (m) {
+        var item = document.createElement('div');
+        item.className = 'rail__child';
+        item.setAttribute('data-view', m.id);
+        item.setAttribute('role', 'button');
+        item.setAttribute('tabindex', '0');
+        item.innerHTML =
+          '<span class="rail__child__icon">' + ICONS[m.icon] + '</span>' +
+          '<span>' + clean(m.label) + '</span>';
+        item.addEventListener('click', function (e) { e.stopPropagation(); AH.Router.go(m.id); });
+        item.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); AH.Router.go(m.id); }
+        });
+        kids.appendChild(item);
+      });
+      parentEl.appendChild(kids);
+      nav.appendChild(parentEl);
     });
   }
 
@@ -3599,8 +3818,15 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       var render = RENDERERS[m.id] || AH.Views.generic;
       ws.innerHTML = '<div class="view is-active" id="view-' + m.id + '">' + render(m) + '</div>';
       ws.scrollTop = 0;
-      $$('.rail__item').forEach(function (el) {
-        el.classList.toggle('is-active', el.getAttribute('data-view') === m.id);
+      // Legacy single-level rail (still fired in case older markup exists)
+      $$('.rail__item').forEach(function (el) { el.classList.toggle('is-active', el.getAttribute('data-view') === m.id); });
+      // Nested rail — mark child + parent
+      $$('.rail__child').forEach(function (el) { el.classList.toggle('is-active', el.getAttribute('data-view') === m.id); });
+      $$('.rail__parent').forEach(function (el) {
+        var pid = el.getAttribute('data-parent');
+        var isActive = m.parent === pid;
+        el.classList.toggle('is-active', isActive);
+        if (isActive) { el.classList.add('is-open'); AH.Storage.local.set('ah_rail_open', pid); }
       });
       $$('.bottombar__btn').forEach(function (el) {
         el.classList.toggle('is-active', el.getAttribute('data-view') === m.id);
@@ -8527,6 +8753,197 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   AH.hooks['notes:mount'] = function () {
     var pad = $('#notes-pad');
     if (pad) on(pad, 'input', debounce(function () { STATE.notes = pad.value; saveState(); }, 400));
+  };
+
+  // ══════════════════════════════════════════════════════════════════════════
+  //  BEAT BOARD · V1-parity corkboard for outlining
+  //  ──────────────────────────────────────────────────────────────────────
+  //  Bidirectional sync with Script Studio: SYNC FROM SCRIPT pulls every
+  //  scene into a beat card; PUSH TO SCRIPT writes summaries back as
+  //  action paragraphs under each scene. Also bridges Story Map nodes.
+  // ══════════════════════════════════════════════════════════════════════════
+  var BEAT_STATUSES = ['draft','outline','writing','done'];
+  var BEAT_STATUS_CLS = { draft: 'chip--amber', outline: 'chip--aqua', writing: 'chip--violet', done: 'chip--mint' };
+  function loadBeats() {
+    var k = 'ah_beats_' + STATE.activeProdId;
+    var d = AH.Storage.local.get(k, null);
+    if (!d) {
+      d = [
+        { id: uid('b'), heading: 'OPENING',    summary: 'Hook. Introduce protagonist and inciting question.', act: 1, status: 'outline', color: '#17FFC5', words: 280, sli: null },
+        { id: uid('b'), heading: 'INCITING',   summary: 'Event disrupts status quo. Stakes emerge.',          act: 1, status: 'outline', color: '#14AFDF', words: 360, sli: null },
+        { id: uid('b'), heading: 'MIDPOINT',   summary: 'Reversal. New information reframes the mission.',    act: 2, status: 'draft',   color: '#a794ff', words: 420, sli: null },
+        { id: uid('b'), heading: 'CLIMAX',     summary: 'Confrontation with the core obstacle.',               act: 3, status: 'draft',   color: '#f7b86b', words: 500, sli: null },
+        { id: uid('b'), heading: 'RESOLUTION', summary: 'New equilibrium. Reflection on change.',              act: 3, status: 'draft',   color: '#bfff6b', words: 300, sli: null }
+      ];
+      AH.Storage.local.set(k, d);
+    }
+    return d;
+  }
+  function saveBeats(d) { AH.Storage.local.set('ah_beats_' + STATE.activeProdId, d); AH.emit && AH.emit('beats:updated'); }
+  AH.register('beatboard', function (m) {
+    var beats = loadBeats();
+    var actFilter = AH.Storage.local.get('ah_beat_filter', 'ALL');
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'SYNC FROM SCRIPT',   primaryFn: 'AH.BeatBoard.syncFrom()',
+        secondary: 'PUSH TO SCRIPT',   secondaryFn: 'AH.BeatBoard.pushTo()'
+      }) +
+      '<div class="section">' +
+        '<div class="card" style="margin-bottom:10px;">' +
+          '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
+            '<button class="btn btn--primary" onclick="AH.BeatBoard.add()">+ BEAT</button>' +
+            '<button class="btn btn--ghost" onclick="AH.BeatBoard.exportPDF()">EXPORT OUTLINE PDF</button>' +
+            '<button class="btn btn--ghost" onclick="AH.BeatBoard.exportMD()">EXPORT MARKDOWN</button>' +
+            '<div style="flex:1;"></div>' +
+            '<span style="font-family:var(--f-mono);font-size:10px;letter-spacing:0.18em;color:var(--fg-45);text-transform:uppercase;">ACT</span>' +
+            ['ALL','1','2','3'].map(function (a) { return '<button class="btn btn--ghost' + (actFilter === a ? ' btn--primary' : '') + '" onclick="AH.BeatBoard.filter(\'' + a + '\')">' + a + '</button>'; }).join('') +
+          '</div>' +
+        '</div>' +
+        '<div class="bb-board" id="bb-board">' +
+          beats.filter(function (b) { return actFilter === 'ALL' || String(b.act) === actFilter; }).map(function (b) {
+            return '<div class="bb-card" draggable="true" data-bid="' + b.id + '" style="border-top:3px solid ' + clean(b.color || '#17FFC5') + ';">' +
+              '<div class="bb-card__head">' +
+                '<span class="chip ' + (BEAT_STATUS_CLS[b.status] || 'chip--aqua') + '">' + clean((b.status || 'draft').toUpperCase()) + '</span>' +
+                '<span class="bb-card__act">ACT ' + b.act + '</span>' +
+                '<button class="bb-card__x" onclick="AH.BeatBoard.del(\'' + b.id + '\')" title="Remove">×</button>' +
+              '</div>' +
+              '<div class="bb-card__head-input" contenteditable="true" data-f="heading" data-id="' + b.id + '">' + clean(b.heading || '') + '</div>' +
+              '<textarea class="bb-card__body" data-f="summary" data-id="' + b.id + '" rows="5" placeholder="Summary…">' + clean(b.summary || '') + '</textarea>' +
+              '<div class="bb-card__foot">' +
+                '<input type="number" class="bb-card__num" data-f="words" data-id="' + b.id + '" value="' + (b.words || 0) + '" min="0" step="10" title="Target words"/>' +
+                '<select class="bb-card__sel" data-f="status" data-id="' + b.id + '">' +
+                  BEAT_STATUSES.map(function (s) { return '<option value="' + s + '"' + (b.status === s ? ' selected' : '') + '>' + s.toUpperCase() + '</option>'; }).join('') +
+                '</select>' +
+                '<select class="bb-card__sel" data-f="act" data-id="' + b.id + '">' +
+                  [1,2,3,4,5].map(function (a) { return '<option value="' + a + '"' + (b.act === a ? ' selected' : '') + '>Act ' + a + '</option>'; }).join('') +
+                '</select>' +
+                '<input type="color" class="bb-card__color" data-f="color" data-id="' + b.id + '" value="' + clean(b.color || '#17FFC5') + '" title="Color"/>' +
+                (b.sli != null ? '<button class="btn btn--ghost" onclick="AH.BeatBoard.goto(' + b.sli + ')">⇢ SCRIPT</button>' : '') +
+              '</div>' +
+            '</div>';
+          }).join('') +
+        '</div>' +
+      '</div>'
+    );
+  });
+  AH.BeatBoard = {
+    filter: function (a) { AH.Storage.local.set('ah_beat_filter', a); AH.Router.go('beatboard'); },
+    add: function () {
+      var d = loadBeats();
+      d.push({ id: uid('b'), heading: 'NEW BEAT', summary: '', act: 1, status: 'draft', color: '#17FFC5', words: 0, sli: null });
+      saveBeats(d); AH.Router.go('beatboard'); toast('Beat added');
+    },
+    del: function (id) { saveBeats(loadBeats().filter(function (b) { return b.id !== id; })); AH.Router.go('beatboard'); },
+    goto: function (sli) {
+      AH.Router.go('script-editor');
+      setTimeout(function () { if (AH.Editor && AH.Editor.scrollToLine) AH.Editor.scrollToLine(sli); }, 220);
+    },
+    syncFrom: function () {
+      if (!AH.Editor || !AH.Editor.state || !AH.Editor.state.lines) { toast('Open Script Studio first', 'warn'); return; }
+      var lines = AH.Editor.state.lines;
+      var d = loadBeats();
+      var bySli = {};
+      d.forEach(function (b) { if (b.sli != null) bySli[b.sli] = b; });
+      var added = 0;
+      lines.forEach(function (l, i) {
+        if (l.t !== 'scene') return;
+        var summary = '';
+        for (var j = i + 1; j < lines.length && j < i + 12; j++) {
+          var n = lines[j]; if (n.t === 'scene') break;
+          if (n.t === 'action' || n.t === 'dial') { summary += (summary ? ' ' : '') + (n.x || ''); }
+          if (summary.length > 220) { summary = summary.slice(0, 220) + '…'; break; }
+        }
+        if (bySli[i]) { bySli[i].heading = (l.x || '').toUpperCase(); bySli[i].summary = summary; return; }
+        d.push({ id: uid('b'), heading: (l.x || '').toUpperCase(), summary: summary, act: Math.min(3, Math.max(1, Math.ceil((d.length + 1) / 3))), status: 'outline', color: '#14AFDF', words: 0, sli: i });
+        added++;
+      });
+      saveBeats(d); AH.Router.go('beatboard');
+      toast('Beat board synced · ' + added + ' new · ' + d.length + ' total');
+    },
+    pushTo: function () {
+      if (!AH.Editor || !AH.Editor.state || !AH.Editor.state.lines) { toast('Open Script Studio first', 'warn'); return; }
+      AH.Modal.confirm('Push to Script', 'This will prepend each beat summary to its linked scene as an action line. Unlinked beats will be appended at the end as new scenes. Continue?', function () {
+        var beats = loadBeats();
+        var lines = AH.Editor.state.lines.slice();
+        // Insert summaries for linked beats in reverse index order
+        var sorted = beats.filter(function (b) { return b.sli != null && b.summary; }).sort(function (a, b) { return b.sli - a.sli; });
+        sorted.forEach(function (b) {
+          lines.splice(b.sli + 1, 0, { t: 'action', x: b.summary });
+        });
+        // Append unlinked beats
+        beats.filter(function (b) { return b.sli == null; }).forEach(function (b) {
+          lines.push({ t: 'scene', x: 'INT. ' + (b.heading || 'BEAT').toUpperCase() + ' - DAY' });
+          if (b.summary) lines.push({ t: 'action', x: b.summary });
+        });
+        AH.Editor.state.lines = lines;
+        AH.Editor.markDirty && AH.Editor.markDirty();
+        toast('Beats pushed to script · ' + beats.length);
+        AH.Router.go('script-editor');
+      });
+    },
+    exportPDF: function () {
+      var d = loadBeats();
+      var body = PDF.header('Beat Outline', getActiveProd().title) +
+        [1,2,3,4,5].map(function (act) {
+          var rows = d.filter(function (b) { return b.act === act; });
+          if (!rows.length) return '';
+          return PDF.section('ACT ' + act,
+            rows.map(function (b) {
+              return '<div style="margin-bottom:10px;padding-left:8px;border-left:3px solid ' + clean(b.color || '#17FFC5') + ';">' +
+                '<div style="font-weight:700;font-size:11pt;color:#0f172a;">' + clean(b.heading) + ' <span style="color:#64748b;font-weight:500;">· ' + clean((b.status || '').toUpperCase()) + (b.words ? ' · ' + b.words + ' words' : '') + '</span></div>' +
+                '<div style="font-size:10pt;line-height:1.6;margin-top:4px;">' + clean(b.summary || '—') + '</div>' +
+              '</div>';
+            }).join('')
+          );
+        }).join('') + PDF.footer();
+      PDF.openDoc(body, 'Beat_Outline_' + slugify(prodTitle()));
+      toast('Outline PDF generated');
+    },
+    exportMD: function () {
+      var d = loadBeats();
+      var out = ['# Beat Outline · ' + getActiveProd().title, ''];
+      [1,2,3,4,5].forEach(function (act) {
+        var rows = d.filter(function (b) { return b.act === act; });
+        if (!rows.length) return;
+        out.push('## Act ' + act, '');
+        rows.forEach(function (b) { out.push('### ' + (b.heading || 'Beat') + '  _(' + (b.status || 'draft') + (b.words ? ' · ' + b.words + ' words' : '') + ')_'); out.push(b.summary || ''); out.push(''); });
+      });
+      Editor._download('beat-outline-' + slugify(prodTitle()) + '.md', out.join('\n'));
+      toast('Outline Markdown exported');
+    }
+  };
+  AH.hooks['beatboard:mount'] = function () {
+    $$('[data-f][data-id]').forEach(function (el) {
+      var ev = (el.tagName === 'SELECT' || el.tagName === 'INPUT') ? 'change' : 'blur';
+      on(el, ev, function () {
+        var d = loadBeats();
+        var b = d.find(function (x) { return x.id === el.getAttribute('data-id'); }); if (!b) return;
+        var f = el.getAttribute('data-f');
+        var v = (el.tagName === 'INPUT' && el.type === 'number') ? parseInt(el.value || '0') : (el.value != null ? el.value : el.innerText.trim());
+        if (f === 'act') v = parseInt(v);
+        b[f] = v;
+        saveBeats(d);
+      });
+    });
+    // Drag-to-reorder
+    var dragId = null;
+    $$('.bb-card').forEach(function (c) {
+      on(c, 'dragstart', function () { dragId = c.getAttribute('data-bid'); c.classList.add('is-drag'); });
+      on(c, 'dragend',   function () { c.classList.remove('is-drag'); });
+      on(c, 'dragover',  function (e) { e.preventDefault(); });
+      on(c, 'drop', function (e) {
+        e.preventDefault();
+        var overId = c.getAttribute('data-bid');
+        if (!dragId || dragId === overId) return;
+        var d = loadBeats();
+        var fromI = d.findIndex(function (x) { return x.id === dragId; });
+        var toI   = d.findIndex(function (x) { return x.id === overId; });
+        if (fromI < 0 || toI < 0) return;
+        var moved = d.splice(fromI, 1)[0];
+        d.splice(toI, 0, moved);
+        saveBeats(d); AH.Router.go('beatboard');
+      });
+    });
   };
 
   // ══════════════════════════════════════════════════════════════════════════
