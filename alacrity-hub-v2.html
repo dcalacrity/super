@@ -2297,6 +2297,14 @@ body.se-typewriter .se-scroll { padding-top: 40vh; padding-bottom: 40vh; }
   color: var(--fg-60);
 }
 .se-statusbar b { color: var(--mint); font-weight: 800; }
+.sb-mode-ind {
+  display: inline-flex; align-items: center;
+  padding: 2px 10px; border-radius: 999px;
+  background: linear-gradient(135deg, rgba(23,255,197,0.18), rgba(20,175,223,0.14));
+  border: 1px solid var(--edge-mint);
+  font-family: var(--f-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.18em; color: var(--mint);
+}
 
 /* Element popup */
 .se-el-popup {
@@ -4456,10 +4464,14 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
               '<div class="se-page" id="se-page"></div>' +
             '</div>' +
             '<div class="se-statusbar">' +
-              '<span><b id="se-pc">1</b>/<b id="se-pt">1</b> PAGES</span>' +
+              '<span class="sb-mode-ind" id="sb-mode-ind">' + (s.mode || 'EDIT').toUpperCase() + '</span>' +
               '<span><b id="se-lc">0</b>LINES</span>' +
+              '<span><b id="se-st-sc2">0</b>SCENES</span>' +
+              '<span><b id="se-pc">1</b>/<b id="se-pt">1</b> PAGES</span>' +
               '<span><b id="se-wc">0</b>WORDS</span>' +
               '<span id="se-runtime"><b>0</b>RUNTIME</span>' +
+              '<span>LINE <b id="se-cur-ln">—</b></span>' +
+              '<span>ELEM <b id="se-cur-el">—</b></span>' +
               '<span style="margin-left:auto;opacity:0.6;">' + (s.language || 'en-US') + ' · ' + (s.scriptType || 'regular').toUpperCase() + '</span>' +
             '</div>' +
           '</section>' +
@@ -4765,6 +4777,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       Object.keys(s.anns).forEach(function (k) { annCount += (s.anns[k] || []).length; });
       shotCount = (s.shotList || []).length;
       $('#se-st-sc') && ($('#se-st-sc').textContent = sceneCount);
+      $('#se-st-sc2')&& ($('#se-st-sc2').textContent = sceneCount);
       $('#se-st-ch') && ($('#se-st-ch').textContent = Object.keys(chars).length);
       $('#se-st-an') && ($('#se-st-an').textContent = annCount);
       $('#se-st-sh') && ($('#se-st-sh').textContent = shotCount);
@@ -4773,18 +4786,36 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       var totalPages = Math.max(1, Math.ceil(s.lines.length / Editor.LINES_PER_PAGE));
       $('#se-pt')   && ($('#se-pt').textContent = totalPages);
       $('#se-runtime') && ($('#se-runtime').innerHTML = '<b>' + totalPages + 'm</b>RUNTIME');
+      $('#sb-mode-ind') && ($('#sb-mode-ind').textContent = (s.mode || 'EDIT').toUpperCase());
     },
 
     selectLine: function (idx) {
       Editor.state.selLine = idx;
       $$('.se-line').forEach(function (el) { el.classList.toggle('is-selected', +el.getAttribute('data-idx') === idx); });
       Editor.renderRight();
+      // Update cursor telemetry in status bar
+      var ln = Editor.state.lines[idx];
+      var curLn = $('#se-cur-ln'); if (curLn) curLn.textContent = (idx + 1);
+      var curEl = $('#se-cur-el'); if (curEl) curEl.textContent = ln ? (ln.t || '').toUpperCase() : '—';
     },
 
     // ───── Keyboard ─────
     onLineKey: function (e, idx) {
       var s = Editor.state;
       var el = e.target;
+      // Page lock guard: determine page from idx and block edits if locked.
+      if (s.lockedPages && s.lockedPages.length) {
+        var page = Math.floor(idx / Editor.LINES_PER_PAGE) + 1;
+        if (s.lockedPages.indexOf(page) >= 0 && !e.ctrlKey && !e.metaKey) {
+          // Allow arrow/select-only; block character entry
+          var modKeys = ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Home','End','PageUp','PageDown','Tab','Shift','Meta','Control','Alt'];
+          if (modKeys.indexOf(e.key) < 0) {
+            e.preventDefault();
+            toast('🔒 Page ' + page + ' is locked. Unlock in Revision Manager.', 'warn');
+            return;
+          }
+        }
+      }
       // Enter: split / new line
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -4946,6 +4977,42 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       Editor.renderScript(); Editor.markDirty(); Editor.closeElPopup();
     },
 
+    // ─── Script ↔ Story Map bridge (from the element popup) ───────────────
+    addSceneToMap: function (idx) {
+      var line = Editor.state.lines[idx]; if (!line) return;
+      if (line.t !== 'scene') { toast('Pick a SCENE line to add to the map', 'warn'); Editor.closeElPopup(); return; }
+      StoryMap.load();
+      var existing = (StoryMap.state.nodes || []).find(function (n) { return n.sceneLineIdx === idx; });
+      if (existing) { toast('Scene already on map · ' + existing.id); Editor.closeElPopup(); AH.Router.go('storymap'); return; }
+      var sm = StoryMap.state; var id = 'n' + (++sm.nodeCounter);
+      sm.nodes.push({
+        id: id, label: (line.x || 'SCENE').toUpperCase(), note: '',
+        trackId: (sm.tracks[0] || {}).id || 't1', phaseId: (sm.phases[0] || {}).id || 'p1',
+        x: 80 + (sm.nodes.length * 220), y: 80,
+        nodeType: 'scene', sceneLineIdx: idx, tags: []
+      });
+      StoryMap.save();
+      Editor.closeElPopup();
+      toast('Added to map · ' + id);
+      AH.Router.go('storymap');
+    },
+    gotoMapNode: function (idx) {
+      StoryMap.load();
+      var node = (StoryMap.state.nodes || []).find(function (n) { return n.sceneLineIdx === idx; });
+      if (!node) { toast('No map node for this scene yet — use ADD TO MAP', 'warn'); Editor.closeElPopup(); return; }
+      StoryMap.sel = { nodeId: node.id, linkId: null };
+      Editor.closeElPopup(); AH.Router.go('storymap');
+    },
+    newForkFromScene: function (idx) {
+      var line = Editor.state.lines[idx]; if (!line) return;
+      StoryMap.load();
+      var sm = StoryMap.state;
+      var baseId = 'n' + (++sm.nodeCounter);
+      sm.nodes.push({ id: baseId, label: (line.x || 'FORK').toUpperCase(), note: 'Fork source', trackId: (sm.tracks[0]||{}).id||'t1', phaseId: (sm.phases[0]||{}).id||'p1', x: 120, y: 120, nodeType: 'fork', sceneLineIdx: idx });
+      StoryMap.save();
+      Editor.closeElPopup(); toast('Fork node created · ' + baseId); AH.Router.go('storymap');
+    },
+
     // ───── Popups ─────
     openElPopup: function (idx, x, y) {
       var pop = $('#se-el-popup');
@@ -4965,6 +5032,10 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       '<div class="se-el-popup__sep"></div>' +
       '<div class="se-el-popup__item" onclick="AH.Editor.insertPathwayChoice(' + idx + ')"><span>🔀 New Pathway</span><kbd>W</kbd></div>' +
       '<div class="se-el-popup__item" onclick="AH.Editor.insertChoiceOption(' + idx + ')"><span>◆ Choice Option</span><kbd>O</kbd></div>' +
+      '<div class="se-el-popup__sep"></div>' +
+      '<div class="se-el-popup__item" onclick="AH.Editor.addSceneToMap(' + idx + ')"><span>⬢ Add to Story Map</span><kbd>M</kbd></div>' +
+      '<div class="se-el-popup__item" onclick="AH.Editor.gotoMapNode(' + idx + ')"><span>↔ Go to Map Node</span><kbd>G</kbd></div>' +
+      '<div class="se-el-popup__item" onclick="AH.Editor.newForkFromScene(' + idx + ')"><span>⌥ Create Fork Node</span></div>' +
       '<div class="se-el-popup__sep"></div>' +
       '<div class="se-el-popup__item" style="color:var(--rose);" onclick="AH.Modal.confirm(\'Delete line\',\'Delete this line?\', function(){ AH.Editor.deleteLine(' + idx + '); AH.Editor.closeElPopup(); })"><span>🗑 Delete Line</span><kbd>⌫</kbd></div>';
       pop.style.left = Math.min(x, window.innerWidth - 280) + 'px';
@@ -5456,21 +5527,66 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
 
   Editor.openRevisions = function () {
     var s = Editor.state;
+    s.lockedPages = s.lockedPages || [];
+    s.revisionHistory = s.revisionHistory || [];
     var reved = s.lines.filter(function (l) { return l.revised; }).length;
-    AH.Modal.open('Revisions · Draft Colors',
+    var totalPages = Math.max(1, Math.ceil(s.lines.length / Editor.LINES_PER_PAGE));
+    AH.Modal.open('Revision Manager',
       '<div class="sh-modal__label">Current draft color</div>' +
       '<select style="padding:10px;border-radius:8px;background:var(--ink-2);border:1px solid var(--edge);color:var(--fg);font-size:13px;width:100%;margin-bottom:16px;" onchange="AH.Editor.setRevisionColor(this.value)">' +
         ['white','blue','pink','yellow','green','goldenrod','buff','salmon','cherry'].map(function (c, i) {
           return '<option value="' + c + '"' + (s.revColor === c ? ' selected' : '') + '>' + ['White (Original)','Blue (1st)','Pink (2nd)','Yellow (3rd)','Green (4th)','Goldenrod (5th)','Buff (6th)','Salmon (7th)','Cherry (8th)'][i] + '</option>';
         }).join('') +
       '</select>' +
-      '<div class="sh-modal__label">Actions</div>' +
-      '<div style="display:grid;gap:8px;">' +
-        '<button class="btn btn--ghost" onclick="AH.Editor.revSnapshot()">SNAPSHOT CURRENT DRAFT</button>' +
-        '<button class="btn btn--ghost" onclick="AH.Editor.revClearAll()">CLEAR ALL REVISION MARKS</button>' +
+      '<div class="sh-modal__label">Revision history · ' + s.revisionHistory.length + '</div>' +
+      '<div style="max-height:160px;overflow:auto;border:1px solid var(--edge);border-radius:8px;padding:8px;font-size:12px;margin-bottom:12px;">' +
+        (s.revisionHistory.length ? s.revisionHistory.map(function (r, i) { return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--edge);"><span><span class="chip chip--' + (r.color || 'aqua') + '" style="margin-right:8px;">' + clean((r.color || '').toUpperCase()) + '</span>' + clean(r.name || ('Rev ' + (i + 1))) + '</span><span style="font-family:var(--f-mono);font-size:10px;color:var(--fg-60);">' + new Date(r.ts).toLocaleString() + '</span></div>'; }).join('') : '<div style="color:var(--fg-45);">No revisions started yet.</div>') +
       '</div>' +
-      '<div style="margin-top:18px;font-family:var(--f-mono);font-size:11px;color:var(--fg-60);letter-spacing:0.14em;text-transform:uppercase;">' + reved + ' LINES MARKED REVISED</div>',
-      { size: 'sm' });
+      '<div class="sh-modal__label">Page lock · ' + s.lockedPages.length + ' of ' + totalPages + ' pages locked</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:4px;max-height:120px;overflow:auto;border:1px solid var(--edge);border-radius:8px;padding:6px;margin-bottom:12px;">' +
+        Array.from({ length: totalPages }).map(function (_, i) {
+          var p = i + 1; var locked = s.lockedPages.indexOf(p) >= 0;
+          return '<button class="btn btn--ghost" style="padding:4px 0;height:30px;font-family:var(--f-mono);font-size:11px;' + (locked ? 'background:rgba(247,184,107,0.18);color:var(--amber);border-color:var(--amber);' : '') + '" onclick="AH.Editor.togglePageLock(' + p + ')">' + (locked ? '🔒 ' : '') + 'p' + p + '</button>';
+        }).join('') +
+      '</div>' +
+      '<div class="sh-modal__label">Actions</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+        '<button class="btn btn--primary" onclick="AH.Editor.startNewRevision()">+ START NEW REVISION</button>' +
+        '<button class="btn btn--ghost" onclick="AH.Editor.lockAllPages()">🔒 LOCK ALL PAGES</button>' +
+        '<button class="btn btn--ghost" onclick="AH.Editor.unlockAllPages()">UNLOCK ALL</button>' +
+        '<button class="btn btn--ghost" onclick="AH.Editor.revSnapshot()">SNAPSHOT DRAFT</button>' +
+        '<button class="btn btn--ghost" onclick="AH.Editor.revClearAll()">CLEAR MARKS</button>' +
+      '</div>' +
+      '<div style="margin-top:18px;font-family:var(--f-mono);font-size:11px;color:var(--fg-60);letter-spacing:0.14em;text-transform:uppercase;">' + reved + ' LINES MARKED REVISED · locked lines cannot be edited</div>',
+      { size: 'md' });
+  };
+  Editor.togglePageLock = function (p) {
+    var s = Editor.state; s.lockedPages = s.lockedPages || [];
+    var i = s.lockedPages.indexOf(p);
+    if (i >= 0) s.lockedPages.splice(i, 1); else s.lockedPages.push(p);
+    Editor.markDirty(); Editor.renderScript(); Editor.openRevisions();
+  };
+  Editor.lockAllPages = function () {
+    var s = Editor.state; var totalPages = Math.max(1, Math.ceil(s.lines.length / Editor.LINES_PER_PAGE));
+    s.lockedPages = []; for (var p = 1; p <= totalPages; p++) s.lockedPages.push(p);
+    Editor.markDirty(); Editor.renderScript(); Editor.openRevisions(); toast('All pages locked');
+  };
+  Editor.unlockAllPages = function () {
+    Editor.state.lockedPages = [];
+    Editor.markDirty(); Editor.renderScript(); Editor.openRevisions(); toast('All pages unlocked');
+  };
+  Editor.startNewRevision = function () {
+    AH.Modal.prompt('Start new revision', 'Name this revision (e.g. "Production Blue")', 'Production ' + ((Editor.state.revColor || 'blue').toUpperCase()), function (name) {
+      if (!name) return;
+      var s = Editor.state; s.revisionHistory = s.revisionHistory || [];
+      s.revisionHistory.push({ name: name, color: s.revColor, ts: Date.now(), snapshotLines: JSON.parse(JSON.stringify(s.lines)) });
+      if (s.revisionHistory.length > 30) s.revisionHistory.shift();
+      // Clear line-level revised flags so the new revision only marks new changes
+      s.lines.forEach(function (l) { delete l.revised; delete l.rev; });
+      Editor.markDirty(); Editor.pushHistory(); Editor.renderScript();
+      AH.Notif.push('Revision · ' + name + ' started · ' + (s.revColor || 'blue'));
+      Editor.openRevisions();
+    });
   };
   Editor.revSnapshot = function () {
     AH.Storage.local.set('ah_script_snap_' + STATE.activeProdId + '_' + Date.now(), JSON.parse(JSON.stringify(Editor.state)));
@@ -5902,7 +6018,35 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     return result;
   };
 
-  Editor.importFDX = function () { Editor.openImportModal(); toast('Tip: drop a .fdx file'); };
+  // Dedicated FDX importer with focused drop zone. Parallel to V1's
+  // pro-fdx-import-modal. Uses the same parseFDX under the hood.
+  Editor.importFDX = function () {
+    AH.Modal.open('Import Final Draft · .fdx',
+      '<div class="sh-modal__label">Drop an FDX file or click to browse. Title page, paragraph types, and ShotList trailer are preserved.</div>' +
+      '<div class="sh-drop" id="fdx-drop" style="padding:40px;"><div class="sh-drop__ico">🎬</div><div><strong>Drop .fdx</strong> or click to browse</div><input type="file" id="fdx-file" accept=".fdx,application/xml,text/xml" style="display:none"/></div>' +
+      '<div id="fdx-status" style="font-family:var(--f-mono);font-size:10.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--fg-60);margin-top:8px;">Waiting for file…</div>',
+      {
+        size: 'md',
+        footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--ghost" onclick="AH.Editor.openImportModal()">Or use generic importer…</button>',
+        onMount: function () {
+          var drop = $('#fdx-drop'); var file = $('#fdx-file'); var status = $('#fdx-status');
+          drop.onclick = function () { file.click(); };
+          function process(f) {
+            status.textContent = 'Parsing ' + f.name + ' …';
+            var rd = new FileReader();
+            rd.onload = function () {
+              try { Editor._importText(rd.result, f.name); AH.Modal.close(); }
+              catch (e) { status.textContent = 'Parse failed · ' + e.message; }
+            };
+            rd.readAsText(f);
+          }
+          file.onchange = function () { if (file.files[0]) process(file.files[0]); };
+          drop.ondragover = function (e) { e.preventDefault(); drop.classList.add('is-drag'); };
+          drop.ondragleave = function () { drop.classList.remove('is-drag'); };
+          drop.ondrop = function (e) { e.preventDefault(); drop.classList.remove('is-drag'); if (e.dataTransfer.files[0]) process(e.dataTransfer.files[0]); };
+        }
+      });
+  };
 
   Editor.openExportModal = function () {
     var formats = [
@@ -6259,6 +6403,15 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         default: y += 0.12;
       }
     });
+    // Watermark every page with user identity + date (parity with print PDF).
+    try {
+      var pages = doc.internal.getNumberOfPages();
+      var wm = (AH.Firebase && AH.Firebase.user && (AH.Firebase.user.email || AH.Firebase.user.displayName)) || 'Guest';
+      var stamp = wm + ' · ' + new Date().toISOString().slice(0, 10) + ' · ALACRITY HUB';
+      doc.setFont('courier', 'normal'); doc.setFontSize(7); doc.setTextColor(160);
+      for (var pi = 1; pi <= pages; pi++) { doc.setPage(pi); doc.text(stamp, pageW - right, pageH - 0.3, { align: 'right' }); }
+      doc.setTextColor(0);
+    } catch (_) {}
     doc.save(slugify(s.title || 'script') + '.pdf');
     toast('PDF saved');
   };
@@ -9922,9 +10075,13 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       Editor._download('schedule.csv', csv, 'text/csv'); toast('Schedule CSV exported');
     },
     csvFin: function () {
-      var rows = [['category','budget','actual','variance','owner'],['ATL','420000','182000','-3.1%','Anouk'],['Production','560000','221000','+0.8%','Mikaela'],['Post','180000','32000','-2.0%','Lior']];
-      Editor._download('financials.csv', rows.map(function (r) { return r.join(','); }).join('\n'), 'text/csv');
-      toast('Financials CSV exported');
+      // Pull the real ledger for the active production instead of a hardcoded table.
+      var L = (typeof loadLedger === 'function' ? loadLedger() : []);
+      if (!L.length) { toast('No ledger entries yet — opening financials to get started', 'warn'); AH.Router.go('financials'); return; }
+      var rows = [['date','vendor','category','amount']].concat(L.map(function (r) { return [r.date, r.vendor, r.cat, r.amt]; }));
+      var csv = rows.map(function (row) { return row.map(function (c) { var s = String(c == null ? '' : c); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(','); }).join('\n');
+      Editor._download('financials_' + slugify(prodTitle()) + '.csv', csv, 'text/csv');
+      toast('Financials CSV exported · ' + L.length + ' transactions');
     }
   };
   AH.hooks['export:mount'] = function () {
@@ -10990,17 +11147,58 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         rd.onload = function () {
           try {
             var data = JSON.parse(rd.result);
-            // Support Alacrity Player bundle wrapper, DCA story map, or raw
             if (data.filmConfig && data.filmConfig.storyMap) data = data.filmConfig.storyMap;
             else if (data.storyMap) data = data.storyMap;
             if (!data.nodes) throw new Error('No nodes[] in JSON');
-            StoryMap.state = Object.assign(StoryMap.defaultState(), data, {
-              nodeCounter: data.nodeCounter || data.nodes.length,
-              linkCounter: data.linkCounter || (data.links || []).length,
-              trackCounter: data.trackCounter || (data.tracks || []).length,
-              phaseCounter: data.phaseCounter || (data.phases || []).length
+            // V1-parity: ask whether to REPLACE or MERGE into the current map.
+            AH.Modal.open('Import Story Map', (
+              '<div class="sh-modal__label">The file contains <b>' + (data.nodes.length) + '</b> nodes and <b>' + ((data.links || []).length) + '</b> edges. Choose how to apply it.</div>' +
+              '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px;">' +
+                '<button class="btn btn--primary" id="imp-replace">REPLACE ALL</button>' +
+                '<button class="btn btn--ghost"   id="imp-merge">MERGE</button>' +
+              '</div>'
+            ), {
+              size: 'md',
+              footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button>',
+              onMount: function () {
+                $('#imp-replace').onclick = function () {
+                  AH.StoryMapX && AH.StoryMapX.snapshot();
+                  StoryMap.state = Object.assign(StoryMap.defaultState(), data, {
+                    nodeCounter: data.nodeCounter || data.nodes.length,
+                    linkCounter: data.linkCounter || (data.links || []).length,
+                    trackCounter: data.trackCounter || (data.tracks || []).length,
+                    phaseCounter: data.phaseCounter || (data.phases || []).length
+                  });
+                  StoryMap.dirty(); AH.Modal.close(); toast('Replaced · ' + data.nodes.length + ' nodes');
+                };
+                $('#imp-merge').onclick = function () {
+                  AH.StoryMapX && AH.StoryMapX.snapshot();
+                  var s = StoryMap.state;
+                  var remap = {}; var addedN = 0, addedE = 0;
+                  // Merge tracks + phases
+                  (data.tracks || []).forEach(function (t) {
+                    var e = (s.tracks || []).find(function (x) { return x.label === t.label; });
+                    if (!e) { s.tracks.push({ id: 't' + (++s.trackCounter), label: t.label, color: t.color || '#17FFC5', visible: t.visible !== false }); }
+                  });
+                  (data.phases || []).forEach(function (p) {
+                    var e = (s.phases || []).find(function (x) { return x.label === p.label; });
+                    if (!e) { s.phases.push({ id: 'p' + (++s.phaseCounter), label: p.label }); }
+                  });
+                  data.nodes.forEach(function (n) {
+                    var nid = 'n' + (++s.nodeCounter);
+                    remap[n.id] = nid;
+                    s.nodes.push(Object.assign({}, n, { id: nid, x: (n.x || 0) + 40, y: (n.y || 0) + 40 }));
+                    addedN++;
+                  });
+                  (data.links || []).forEach(function (l) {
+                    var lid = 'l' + (++s.linkCounter);
+                    s.links.push(Object.assign({}, l, { id: lid, source: remap[l.source] || l.source, target: remap[l.target] || l.target }));
+                    addedE++;
+                  });
+                  StoryMap.dirty(); AH.Modal.close(); toast('Merged · +' + addedN + ' nodes, +' + addedE + ' edges');
+                };
+              }
             });
-            StoryMap.dirty(); toast('Story Map imported · ' + data.nodes.length + ' nodes');
           } catch (e) { toast('Import failed · ' + e.message, 'error'); }
         };
         rd.readAsText(f);
