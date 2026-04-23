@@ -1099,35 +1099,40 @@ html[data-theme="light"] .topbar {
 }
 .topbar__search {
   justify-self: center;
-  width: min(460px, 100%);
-  height: 42px;
+  width: min(420px, 100%);
+  height: 40px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 16px;
+  gap: 10px;
+  padding: 0 14px 0 12px;
   border-radius: 999px;
   background: var(--glass-1);
   border: 1px solid var(--edge);
   color: var(--fg-60);
-  font-family: var(--f-mono);
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--f-body);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-transform: none;
   cursor: pointer;
-  transition: border-color 0.25s var(--ease), background 0.25s var(--ease);
+  transition: border-color 0.25s var(--ease), background 0.25s var(--ease), color 0.2s var(--ease);
 }
-.topbar__search:hover { border-color: var(--edge-mint); }
-.topbar__search svg { width: 16px; height: 16px; color: var(--fg-60); }
+.topbar__search:hover { border-color: var(--edge-mint); color: var(--fg); }
+.topbar__search svg { width: 17px; height: 17px; color: var(--fg-50); flex-shrink: 0; }
+.topbar__search__label { flex: 1; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--fg-60); }
 .topbar__search kbd {
-  margin-left: auto;
+  margin-left: 4px;
+  flex-shrink: 0;
   font-family: var(--f-mono);
-  font-size: 10px;
-  padding: 3px 7px;
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 3px 6px;
   border-radius: 6px;
   background: var(--ink-2);
   border: 1px solid var(--edge);
-  color: var(--fg-60);
-  letter-spacing: 0.08em;
+  color: var(--fg-50);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 html[data-theme="light"] .topbar__search kbd { background: #fff; }
 .topbar__actions { display: flex; align-items: center; gap: 10px; }
@@ -2159,10 +2164,17 @@ html[data-theme="light"] .gantt__track { background: var(--ink-1); }
   border: 0;
   outline: none;
   font-family: var(--f-body);
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 450;
+  letter-spacing: 0.01em;
   color: var(--fg);
 }
-.cmdk__input::placeholder { color: var(--fg-45); }
+.cmdk__input::placeholder {
+  color: var(--fg-42);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
 .cmdk__hint {
   font-family: var(--f-mono);
   font-size: 10px;
@@ -2198,6 +2210,67 @@ html[data-theme="light"] .gantt__track { background: var(--ink-1); }
 .cmdk__item.is-active, .cmdk__item:hover { background: linear-gradient(135deg, rgba(23,255,197,0.14), rgba(20,175,223,0.1)); color: var(--fg); }
 .cmdk__item svg { width: 18px; height: 18px; }
 .cmdk__item-meta { font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-45); }
+
+/* In-app PDF preview (inline, no extra tab until print) */
+.pdf-preview {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: min(520px, 100vw - 48px);
+  z-index: 950;
+  display: flex;
+  flex-direction: column;
+  background: var(--glass-2);
+  border-left: 1px solid var(--edge-2);
+  box-shadow: -24px 0 80px rgba(0,0,0,0.45);
+  transform: translateX(100%);
+  transition: transform 0.32s var(--ease-out);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+.pdf-preview.is-open { transform: translateX(0); }
+.pdf-preview__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--edge);
+  flex-shrink: 0;
+}
+.pdf-preview__title {
+  font-family: var(--f-display);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pdf-preview__actions { display: flex; gap: 8px; flex-shrink: 0; }
+.pdf-preview__frame-wrap {
+  flex: 1;
+  min-height: 0;
+  background: var(--ink-0);
+}
+.pdf-preview iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+}
+.pdf-preview__hint {
+  padding: 10px 16px 14px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--fg-60);
+  border-top: 1px solid var(--edge);
+  flex-shrink: 0;
+}
+@media (max-width: 900px) {
+  .pdf-preview { width: 100vw; }
+}
 
 /* ── SPLASH ───────────────────────────────────────────────────────────── */
 .splash {
@@ -3757,9 +3830,9 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         <span id="topbar-title">Dashboard</span>
       </h1>
 
-      <button class="topbar__search" id="topbar-search" type="button">
+      <button class="topbar__search" id="topbar-search" type="button" aria-label="Open command palette">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-        <span>Search · Modules · Scenes · People</span>
+        <span class="topbar__search__label">Search the Hub…</span>
         <kbd>⌘K</kbd>
       </button>
 
@@ -3836,12 +3909,26 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   <div class="cmdk">
     <div class="cmdk__header">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-      <input class="cmdk__input" id="cmdk-input" type="text" placeholder="Search modules · scenes · people · actions..." />
+      <input class="cmdk__input" id="cmdk-input" type="text" placeholder="Jump to a module, person, or action…" />
       <span class="cmdk__hint">ESC</span>
     </div>
     <div class="cmdk__list" id="cmdk-list"></div>
   </div>
 </div>
+
+<aside class="pdf-preview" id="pdf-preview" aria-hidden="true" aria-label="Document preview">
+  <div class="pdf-preview__head">
+    <div class="pdf-preview__title" id="pdf-preview-title">Preview</div>
+    <div class="pdf-preview__actions">
+      <button type="button" class="btn btn--ghost" id="pdf-preview-print">Print / Save PDF</button>
+      <button type="button" class="btn btn--primary" id="pdf-preview-close">Close</button>
+    </div>
+  </div>
+  <div class="pdf-preview__frame-wrap">
+    <iframe id="pdf-preview-frame" title="PDF preview"></iframe>
+  </div>
+  <div class="pdf-preview__hint" id="pdf-preview-hint">Use your system print dialog to save as PDF. This panel previews the same layout as generated paperwork.</div>
+</aside>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
      6 · FLOATING PANELS · SCRIPT EDITOR
@@ -4695,6 +4782,23 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     var title = opts.title || (m.id === 'dashboard' ? 'Command <em>center.</em>' : m.label);
     var lede  = opts.lede  || heroLede(m.id);
     var stat  = opts.stat  || heroStat(m.id);
+    var secLabel = opts.secondary;
+    var secFn = opts.secondaryFn;
+    var terLabel = opts.tertiary;
+    var terFn = opts.tertiaryFn;
+    if (opts.hideSecondary) { secLabel = null; secFn = null; }
+    else if (secLabel == null && secFn == null) {
+      secLabel = 'Production brief';
+      secFn = 'AH.Brief.openPDF()';
+    } else if (secLabel != null && secFn == null) {
+      secFn = 'AH.Brief.openPDF()';
+    }
+    if (secLabel && secFn && !opts.hideSecondary && terLabel == null && terFn == null) {
+      if (String(secFn).indexOf('AH.Brief.openPDF') === -1) {
+        terLabel = 'Brief';
+        terFn = 'AH.Brief.openPDF()';
+      }
+    }
     return (
       '<div class="hero">' +
         '<div class="hero__img" style="background-image:url(\'' + m.img + '\')"></div>' +
@@ -4705,7 +4809,12 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           '<p class="hero__lede">' + lede + '</p>' +
           '<div class="hero__cta-row">' +
             '<button class="btn btn--primary"' + (opts.primaryFn ? ' onclick="' + opts.primaryFn + '"' : '') + '>' + (opts.primary || 'OPEN MODULE') + ' ' + ICONS.arrow + '</button>' +
-            '<button class="btn btn--ghost-light"' + (opts.secondaryFn ? ' onclick="' + opts.secondaryFn + '"' : '') + '>' + (opts.secondary || 'EXPORT BRIEF') + '</button>' +
+            (secLabel && secFn
+              ? '<button class="btn btn--ghost-light" onclick="' + secFn + '">' + secLabel + '</button>'
+              : '') +
+            (terLabel && terFn
+              ? '<button class="btn btn--ghost-light" style="opacity:0.92;border-color:rgba(255,255,255,0.22);" onclick="' + terFn + '">' + terLabel + '</button>'
+              : '') +
           '</div>' +
         '</div>' +
         '<div class="hero__card">' +
@@ -5133,7 +5242,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       var s = Editor.getState();
       return (
         '<div class="section" style="margin-bottom:10px;">' +
-          AH.Views.renderHero(m, { primary: 'PREVIEW PDF', primaryFn: 'AH.Editor.openExportModal()' }) +
+          AH.Views.renderHero(m, { primary: 'PREVIEW PDF', primaryFn: 'AH.Editor.openExportModal()', hideSecondary: true }) +
         '</div>' +
         // Command bar
         '<div class="se-cmdbar">' +
@@ -6889,10 +6998,14 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     ];
     AH.Modal.open('Export Script',
       '<div class="sh-modal__label">Choose a format</div>' +
-      '<div class="sh-field" style="margin-bottom:14px;padding:10px 12px;border-radius:10px;border:1px solid var(--edge);background:var(--glass-2);">' +
-        '<label style="display:flex;gap:10px;align-items:center;cursor:pointer;font-size:13px;color:var(--fg-80);">' +
-          '<input type="checkbox" id="exp-storymap"' + (smPref ? ' checked' : '') + '/>' +
-          '<span>Append <strong>Story Map</strong> summary page to <em>PDF · Vector</em> export (node labels, types, scene links, tension).</span>' +
+      '<div class="sh-field" style="margin-bottom:14px;padding:10px 12px;border-radius:10px;border:1px solid var(--edge);background:var(--glass-2);display:flex;flex-direction:column;gap:10px;">' +
+        '<label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;font-size:13px;color:var(--fg-80);line-height:1.45;">' +
+          '<input type="checkbox" id="exp-storymap"' + (smPref ? ' checked' : '') + ' style="margin-top:3px;"/>' +
+          '<span>Append a <strong>Story Map</strong> page to screenplay PDFs (print + vector). Shows nodes, types, tension, and script links.</span>' +
+        '</label>' +
+        '<label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;font-size:13px;color:var(--fg-80);line-height:1.45;">' +
+          '<input type="checkbox" id="exp-inline"' + (AH.Storage.local.get('ah_pdf_inline', '1') === '1' ? ' checked' : '') + ' style="margin-top:3px;"/>' +
+          '<span>Open generated <strong>paperwork PDFs</strong> in the side preview panel first (then print). Uncheck to use a separate tab.</span>' +
         '</label>' +
       '</div>' +
       '<div class="sh-grid-3">' + formats.map(function (f) { return '<div class="sh-tile" data-fmt="' + f.k + '"><div class="sh-tile__ico">' + f.i + '</div><div class="sh-tile__name">' + f.n + '</div><div class="sh-tile__desc">' + f.d + '</div></div>'; }).join('') + '</div>',
@@ -7046,6 +7159,27 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     parts.push('</FinalDraft>');
     return parts.join('\n');
   };
+  Editor._storyMapAppendixHTML = function () {
+    if (AH.Storage.local.get('ah_pdf_storymap', '0') !== '1' || !window.AH || !AH.StoryMap) return '';
+    try {
+      StoryMap.load();
+      var sn = (StoryMap.state && StoryMap.state.nodes) || [];
+      if (!sn.length) return '';
+      var rows = sn.slice(0, 60).map(function (n) {
+        var bits = [(n.label || '—'), (n.nodeType || 'scene').toUpperCase()];
+        if (n.sceneSlug) bits.push('SCN ' + String(n.sceneSlug));
+        else if (typeof n.sceneLineIdx === 'number') bits.push('L' + n.sceneLineIdx);
+        if (n.emotionTension != null && n.emotionTension !== '') bits.push('T=' + n.emotionTension);
+        return '<div class="action" style="font-size:11pt;border-bottom:1px solid #e5e7eb;padding:6pt 0;">' + clean(bits.join(' · ')) + '</div>';
+      }).join('');
+      var more = sn.length > 60 ? '<div class="action" style="margin-top:12pt;color:#64748b;">… ' + (sn.length - 60) + ' additional nodes — open Story Map for the full graph.</div>' : '';
+      return '<section class="script-body" style="page-break-before:always;padding-top:0.5in;">' +
+        '<div class="scene" style="margin-top:0;">STORY MAP · APPENDIX</div>' +
+        '<div class="action" style="margin-bottom:14pt;color:#444;">Narrative graph snapshot for this production · exported with the screenplay.</div>' +
+        rows + more +
+      '</section>';
+    } catch (_) { return ''; }
+  };
   Editor._serializeHTML = function () {
     var s = Editor.state;
     var body = s.lines.map(function (l) {
@@ -7123,6 +7257,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   };
   Editor._openPrintPDF = function () {
     var html = Editor._serializeHTML();
+    var apx = Editor._storyMapAppendixHTML();
+    if (apx) html = html.replace('</body></html>', apx + '</body></html>');
     var w = window.open('', '_blank'); if (!w) { toast('Popup blocked — allow popups for PDF export', 'warn'); return; }
     w.document.write(html); w.document.close();
     setTimeout(function () { try { w.focus(); w.print(); } catch (_) {} }, 600);
@@ -8205,7 +8341,11 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     if (!d) { d = AH.Views.todayScenes().map(function (s, i) { return { id: uid('sc'), n: s.n, title: s.title, int: s.int, loc: s.loc, pages: s.pages, day: s.day }; }); AH.Storage.local.set(k, d); }
     return d;
   }
-  function saveScenes(list) { AH.Storage.local.set('ah_scenes_' + STATE.activeProdId, list); }
+  function saveScenes(list) {
+    AH.Storage.local.set('ah_scenes_' + STATE.activeProdId, list);
+    AH.syncProductionBlob && AH.syncProductionBlob({ scheduleStrips: list, scheduleUpdatedAt: Date.now() });
+    AH.Bus && AH.Bus.emit('schedule:updated', { strips: (list || []).length });
+  }
 
   AH.register('schedule', function (m) {
     var scs = loadScenes();
@@ -8519,7 +8659,10 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     }
     return d;
   }
-  function saveBreakdown(d) { AH.Storage.local.set('ah_bdown_' + STATE.activeProdId, d); }
+  function saveBreakdown(d) {
+    AH.Storage.local.set('ah_bdown_' + STATE.activeProdId, d);
+    AH.syncProductionBlob && AH.syncProductionBlob({ breakdownRows: d, breakdownUpdatedAt: Date.now() });
+  }
 
   AH.register('breakdown', function (m) {
     var bd = loadBreakdown();
@@ -8782,7 +8925,10 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     }
     return d;
   }
-  function saveCast(d) { AH.Storage.local.set('ah_cast_' + STATE.activeProdId, d); }
+  function saveCast(d) {
+    AH.Storage.local.set('ah_cast_' + STATE.activeProdId, d);
+    AH.Bus && AH.Bus.emit('cast:updated', { total: (d || []).length });
+  }
 
   AH.register('cast-crew', function (m) {
     var p = loadCast();
@@ -9284,7 +9430,41 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     },
     openDoc: function (innerHTML, filename) {
       var html = '<div class="page">' + innerHTML + '<div class="pdf-watermark">ALACRITY HUB · ' + (getActiveProd().title || '') + ' · ' + new Date().toISOString().slice(0, 10) + '</div></div>';
-      PDF.openPrint(html, filename || 'alacrity-doc');
+      if (AH.Storage.local.get('ah_pdf_inline', '1') === '1') PDF.openPreview(html, filename || 'alacrity-doc');
+      else PDF.openPrint(html, filename || 'alacrity-doc');
+    },
+    _previewWin: null,
+    openPreview: function (innerHTML, filename) {
+      var shell =
+        '<!doctype html><html><head><meta charset="utf-8"><title>' + clean(filename || 'Alacrity') + '</title>' +
+        '<meta name="viewport" content="width=device-width, initial-scale=1"/>' +
+        '<style>' + PDF.getStyles() + '</style></head><body>' + innerHTML + '</body></html>';
+      var frame = $('#pdf-preview-frame');
+      var panel = $('#pdf-preview');
+      var titleEl = $('#pdf-preview-title');
+      if (frame && panel) {
+        if (titleEl) titleEl.textContent = filename || 'Document preview';
+        frame.srcdoc = shell;
+        panel.classList.add('is-open');
+        panel.setAttribute('aria-hidden', 'false');
+        return;
+      }
+      PDF._previewWin = window.open('', '_blank');
+      if (!PDF._previewWin) { toast('Popup blocked — allow popups for inline PDF preview', 'warn'); PDF.openPrint(innerHTML, filename); return; }
+      PDF._previewWin.document.open();
+      PDF._previewWin.document.write(shell);
+      PDF._previewWin.document.close();
+    },
+    closePreview: function () {
+      var panel = $('#pdf-preview');
+      var frame = $('#pdf-preview-frame');
+      if (panel) { panel.classList.remove('is-open'); panel.setAttribute('aria-hidden', 'true'); }
+      if (frame) { try { frame.srcdoc = ''; } catch (_) {} }
+    },
+    printPreview: function () {
+      var frame = $('#pdf-preview-frame');
+      if (frame && frame.contentWindow) { try { frame.contentWindow.focus(); frame.contentWindow.print(); } catch (_) {} }
+      else if (PDF._previewWin) { try { PDF._previewWin.focus(); PDF._previewWin.print(); } catch (_) {} }
     },
     header: function (title, subtitle) {
       var prod = getActiveProd();
@@ -9307,6 +9487,122 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     },
     footer: function () {
       return '<div class="pdf-footer">Generated by Alacrity Hub · This document is a template and should be reviewed by qualified legal counsel before execution.</div>';
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════
+  //  PRODUCTION BRIEF · cross-module executive PDF (data-coherent)
+  // ═══════════════════════════════════════════════════════════════════════
+  AH.Brief = {
+    _gather: function () {
+      var prod = getActiveProd();
+      var pd = AH.Prod && AH.Prod._loadPD ? AH.Prod._loadPD(STATE.activeProdId) : {};
+      var lines = (AH.Editor && AH.Editor.state && AH.Editor.state.lines) || [];
+      var sceneLines = lines.filter(function (l) { return l.t === 'scene'; });
+      var words = lines.reduce(function (a, l) { return a + ((l.x || '').split(/\s+/).filter(Boolean).length); }, 0);
+      var cast = (typeof loadCast === 'function') ? loadCast() : [];
+      var locs = (typeof loadLocs === 'function') ? loadLocs() : [];
+      var scs = (typeof loadScenes === 'function') ? loadScenes() : [];
+      var risks = (typeof loadRisk === 'function') ? loadRisk() : [];
+      var shots = (typeof loadShots === 'function') ? loadShots() : [];
+      var bd = (typeof loadBreakdown === 'function') ? loadBreakdown() : [];
+      var gantt = (typeof loadGanttTasks === 'function') ? loadGanttTasks() : [];
+      var sm = null;
+      try { if (typeof StoryMap !== 'undefined' && StoryMap.load) { StoryMap.load(); sm = StoryMap.state; } } catch (_) { sm = null; }
+      var smNodes = (sm && sm.nodes) ? sm.nodes.length : 0;
+      var smLinks = (sm && sm.links) ? sm.links.length : 0;
+      var budgetLines = (typeof loadBudgetLines === 'function') ? loadBudgetLines() : [];
+      var totE = budgetLines.reduce(function (a, r) { return a + (+r.est || 0); }, 0);
+      var totA = budgetLines.reduce(function (a, r) { return a + (+r.act || 0); }, 0);
+      var hot = (typeof loadHotsheet === 'function') ? loadHotsheet().filter(function (h) { return h.when === 'TODAY'; }) : [];
+      return {
+        prod: prod, pd: pd, sceneCount: sceneLines.length, words: words,
+        cast: cast, locs: locs, scs: scs, risks: risks, shots: shots, bd: bd,
+        gantt: gantt, smNodes: smNodes, smLinks: smLinks,
+        budgetTotE: totE, budgetTotA: totA, hotToday: hot
+      };
+    },
+    buildHTML: function () {
+      var D = AH.Brief._gather();
+      var prod = D.prod;
+      var pd = D.pd || {};
+      var logline = (pd.description || prod.description || '').trim();
+      var highRisks = (D.risks || []).filter(function (r) { return (r.lvl || '').toUpperCase() === 'HIGH'; });
+      var stripRows = (D.scs || []).slice(0, 14).map(function (s) {
+        return '<tr><td class="num">' + clean(s.n) + '</td><td>' + clean(s.title) + '</td><td>' + (s.int ? 'INT' : 'EXT') + '</td><td>' + clean(s.loc) + '</td><td class="num">' + clean(s.pages) + '</td><td class="num">' + clean(s.day) + '</td></tr>';
+      }).join('');
+      var castRows = (D.cast || []).slice(0, 16).map(function (c) {
+        return '<tr><td>' + clean(c.name) + '</td><td>' + clean(c.role || '') + '</td><td>' + clean(c.dept || '') + '</td><td class="num">' + clean(c.phone || '—') + '</td></tr>';
+      }).join('');
+      var locRows = (D.locs || []).slice(0, 12).map(function (L) {
+        return '<tr><td>' + clean(L.n || L.name || '—') + '</td><td>' + clean(L.city || '') + '</td><td>' + clean(L.st || L.status || '') + '</td></tr>';
+      }).join('');
+      var riskRows = (D.risks || []).slice(0, 10).map(function (r) {
+        return '<tr><td class="num">' + clean(r.s) + '</td><td>' + clean(r.t) + '</td><td>' + clean(r.lvl) + '</td><td>' + clean(r.mit) + '</td></tr>';
+      }).join('');
+      var bdTop = (D.bd || []).slice(0, 8).map(function (r) {
+        var tags = [];
+        ['stunts', 'animals', 'vehicles', 'props', 'sfx'].forEach(function (k) {
+          if (r[k] && r[k].length) tags.push(k + ': ' + r[k].slice(0, 4).join(', '));
+        });
+        return '<tr><td class="num">' + clean(r.scn) + '</td><td style="font-size:9pt;">' + clean(tags.join(' · ') || '—') + '</td></tr>';
+      }).join('');
+      var ganttRows = (D.gantt || []).slice(0, 10).map(function (t) {
+        return '<tr><td>' + clean(t.name || t.title || 'Task') + '</td><td>' + clean(t.owner || '') + '</td><td class="num">' + clean(t.start || '') + '</td><td class="num">' + clean(t.end || '') + '</td></tr>';
+      }).join('');
+      var hotRows = (D.hotToday || []).map(function (h) {
+        return '<tr><td>' + clean(h.dept) + '</td><td>' + clean(h.txt) + '</td><td>' + clean(h.st || '') + '</td></tr>';
+      }).join('');
+      return (
+        PDF.header('Production Brief', prod.title || 'Untitled') +
+        PDF.section('Executive snapshot', '<div class="pdf-grid2">' +
+          PDF.field('Production', prod.title || '—') +
+          PDF.field('Type / status', (prod.type || pd.type || '—') + ' · ' + (prod.status || pd.status || '—')) +
+          PDF.field('Director', pd.director || prod.director || '—') +
+          PDF.field('Client / studio', pd.client || prod.client || '—') +
+          PDF.field('Shoot start', pd.shootStart || prod.shootStart || '—') +
+          PDF.field('Generated', new Date().toLocaleString()) +
+        '</div>' +
+        (logline ? '<div class="pdf-p" style="margin-top:10px;"><strong>Logline / scope</strong><br/>' + clean(logline) + '</div>' : '')
+        ) +
+        PDF.section('Script & narrative', '<div class="pdf-grid2">' +
+          PDF.field('Scenes (script headings)', String(D.sceneCount)) +
+          PDF.field('Approx. word count', String(D.words)) +
+          PDF.field('Story map nodes', String(D.smNodes)) +
+          PDF.field('Story map edges', String(D.smLinks)) +
+        '</div>') +
+        PDF.section('Stripboard (next scenes)', '<table class="pdf-table"><thead><tr><th>#</th><th>Slug</th><th>I/E</th><th>Location</th><th>Pages</th><th>Day</th></tr></thead><tbody>' +
+          (stripRows || '<tr><td colspan="6">No stripboard rows — import script or add scenes in Stripboard.</td></tr>') + '</tbody></table>') +
+        PDF.section('Cast & crew (roster excerpt)', '<table class="pdf-table"><thead><tr><th>Name</th><th>Role</th><th>Dept</th><th>Phone</th></tr></thead><tbody>' +
+          (castRows || '<tr><td colspan="4">No cast/crew records.</td></tr>') + '</tbody></table>') +
+        PDF.section('Locations (scout list excerpt)', '<table class="pdf-table"><thead><tr><th>Location</th><th>City / address</th><th>Status</th></tr></thead><tbody>' +
+          (locRows || '<tr><td colspan="3">No locations on file.</td></tr>') + '</tbody></table>') +
+        PDF.section('Risk matrix (top hazards)', '<table class="pdf-table"><thead><tr><th>Scn</th><th>Hazard</th><th>Level</th><th>Mitigation</th></tr></thead><tbody>' +
+          (riskRows || '<tr><td colspan="4">No risk rows.</td></tr>') + '</tbody></table>' +
+          (highRisks.length ? '<div class="pdf-p" style="color:#b91c1c;"><strong>High severity count:</strong> ' + highRisks.length + '</div>' : '')
+        ) +
+        PDF.section('Breakdown highlights (stunts / animals / props)', '<table class="pdf-table"><thead><tr><th>Scn</th><th>Highlights</th></tr></thead><tbody>' +
+          (bdTop || '<tr><td colspan="2">Run AI Breakdown from the Breakdown module.</td></tr>') + '</tbody></table>') +
+        PDF.section('Shot plan (first rows)', '<table class="pdf-table"><thead><tr><th>#</th><th>Type</th><th>Lens</th><th>Scene</th><th>Description</th></tr></thead><tbody>' +
+          ((D.shots || []).slice(0, 12).map(function (s) {
+            return '<tr><td class="num">' + clean(s.n) + '</td><td>' + clean(s.kind) + '</td><td class="num">' + clean(s.lens) + '</td><td class="num">' + clean(s.scn) + '</td><td>' + clean(s.desc) + '</td></tr>';
+          }).join('') || '<tr><td colspan="5">No shots in shot list.</td></tr>') +
+        '</tbody></table>') +
+        PDF.section('Timeline tasks (Gantt excerpt)', '<table class="pdf-table"><thead><tr><th>Task</th><th>Owner</th><th>Start</th><th>End</th></tr></thead><tbody>' +
+          (ganttRows || '<tr><td colspan="4">No Gantt tasks.</td></tr>') + '</tbody></table>') +
+        PDF.section('Budget snapshot (line items)', '<div class="pdf-grid2">' +
+          PDF.field('Estimated total', D.budgetTotE ? ('$' + D.budgetTotE.toLocaleString()) : '—') +
+          PDF.field('Actuals to date', D.budgetTotA ? ('$' + D.budgetTotA.toLocaleString()) : '—') +
+        '</div>') +
+        PDF.section('Hot sheet · today', '<table class="pdf-table"><thead><tr><th>Dept</th><th>Issue</th><th>State</th></tr></thead><tbody>' +
+          (hotRows || '<tr><td colspan="3">No hot items flagged for today.</td></tr>') + '</tbody></table>') +
+        PDF.footer()
+      );
+    },
+    openPDF: function () {
+      var html = AH.Brief.buildHTML();
+      PDF.openDoc(html, 'Production_Brief_' + slugify(prodTitle()));
+      AH.Notif.push('Production brief generated · ' + getActiveProd().title);
     }
   };
 
@@ -10442,7 +10738,10 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     }
     return d;
   }
-  function saveRisk(d) { AH.Storage.local.set('ah_risk_' + STATE.activeProdId, d); }
+  function saveRisk(d) {
+    AH.Storage.local.set('ah_risk_' + STATE.activeProdId, d);
+    AH.Bus && AH.Bus.emit('risk:updated', { total: (d || []).length });
+  }
   AH.register('risk', function (m) {
     var risks = loadRisk();
     return (
@@ -10621,7 +10920,10 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     }
     return d;
   }
-  function saveLocs(d) { AH.Storage.local.set('ah_loc_' + STATE.activeProdId, d); }
+  function saveLocs(d) {
+    AH.Storage.local.set('ah_loc_' + STATE.activeProdId, d);
+    AH.Bus && AH.Bus.emit('location:updated', { total: (d || []).length });
+  }
   AH.register('locations', function (m) {
     var locs = loadLocs();
     return (
@@ -11658,11 +11960,40 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     var d = AH.Storage.local.get(k, null);
     if (!d) {
       d = [
-        { id: uid('ar'), name: 'Publish stripboard PDF on day rollover', on: true, trig: 'Midnight · ET', act: 'Email PDF to distro + log in vault' },
-        { id: uid('ar'), name: 'Sync Story Map → Beat Board after script save', on: true, trig: 'On script save', act: 'Queue beat sync (manual confirm in Beat Board)' },
-        { id: uid('ar'), name: 'Hot sheet escalation if risk score > 7', on: false, trig: 'Every 4h during shoot', act: 'Notify AD + prod office' }
+        { id: uid('ar'), name: 'After script save · log stripboard snapshot', on: true, trigKey: 'script:saved', trig: 'On script save', actKey: 'log_stripboard', act: 'Append stripboard row count to automation log' },
+        { id: uid('ar'), name: 'After script save · queue beat board refresh', on: true, trigKey: 'script:saved', trig: 'On script save', actKey: 'router_refresh', act: 'Refresh Beat Board if it is open', params: { route: 'beatboard' } },
+        { id: uid('ar'), name: 'Stripboard change · sync breakdown view', on: true, trigKey: 'schedule:updated', trig: 'On stripboard update', actKey: 'router_refresh', act: 'Refresh Breakdown module if open', params: { route: 'breakdown' } },
+        { id: uid('ar'), name: 'High-risk logged · push hot notification', on: true, trigKey: 'risk:updated', trig: 'On risk matrix change', actKey: 'notify_hot', act: 'Notify if any HIGH severity row exists', params: {} }
       ];
       AH.Storage.local.set(k, d);
+    } else {
+      var mig = false;
+      d.forEach(function (r) {
+        var tg = (r.trig || '') + ' ' + (r.name || '');
+        if (!r.trigKey) {
+          if (/strip|stripboard|schedule|day\b/i.test(tg)) r.trigKey = 'schedule:updated';
+          else if (/risk|hot\s*sheet|hazard/i.test(tg)) r.trigKey = 'risk:updated';
+          else if (/story\s*map|beat|graph/i.test(tg)) r.trigKey = 'storyMap:changed';
+          else if (/cast|crew|roster/i.test(tg)) r.trigKey = 'cast:updated';
+          else if (/location|scout|permit/i.test(tg)) r.trigKey = 'location:updated';
+          else if (/production|switched|slate/i.test(tg)) r.trigKey = 'production:switched';
+          else r.trigKey = 'script:saved';
+          var _tl = { 'script:saved': 'On script save', 'schedule:updated': 'On stripboard update', 'storyMap:changed': 'On story map change', 'cast:updated': 'On cast/crew update', 'location:updated': 'On locations update', 'risk:updated': 'On risk matrix change', 'production:switched': 'On production switch' };
+          r.trig = r.trig || _tl[r.trigKey] || r.trigKey;
+          mig = true;
+        }
+        if (!r.actKey) {
+          var ac = (r.act || '') + ' ' + (r.name || '');
+          if (/refresh|reload|open\s|go\s*to/i.test(ac)) { r.actKey = 'router_refresh'; r.params = r.params || { route: /beat/i.test(ac) ? 'beatboard' : /break|element/i.test(ac) ? 'breakdown' : /shot/i.test(ac) ? 'shotlist' : 'dashboard' }; }
+          else if (/strip|row|count/i.test(ac)) r.actKey = 'log_stripboard';
+          else if (/notify|push|notif|hot/i.test(ac)) r.actKey = 'notify_hot';
+          else if (/brief|pdf|export/i.test(ac)) r.actKey = 'export_brief';
+          else r.actKey = 'log_message';
+          if (r.actKey === 'log_message' && !r.params) r.params = { text: r.act || ('Rule · ' + (r.name || '')) };
+          mig = true;
+        }
+      });
+      if (mig) saveAutoRules(d);
     }
     return d;
   }
@@ -11670,47 +12001,201 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     AH.Storage.local.set('ah_auto_' + STATE.activeProdId, d);
     AH.syncProductionBlob && AH.syncProductionBlob({ productionAutomation: d, automationUpdatedAt: Date.now() });
   }
-  AH.register('production-automation', function (m) {
-    var rules = loadAutoRules();
-    return (
-      AH.Views.renderHero(m, {
-        primary: 'NEW AUTOMATION',
-        primaryFn: 'AH.Auto.add()',
-        secondary: 'RUN ALL ENABLED',
-        secondaryFn: 'AH.Auto.runAll()'
-      }) +
-      '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
-        '<table class="table"><thead><tr><th>Rule</th><th>Trigger</th><th>Action</th><th>On</th><th></th></tr></thead><tbody>' +
-          rules.map(function (r) {
-            return '<tr><td><strong>' + clean(r.name) + '</strong></td><td class="num" style="font-size:12px;">' + clean(r.trig) + '</td><td style="font-size:12px;color:var(--fg-70);">' + clean(r.act) + '</td><td><span class="chip ' + (r.on ? 'chip--mint' : 'chip--amber') + '">' + (r.on ? 'ON' : 'OFF') + '</span></td>' +
-              '<td style="text-align:right;"><button class="btn btn--ghost" onclick="AH.Auto.toggle(\'' + r.id + '\')">TOGGLE</button> <button class="btn btn--ghost" onclick="AH.Auto.del(\'' + r.id + '\')">×</button></td></tr>';
-          }).join('') +
-        '</tbody></table>' +
-      '</div></div>' +
-      '<div class="section"><div class="card" style="font-size:13px;color:var(--fg-65);line-height:1.6;">Automation runs in-browser for this build: rules are stored per production and fire on the triggers you configure. Cloud mode can sync the same <code>ah_auto_*</code> keys via backup/restore.</div></div>'
-    );
-  });
   AH.Auto = {
-    add: function () {
-      AH.Modal.prompt('New automation', 'Name · trigger · action', 'Dailies ingest · On wrap · Notify post', function (v) {
-        if (!v) return;
-        var p = v.split(/\s*·\s*/);
-        var d = loadAutoRules();
-        d.unshift({ id: uid('ar'), name: p[0] || 'Rule', on: true, trig: p[1] || 'Manual', act: p[2] || '' });
-        saveAutoRules(d); AH.Router.go('production-automation'); toast('Automation added');
+    TRIGGERS: {
+      'script:saved':       { label: 'Script saved' },
+      'schedule:updated':   { label: 'Stripboard updated' },
+      'storyMap:changed':   { label: 'Story map changed' },
+      'cast:updated':       { label: 'Cast / crew updated' },
+      'location:updated':   { label: 'Locations updated' },
+      'risk:updated':       { label: 'Risk matrix updated' },
+      'production:switched':{ label: 'Production switched' }
+    },
+    ACTIONS: {
+      'router_refresh': { label: 'Refresh module (if open)' },
+      'router_go':      { label: 'Navigate to module' },
+      'log_stripboard': { label: 'Log stripboard row count' },
+      'log_message':    { label: 'Append log message' },
+      'notify_hot':     { label: 'Notify if HIGH risk exists' },
+      'export_brief':   { label: 'Queue production brief PDF' }
+    },
+    _subs: [],
+    init: function () {
+      AH.Auto.dispose();
+      Object.keys(AH.Auto.TRIGGERS).forEach(function (ev) {
+        AH.Auto._subs.push(AH.Bus.on(ev, function (payload) { AH.Auto.onEvent(ev, payload); }));
       });
     },
+    dispose: function () {
+      AH.Auto._subs.forEach(function (off) { try { off(); } catch (_) {} });
+      AH.Auto._subs = [];
+    },
+    appendLog: function (msg) {
+      var L = loadAutoLog();
+      L.push({ t: new Date().toLocaleTimeString(), msg: msg });
+      if (L.length > 200) L = L.slice(-200);
+      saveAutoLog(L);
+    },
+    onEvent: function (ev, payload) {
+      loadAutoRules().filter(function (r) { return r.on && r.trigKey === ev; }).forEach(function (r) {
+        try { AH.Auto.execute(r, ev, payload); } catch (e) { AH.Auto.appendLog('ERR · ' + (r.name || r.id) + ' · ' + (e && e.message)); }
+      });
+    },
+    execute: function (r, ev, payload, force) {
+      var act = r.actKey || 'log_message';
+      var par = r.params || {};
+      if (act === 'router_refresh') {
+        var rt = par.route || 'dashboard';
+        if (AH.Router.current === rt) { AH.Router.go(rt); AH.Auto.appendLog((force ? 'Manual · ' : '') + '↻ ' + rt + ' · ' + ev); }
+        return;
+      }
+      if (act === 'router_go') {
+        var g = par.route || 'dashboard';
+        AH.Router.go(g);
+        AH.Auto.appendLog((force ? 'Manual · ' : '') + '→ ' + g + ' · ' + ev);
+        return;
+      }
+      if (act === 'log_stripboard') {
+        var n = (typeof loadScenes === 'function') ? loadScenes().length : 0;
+        AH.Auto.appendLog((force ? 'Manual · ' : '') + 'Stripboard rows · ' + n + ' · ' + ev);
+        return;
+      }
+      if (act === 'log_message') {
+        AH.Auto.appendLog((force ? 'Manual · ' : '') + (par.text || r.act || r.name || 'Rule') + ' · ' + ev);
+        return;
+      }
+      if (act === 'notify_hot') {
+        var hi = (typeof loadRisk === 'function') && loadRisk().some(function (x) { return (x.lvl || '').toUpperCase() === 'HIGH'; });
+        if (hi) { AH.Notif.push('Automation · HIGH risk on slate · review Risk Matrix'); AH.Auto.appendLog('⚠ HIGH risk rows · ' + ev); }
+        return;
+      }
+      if (act === 'export_brief') {
+        if (force) { AH.Brief.openPDF(); AH.Auto.appendLog('Production brief PDF · ' + ev); }
+        else { AH.Auto.appendLog('Brief · data changed · open Production brief from hero or run TEST · ' + ev); }
+        return;
+      }
+      AH.Auto.appendLog('Unknown action · ' + act);
+    },
+    testRule: function (id) {
+      var r = loadAutoRules().find(function (x) { return x.id === id; });
+      if (!r) return;
+      AH.Auto.execute(r, 'manual:test', {}, true);
+      toast('Test fired · ' + (r.name || 'rule'));
+    },
+    openBuilder: function () {
+      var el = $('#auto-builder'); if (el) el.style.display = 'block';
+      el && el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    },
+    addFromBuilder: function () {
+      var name = ($('#ab-name').value || '').trim();
+      if (!name) { toast('Name the rule', 'warn'); return; }
+      var trigKey = $('#ab-trig').value;
+      var actKey = $('#ab-act').value;
+      var route = $('#ab-route').value;
+      var msg = ($('#ab-msg').value || '').trim();
+      var tk = AH.Auto.TRIGGERS[trigKey] || { label: trigKey };
+      var ak = AH.Auto.ACTIONS[actKey] || { label: actKey };
+      var d = loadAutoRules();
+      d.unshift({
+        id: uid('ar'), name: name, on: true,
+        trigKey: trigKey, trig: tk.label,
+        actKey: actKey, act: ak.label,
+        params: { route: route, text: msg }
+      });
+      saveAutoRules(d);
+      var b = $('#auto-builder'); if (b) b.style.display = 'none';
+      AH.Router.go('production-automation');
+      toast('Rule saved');
+    },
+    add: function () { AH.Auto.openBuilder(); },
     toggle: function (id) {
       var d = loadAutoRules().map(function (r) { return r.id === id ? Object.assign({}, r, { on: !r.on }) : r; });
       saveAutoRules(d); AH.Router.go('production-automation');
     },
     del: function (id) { saveAutoRules(loadAutoRules().filter(function (r) { return r.id !== id; })); AH.Router.go('production-automation'); },
     runAll: function () {
-      var n = loadAutoRules().filter(function (r) { return r.on; }).length;
-      AH.Notif.push('Automation batch · ' + n + ' rules simulated · check logs', { kind: 'warn' });
-      toast('Ran ' + n + ' enabled rules (simulated)');
+      var rules = loadAutoRules().filter(function (r) { return r.on; });
+      rules.forEach(function (r) { AH.Auto.execute(r, 'manual:run-all', {}, true); });
+      AH.Notif.push('Automation · ran ' + rules.length + ' rules');
+      toast('Ran ' + rules.length + ' enabled rules');
+      AH.Router.go('production-automation');
     }
   };
+
+  function loadAutoLog() {
+    var k = 'ah_autolog_' + STATE.activeProdId;
+    var d = AH.Storage.local.get(k, null);
+    if (!d) { d = []; AH.Storage.local.set(k, d); }
+    return d;
+  }
+  function saveAutoLog(rows) { AH.Storage.local.set('ah_autolog_' + STATE.activeProdId, rows); }
+  AH.register('production-automation', function (m) {
+    var rules = loadAutoRules();
+    var log = loadAutoLog().slice(-18).reverse();
+    var trigOpts = Object.keys(AH.Auto.TRIGGERS).map(function (k) { return '<option value="' + k + '">' + clean(AH.Auto.TRIGGERS[k].label) + '</option>'; }).join('');
+    var actOpts = Object.keys(AH.Auto.ACTIONS).map(function (k) { return '<option value="' + k + '">' + clean(AH.Auto.ACTIONS[k].label) + '</option>'; }).join('');
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'NEW RULE',
+        primaryFn: 'AH.Auto.openBuilder()',
+        secondary: 'RUN ENABLED NOW',
+        secondaryFn: 'AH.Auto.runAll()'
+      }) +
+      '<div class="section" style="display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,1fr);gap:14px;">' +
+        '<div class="card" style="padding:0;overflow:hidden;">' +
+          '<div style="padding:14px 16px;border-bottom:1px solid var(--edge);display:flex;justify-content:space-between;align-items:center;">' +
+            '<div class="section__title" style="margin:0;">Rules · ' + rules.length + '</div>' +
+            '<span class="chip chip--aqua">BUS · COHERENCY</span>' +
+          '</div>' +
+          '<table class="table"><thead><tr><th>Rule</th><th>When</th><th>Then</th><th></th><th></th></tr></thead><tbody>' +
+            rules.map(function (r) {
+              var tk = AH.Auto.TRIGGERS[r.trigKey] || { label: r.trig };
+              var ak = AH.Auto.ACTIONS[r.actKey] || { label: r.act };
+              return '<tr><td><strong>' + clean(r.name) + '</strong></td><td style="font-size:12px;color:var(--fg-65);">' + clean(tk.label) + '</td><td style="font-size:12px;color:var(--fg-72);">' + clean(ak.label) + '</td>' +
+                '<td><span class="chip ' + (r.on ? 'chip--mint' : 'chip--amber') + '">' + (r.on ? 'ON' : 'OFF') + '</span></td>' +
+                '<td style="text-align:right;white-space:nowrap;">' +
+                  '<button class="btn btn--ghost" onclick="AH.Auto.testRule(\'' + r.id + '\')">TEST</button> ' +
+                  '<button class="btn btn--ghost" onclick="AH.Auto.toggle(\'' + r.id + '\')">TOGGLE</button> ' +
+                  '<button class="btn btn--ghost" onclick="AH.Auto.del(\'' + r.id + '\')">×</button>' +
+                '</td></tr>';
+            }).join('') +
+          '</tbody></table>' +
+        '</div>' +
+        '<div class="card" style="padding:0;overflow:hidden;max-height:520px;display:flex;flex-direction:column;">' +
+          '<div style="padding:14px 16px;border-bottom:1px solid var(--edge);"><div class="section__title" style="margin:0;">Run log</div><div class="section__sub" style="margin-top:4px;">LAST ' + log.length + ' EVENTS</div></div>' +
+          '<div style="overflow:auto;padding:10px 14px;font-family:var(--f-mono);font-size:11px;line-height:1.55;color:var(--fg-75);">' +
+            (log.length ? log.map(function (e) {
+              return '<div style="padding:8px 0;border-bottom:1px solid var(--edge);"><span style="color:var(--mint);">' + clean(e.t) + '</span> · ' + clean(e.msg) + '</div>';
+            }).join('') : '<div style="color:var(--fg-45);padding:12px 0;">No runs yet. Save a script or toggle a rule to see coherency events.</div>') +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="section" style="display:none;" id="auto-builder">' +
+        '<div class="card">' +
+          '<div class="section__title" style="margin-bottom:10px;">Quick add</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+            '<div class="sh-field"><label>Rule name</label><input id="ab-name" placeholder="e.g. Refresh shot list after stripboard edit"/></div>' +
+            '<div class="sh-field"><label>Trigger</label><select id="ab-trig">' + trigOpts + '</select></div>' +
+            '<div class="sh-field"><label>Action</label><select id="ab-act">' + actOpts + '</select></div>' +
+            '<div class="sh-field"><label>Target route (for refresh / go)</label><select id="ab-route">' +
+              ['dashboard','script-editor','schedule','breakdown','breakdowns','shotlist','storymap','beatboard','documents','financials','budget','gantt','locations','cast-crew','risk','production-automation'].map(function (rid) {
+                return '<option value="' + rid + '">' + clean(rid) + '</option>';
+              }).join('') +
+            '</select></div>' +
+          '</div>' +
+          '<div class="sh-field" style="margin-top:12px;"><label>Message (for log / notify)</label><input id="ab-msg" placeholder="Optional · appended to log lines"/></div>' +
+          '<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">' +
+            '<button type="button" class="btn btn--primary" onclick="AH.Auto.addFromBuilder()">SAVE RULE</button>' +
+            '<button type="button" class="btn btn--ghost" onclick="document.getElementById(\'auto-builder\').style.display=\'none\'">Cancel</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="section"><div class="card" style="font-size:13px;color:var(--fg-68);line-height:1.65;">' +
+        'Rules subscribe to the <strong>data coherency bus</strong> (<code>AH.Bus</code>). When a trigger fires, enabled actions run immediately — ' +
+        'refreshing open modules, appending to this log, or surfacing notifications. Data is stored per production under <code>ah_auto_*</code> and syncs to Firebase when cloud mode is on.' +
+      '</div></div>'
+    );
+  });
 
   // ══════════════════════════════════════════════════════════════════════════
   //  INTEGRATION HUB
@@ -14279,6 +14764,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       var actions = [
         { id: 'act:new-prod', label: 'New production', group: 'Actions', icon: 'plus', fn: function () { AH.Prod.newProduction(); } },
         { id: 'act:forms', label: 'Forms & document generators', group: 'Actions', icon: 'doc', fn: function () { AH.V2Forms.openPalette(); } },
+        { id: 'act:brief', label: 'Production brief (PDF)', group: 'Actions', icon: 'doc', fn: function () { AH.Brief.openPDF(); } },
         { id: 'act:import', label: 'Import script (file / paste)', group: 'Actions', icon: 'upload', fn: function () { AH.ScriptImport.open(); } },
         { id: 'act:onboard', label: 'Open Getting Started', group: 'Actions', icon: 'check', fn: function () { AH.Router.go('getting-started'); } },
         { id: 'act:shortcuts', label: 'Open Shortcuts reference', group: 'Actions', icon: 'gear', fn: function () { AH.Router.go('shortcuts'); } },
@@ -14606,6 +15092,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     // Data coherency wiring — must happen before router goes live so every
     // module that emits during its first render already has a listener.
     AH.Coherency.init();
+    AH.Auto.init();
 
     // Rail open default
     try {
@@ -14634,6 +15121,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     on($('#btn-mobile-search'), 'click', CmdK.open);
     on($('#cmdk-input'), 'input', function (e) { CmdK.render(e.target.value); });
     on($('#cmdk-backdrop'), 'click', function (e) { if (e.target.id === 'cmdk-backdrop') CmdK.close(); });
+    on($('#pdf-preview-close'), 'click', function () { PDF.closePreview(); });
+    on($('#pdf-preview-print'), 'click', function () { PDF.printPreview(); });
 
     // Login
     // Legacy overlay — route through the same Auth flow as the splash so
@@ -14645,6 +15134,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     document.addEventListener('keydown', function (e) {
       if ((e.key === 'k' || e.key === 'K') && (e.metaKey || e.ctrlKey)) { e.preventDefault(); CmdK.open(); return; }
       if (e.key === 'Escape') {
+        if ($('#pdf-preview') && $('#pdf-preview').classList.contains('is-open')) { PDF.closePreview(); return; }
         if ($('#cmdk-backdrop').classList.contains('is-open')) CmdK.close();
         if ($('#sh-modal-back').classList.contains('is-open')) AH.Modal.close();
         if ($('#se-el-popup').classList.contains('is-open')) Editor.closeElPopup();
