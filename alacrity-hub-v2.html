@@ -4326,17 +4326,22 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     { id: 'dashboard',           label: 'Dashboard',         group: 'OVERVIEW',  parent: 'overview', icon: 'grid',    crumb: 'OVERVIEW · COMMAND',    img: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1800&q=80' },
     { id: 'production-library',  label: 'Productions',       group: 'OVERVIEW',  parent: 'overview', icon: 'library', crumb: 'OVERVIEW · CATALOG',    img: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=1800&q=80' },
     { id: 'calendar',            label: 'Calendar',          group: 'OVERVIEW',  parent: 'overview', icon: 'calendar',crumb: 'OVERVIEW · TIME',       img: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'getting-started',     label: 'Getting Started',   group: 'OVERVIEW',  parent: 'overview', icon: 'check',   crumb: 'OVERVIEW · ONBOARD',    img: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'shortcuts',         label: 'Shortcuts',         group: 'OVERVIEW',  parent: 'overview', icon: 'gear',    crumb: 'OVERVIEW · KEYS',       img: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1800&q=80' },
 
     // STORY ROOM — writing + narrative
     { id: 'script-editor',       label: 'Script Studio',     group: 'STORY',     parent: 'story',    icon: 'script',  crumb: 'STORY · STUDIO',        img: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'script-import',       label: 'Script Import',     group: 'STORY',     parent: 'story',    icon: 'upload',  crumb: 'STORY · IMPORT',        img: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1800&q=80' },
     { id: 'storymap',            label: 'Story Map',         group: 'STORY',     parent: 'story',    icon: 'node',    crumb: 'STORY · MAP',           img: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1800&q=80' },
     { id: 'beatboard',           label: 'Beat Board',        group: 'STORY',     parent: 'story',    icon: 'layers',  crumb: 'STORY · OUTLINE',       img: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=1800&q=80' },
     { id: 'storyboard',          label: 'Storyboard',        group: 'STORY',     parent: 'story',    icon: 'camera',  crumb: 'STORY · BOARD',         img: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1800&q=80' },
     { id: 'shotlist',            label: 'Shot List',         group: 'STORY',     parent: 'story',    icon: 'camera',  crumb: 'STORY · SHOTS',         img: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'shot-list',           label: 'Shot List (legacy)', group: 'STORY',    parent: 'story',    icon: 'camera',  crumb: 'STORY · SHOTS',         img: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=1800&q=80' },
 
     // PRE-PROD — planning
     { id: 'schedule',            label: 'Stripboard',        group: 'PRE',       parent: 'pre',      icon: 'calendar',crumb: 'PRE-PROD · STRIPS',     img: 'https://images.unsplash.com/photo-1533073526757-2c8ca1df9f1c?auto=format&fit=crop&w=1800&q=80' },
     { id: 'breakdown',           label: 'Breakdown',         group: 'PRE',       parent: 'pre',      icon: 'layers',  crumb: 'PRE-PROD · ELEMENTS',   img: 'https://images.unsplash.com/photo-1560472355-536de3962603?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'breakdowns',          label: 'Scene Breakdowns',  group: 'PRE',       parent: 'pre',      icon: 'layers',  crumb: 'PRE-PROD · SCENE BD',   img: 'https://images.unsplash.com/photo-1560472355-536de3962603?auto=format&fit=crop&w=1800&q=80' },
     { id: 'days',                label: 'Shoot Days',        group: 'PRE',       parent: 'pre',      icon: 'calendar',crumb: 'PRE-PROD · DAYS',       img: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1800&q=80' },
     { id: 'locations',           label: 'Locations',         group: 'PRE',       parent: 'pre',      icon: 'location',crumb: 'PRE-PROD · LOCATIONS',  img: 'https://images.unsplash.com/photo-1487958449943-2429e8be8625?auto=format&fit=crop&w=1800&q=80' },
     { id: 'cast-crew',           label: 'Cast & Crew',       group: 'PRE',       parent: 'pre',      icon: 'users',   crumb: 'PRE-PROD · PEOPLE',     img: 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&w=1800&q=80' },
@@ -4434,14 +4439,17 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       if (sm) sm.removeAttribute('data-modal');
       document.body.style.overflow = '';
     },
-    confirm: function (title, msg, onYes) {
+    confirm: function (title, msg, onYes, onNo) {
       AH.Modal.open(title,
         '<div style="font-size:14px;color:var(--fg-80);line-height:1.5;">' + clean(msg) + '</div>',
         {
           size: 'sm',
-          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button>' +
+          footer: '<button class="btn btn--ghost" id="mod-no">Cancel</button>' +
                   '<button class="btn btn--primary" id="mod-yes">Confirm</button>',
-          onMount: function (body, foot) { $('#mod-yes').onclick = function () { AH.Modal.close(); onYes && onYes(); }; }
+          onMount: function (body, foot) {
+            $('#mod-yes').onclick = function () { AH.Modal.close(); onYes && onYes(); };
+            $('#mod-no').onclick = function () { AH.Modal.close(); onNo && onNo(); };
+          }
         });
     },
     prompt: function (title, label, def, onOK) {
@@ -4747,7 +4755,17 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       'export':              'Package a production as an interactive APK or a complete archival backup.',
       'platform':            'Platform capabilities. Every module, every extension point, catalogued.',
       'privacy':             'Privacy policy, data processing terms, data subject rights.',
-      'security':            'Four-layer zero-trust defense posture. Independently scanned. Zero critical. Zero high.'
+      'security':            'Four-layer zero-trust defense posture. Independently scanned. Zero critical. Zero high.',
+      'getting-started':     'Onboarding path: import, schedule, story map, and paperwork — without losing the zero-trust posture.',
+      'shortcuts':           'Keyboard surface area across Script Studio, Story Map, and the command palette.',
+      'preflight':           'Shoot-day readiness: scenes, people, locations, and risk posture in one pass.',
+      'prod-pipeline':       'Production-side CRM pipeline — same data as Production CRM, focused on stage columns.',
+      'prod-dialer':         'Outbound cadence for production leads with explicit call-state tracking.',
+      'prod-intel':          'Research layer for production-side deals — separate from pipeline cards.',
+      'biz-pipeline':        'Business-side CRM pipeline — same data as Business CRM, focused on stage columns.',
+      'biz-dialer':          'Outbound cadence for business leads with explicit call-state tracking.',
+      'biz-intel':           'Research layer for business-side deals — separate from pipeline cards.',
+      'shot-list':           'Legacy route alias for Shot List — deep links from V1 resolve here.'
     };
     return L[id] || 'Production overview & status.';
   }
@@ -4791,7 +4809,17 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       'export':             { n: '2',   l: 'Ready packages' },
       'platform':           { n: '32',  l: 'Capabilities' },
       'privacy':            { n: 'GDPR',l: 'Compliant' },
-      'security':           { n: '0',   l: 'Critical vulns' }
+      'security':           { n: '0',   l: 'Critical vulns' },
+      'getting-started':    { n: '10',  l: 'Min setup' },
+      'shortcuts':          { n: '⌘K',  l: 'Palette' },
+      'preflight':          { n: '✓',   l: 'Checks' },
+      'prod-pipeline':      { n: '29',  l: 'Stages' },
+      'prod-dialer':        { n: '8',   l: 'Queue' },
+      'prod-intel':         { n: '12',  l: 'Notes' },
+      'biz-pipeline':       { n: '52',  l: 'Stages' },
+      'biz-dialer':         { n: '11',  l: 'Queue' },
+      'biz-intel':          { n: '9',   l: 'Notes' },
+      'shot-list':          { n: '↗',   l: 'Alias' }
     };
     return S[id] || { n: '—', l: 'Overview' };
   }
@@ -5011,6 +5039,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         leftTab: 'scenes',
         rightTab: 'inspector',
         spellCheck: false,
+        autoContd: true,
+        autoUpperFormatting: true,
         language: 'en-US',
         revColor: 'white',
         lockedPages: [],
@@ -5030,6 +5060,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         else Editor._stateByProd[pid] = Editor._newScriptState();
       }
       Editor.state = Editor._stateByProd[pid];
+      if (Editor.state.autoContd === undefined) Editor.state.autoContd = true;
+      if (Editor.state.autoUpperFormatting === undefined) Editor.state.autoUpperFormatting = true;
       return Editor.state;
     },
 
@@ -5128,6 +5160,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         '<div class="se-probar">' +
           '<span class="se-probar__badge">PRO</span>' +
           '<button class="se-btn se-btn--xs" onclick="AH.Editor.toggleSpell()" title="Spell check">✎ SPELL</button>' +
+          '<button class="se-btn se-btn--xs' + (s.autoContd ? ' is-primary' : '') + '" id="se-fmt-contd" onclick="AH.Editor.toggleAutoContd()" title="Prompt to add (CONT\'D) when the same character speaks back-to-back">CONT\'D</button>' +
+          '<button class="se-btn se-btn--xs' + (s.autoUpperFormatting ? ' is-primary' : '') + '" id="se-fmt-uc" onclick="AH.Editor.toggleAutoUpper()" title="Auto-uppercase scene headings, transitions, and character names on blur">AUTO UC</button>' +
           '<button class="se-btn se-btn--xs" onclick="AH.Editor.openTemplates()" title="Templates">☰ TEMPLATES</button>' +
           '<button class="se-btn se-btn--xs" onclick="AH.Editor.openLang()" title="Language">⌘ LANG</button>' +
           '<div class="se-probar__sep"></div>' +
@@ -5445,6 +5479,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       var lineEl = row.querySelector('.se-line');
       var edit = lineEl.querySelector('[contenteditable]');
       on(edit, 'input', function () { ln.x = edit.innerText; Editor.markDirty(); Editor.updateStats(); });
+      on(edit, 'blur', function () { Editor.applyFormatOnBlur(idx, edit); });
       on(edit, 'keydown', function (e) { Editor.onLineKey(e, idx); });
       on(edit, 'focus', function () { Editor.selectLine(idx); });
       on(lineEl, 'click', function (e) {
@@ -6151,6 +6186,59 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     toast('Spell check · ' + (Editor.state.spellCheck ? 'ON' : 'OFF'));
   };
 
+  function _normCharName(x) {
+    return (x || '').toString().replace(/\s*\((?:CONT'?D|cont'?d)\)\s*$/i, '').replace(/\s*\([^)]*\)\s*$/g, '').trim().toUpperCase();
+  }
+  Editor.toggleAutoContd = function () {
+    Editor.state.autoContd = !Editor.state.autoContd;
+    Editor.markDirty();
+    var b = $('#se-fmt-contd'); if (b) b.classList.toggle('is-primary', !!Editor.state.autoContd);
+    toast('Auto-CONT\'D prompts · ' + (Editor.state.autoContd ? 'ON' : 'OFF'));
+  };
+  Editor.toggleAutoUpper = function () {
+    Editor.state.autoUpperFormatting = !Editor.state.autoUpperFormatting;
+    Editor.markDirty();
+    var b = $('#se-fmt-uc'); if (b) b.classList.toggle('is-primary', !!Editor.state.autoUpperFormatting);
+    toast('Auto-uppercase on blur · ' + (Editor.state.autoUpperFormatting ? 'ON' : 'OFF'));
+  };
+  Editor.applyFormatOnBlur = function (idx, editEl) {
+    var s = Editor.state; if (!s || !s.lines[idx]) return;
+    var ln = s.lines[idx];
+    var raw = (editEl && editEl.innerText != null ? editEl.innerText : (ln.x || '')).replace(/\u00a0/g, ' ');
+    ln.x = raw;
+    if (s.autoUpperFormatting) {
+      var t = ln.t;
+      if (t === 'scene' || t === 'trans' || t === 'centered' || t === 'pathway' || t === 'shot') {
+        ln.x = raw.trim().toUpperCase();
+      } else if (t === 'char') {
+        var parts = raw.split(/\n/);
+        ln.x = parts.map(function (p) { return p.trim().toUpperCase(); }).join('\n');
+      }
+      if (editEl && ln.x !== raw) { editEl.innerText = ln.x; Editor.markDirty(); }
+    }
+    if (s.autoContd && ln.t === 'char' && idx >= 2) {
+      var prevChar = s.lines[idx - 2];
+      var between = s.lines[idx - 1];
+      if (prevChar && prevChar.t === 'char' && between && between.t === 'dial') {
+        var a = _normCharName(prevChar.x);
+        var b = _normCharName(ln.x);
+        if (a && a === b && !/\(CONT'?D\)/i.test(ln.x)) {
+          AH.Modal.confirm(
+            'Continue dialogue?',
+            'Same character speaks again right after their line. Add (CONT\'D) to the character cue?',
+            function () {
+              var base = (ln.x || '').trim().replace(/\s*\([^)]*\)\s*$/g, '').trim();
+              ln.x = base + ' (CONT\'D)';
+              Editor.pushHistory(); Editor.renderScript(); Editor.markDirty(); toast('CONT\'D added');
+            },
+            function () { Editor.markDirty(); }
+          );
+        }
+      }
+    }
+    Editor.updateStats();
+  };
+
   Editor.openLang = function () {
     var langs = [
       { c: 'en-US', n: '🇺🇸 English (US)' }, { c: 'en-GB', n: '🇬🇧 English (UK)' },
@@ -6789,6 +6877,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   };
 
   Editor.openExportModal = function () {
+    var smPref = AH.Storage.local.get('ah_pdf_storymap', '0') === '1';
     var formats = [
       { k: 'pdf',       n: 'PDF · Vector',      i: '📄', d: 'Vector PDF via jsPDF · title page + scene numbers' },
       { k: 'pdf-print', n: 'PDF · Browser',     i: '🖨', d: 'Print dialog → Save-as-PDF · high-fidelity' },
@@ -6800,10 +6889,20 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     ];
     AH.Modal.open('Export Script',
       '<div class="sh-modal__label">Choose a format</div>' +
+      '<div class="sh-field" style="margin-bottom:14px;padding:10px 12px;border-radius:10px;border:1px solid var(--edge);background:var(--glass-2);">' +
+        '<label style="display:flex;gap:10px;align-items:center;cursor:pointer;font-size:13px;color:var(--fg-80);">' +
+          '<input type="checkbox" id="exp-storymap"' + (smPref ? ' checked' : '') + '/>' +
+          '<span>Append <strong>Story Map</strong> summary page to <em>PDF · Vector</em> export (node labels, types, scene links, tension).</span>' +
+        '</label>' +
+      '</div>' +
       '<div class="sh-grid-3">' + formats.map(function (f) { return '<div class="sh-tile" data-fmt="' + f.k + '"><div class="sh-tile__ico">' + f.i + '</div><div class="sh-tile__name">' + f.n + '</div><div class="sh-tile__desc">' + f.d + '</div></div>'; }).join('') + '</div>',
       {
         size: 'lg',
         onMount: function () {
+          var cb = $('#exp-storymap');
+          if (cb) {
+            cb.onchange = function () { AH.Storage.local.set('ah_pdf_storymap', cb.checked ? '1' : '0'); };
+          }
           $$('.sh-tile[data-fmt]').forEach(function (t) { on(t, 'click', function () { Editor._export(t.getAttribute('data-fmt')); AH.Modal.close(); }); });
         }
       });
@@ -7151,6 +7250,30 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       doc.setFont('courier', 'normal'); doc.setFontSize(7); doc.setTextColor(160);
       for (var pi = 1; pi <= pages; pi++) { doc.setPage(pi); doc.text(stamp, pageW - right, pageH - 0.3, { align: 'right' }); }
       doc.setTextColor(0);
+    } catch (_) {}
+    try {
+      if (AH.Storage.local.get('ah_pdf_storymap', '0') === '1' && window.AH && AH.StoryMap) {
+        StoryMap.load();
+        var sn = (StoryMap.state && StoryMap.state.nodes) || [];
+        if (sn.length) {
+          doc.addPage();
+          y = top;
+          doc.setFont('courier', 'bold'); doc.setFontSize(14);
+          doc.text('STORY MAP APPENDIX', left, y); y += 0.32;
+          doc.setFont('courier', 'normal'); doc.setFontSize(9);
+          sn.slice(0, 48).forEach(function (n) {
+            maybeBreak(0.2);
+            var bits = [n.label || '—', (n.nodeType || 'scene').toUpperCase()];
+            if (n.sceneSlug) bits.push('SCN ' + String(n.sceneSlug));
+            else if (typeof n.sceneLineIdx === 'number') bits.push('LINE ' + n.sceneLineIdx);
+            if (n.emotionTension != null && n.emotionTension !== '') bits.push('T=' + n.emotionTension);
+            var line = bits.join(' · ');
+            var wrapped = splitAt(line, pageW - left - right);
+            wrapped.forEach(function (ln) { maybeBreak(0.16); doc.text(ln, left, y); y += 0.16; });
+          });
+          if (sn.length > 48) { maybeBreak(0.2); doc.text('… plus ' + (sn.length - 48) + ' additional nodes (see Story Map module).', left, y); }
+        }
+      }
     } catch (_) {}
     doc.save(slugify(s.title || 'script') + '.pdf');
     toast('PDF saved');
@@ -7859,7 +7982,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
                 schedule: { strips: [] }, shotlist: [], milestones: [], risks: [], tasks: [],
                 continuity: [], cast: {}, crew: {},
                 financials: { categories: {}, budget: 0, spent: 0, remaining: 0 },
-                _cloudSynced: false
+                storyMap: null, beatboard: null, music: { cues: [] }, documents: [], locations: [], reports: [],
+                budgetLines: [], productionAutomation: [], _cloudSynced: false
               };
               AH.Prod._savePD(id, pd);
               AH.Prod.setActive(id);
@@ -8160,7 +8284,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     var lc = locColor(s.loc);
     var type = s.int ? 'INT' : 'EXT';
     return (
-      '<div class="board-strip ' + cls + '" draggable="true" data-sid="' + s.id + '" style="border-left:5px solid ' + lc + ';">' +
+      '<div class="board-strip ' + cls + '" draggable="true" data-sid="' + s.id + '" oncontextmenu="AH.Schedule.stripCtx(event,\'' + s.id + '\');return false;" style="border-left:5px solid ' + lc + ';">' +
         '<div class="board-strip__cell board-strip__num">' + s.n + '</div>' +
         '<div class="board-strip__cell"><span class="inline-edit" contenteditable data-f="title" data-id="' + s.id + '">' + clean(s.title) + '</span></div>' +
         '<div class="board-strip__cell" style="font-family:var(--f-mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg-60);"><span class="inline-edit" contenteditable data-f="type" data-id="' + s.id + '">' + type + '</span></div>' +
@@ -8203,6 +8327,21 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     });
   };
   AH.Schedule = {
+    stripCtx: function (e, id) {
+      e.preventDefault();
+      var html =
+        '<div class="sm-ctx__item" onclick="AH.Schedule.editSceneModal(\'' + id + '\');AH.Schedule._closeStripCtx();">Edit scene…</div>' +
+        '<div class="sm-ctx__item" onclick="AH.Router.go(\'locations\');AH.Schedule._closeStripCtx();">Open locations</div>' +
+        '<div class="sm-ctx__item" onclick="AH.Docs.gen(\'callSheet\');AH.Schedule._closeStripCtx();">Call sheet</div>';
+      AH.Schedule._closeStripCtx();
+      var m = document.createElement('div'); m.id = 'strip-ctx'; m.className = 'sm-ctx'; m.innerHTML = html;
+      m.style.left = (e.clientX || 0) + 'px'; m.style.top = (e.clientY || 0) + 'px';
+      document.body.appendChild(m);
+      setTimeout(function () {
+        document.addEventListener('click', AH.Schedule._closeStripCtx, { once: true });
+      }, 0);
+    },
+    _closeStripCtx: function () { var el = document.getElementById('strip-ctx'); if (el) el.remove(); },
     editSceneModal: function (sceneId) {
       var scs = loadScenes();
       var s = sceneId ? scs.find(function (x) { return x.id === sceneId; }) : null;
@@ -8619,6 +8758,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       });
     });
   };
+  AH.register('shot-list', RENDERERS.shotlist);
+  AH.hooks['shot-list:mount'] = AH.hooks['shotlist:mount'];
 
   // ══════════════════════════════════════════════════════════════════════════
   //  CAST & CREW · Contacts
@@ -8677,6 +8818,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">' +
           '<button class="se-btn se-btn--xs" onclick="AH.Cast.call(\'' + p.id + '\')">CALL</button>' +
           '<button class="se-btn se-btn--xs" onclick="AH.Cast.edit(\'' + p.id + '\')">EDIT</button>' +
+          '<button class="se-btn se-btn--xs" onclick="AH.Cast.profileSheet(\'' + p.id + '\')">PROFILE</button>' +
           '<button class="se-btn se-btn--xs" onclick="AH.Cast.photo(\'' + p.id + '\')">PHOTO</button>' +
           '<button class="se-btn se-btn--xs" onclick="AH.Cast.dealMemoFor(\'' + p.id + '\')">DEAL MEMO</button>' +
         '</div>' +
@@ -8763,6 +8905,88 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         PDF.footer();
       PDF.openDoc(body, 'Contact_Sheet_' + slugify(prodTitle()));
       toast('Contact sheet PDF generated');
+    },
+    profileSheet: function (personId) {
+      var roster = loadCast();
+      if (!roster.length) { toast('Add cast & crew first', 'warn'); AH.Router.go('cast-crew'); return; }
+      var p = personId ? roster.find(function (x) { return x.id === personId; }) : null;
+      if (personId && !p) { toast('Person not found', 'warn'); return; }
+      if (!p && roster.length === 1) p = roster[0];
+      if (!p) {
+        var opts = '<option value="">— Select cast / crew —</option>' + roster.map(function (x) { return '<option value="' + x.id + '">' + clean(x.name) + ' · ' + clean(x.role || '') + '</option>'; }).join('');
+        AH.Modal.open('Cast profile sheet',
+          '<div class="sh-modal__label">Pick a person from the slate roster.</div>' +
+          '<div class="sh-field"><label>Person</label><select id="cpi-pick">' + opts + '</select></div>',
+          {
+            size: 'sm',
+            modalId: 'modal-cast-info',
+            footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="cpi-go">OPEN</button>',
+            onMount: function () {
+              $('#cpi-go').onclick = function () {
+                var id = $('#cpi-pick').value; if (!id) { toast('Select someone', 'warn'); return; }
+                AH.Modal.close(); AH.Cast.profileSheet(id);
+              };
+            }
+          });
+        return;
+      }
+      p.profile = p.profile || {};
+      var pr = p.profile;
+      AH.Modal.open('Cast profile · ' + clean(p.name),
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+          '<div class="sh-field" style="grid-column:1/3;"><label>Legal name</label><input id="cpi-name" value="' + clean(p.name) + '"/></div>' +
+          '<div class="sh-field"><label>Role</label><input id="cpi-role" value="' + clean(p.role || '') + '"/></div>' +
+          '<div class="sh-field"><label>Union / status</label><input id="cpi-union" value="' + clean(pr.union || '') + '" placeholder="SAG-AFTRA · Must join"/></div>' +
+          '<div class="sh-field"><label>Agency</label><input id="cpi-agency" value="' + clean(pr.agency || '') + '"/></div>' +
+          '<div class="sh-field"><label>Emergency contact</label><input id="cpi-em" value="' + clean(pr.emergency || '') + '"/></div>' +
+          '<div class="sh-field"><label>Measurements (wardrobe)</label><input id="cpi-ms" value="' + clean(pr.measurements || '') + '"/></div>' +
+          '<div class="sh-field"><label>Dietary / allergies</label><input id="cpi-diet" value="' + clean(pr.dietary || '') + '"/></div>' +
+          '<div class="sh-field"><label>Special skills</label><input id="cpi-sk" value="' + clean(pr.skills || '') + '"/></div>' +
+          '<div class="sh-field" style="grid-column:1/3;"><label>Private notes</label><textarea id="cpi-notes" rows="3">' + clean(pr.notes || '') + '</textarea></div>' +
+        '</div>',
+        {
+          size: 'lg',
+          modalId: 'modal-cast-info',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Close</button><button class="btn btn--primary" id="cpi-save">SAVE PROFILE</button><button class="btn btn--ghost" onclick="AH.Cast.profilePDF(\'' + p.id + '\')">PROFILE PDF</button>',
+          onMount: function () {
+            $('#cpi-save').onclick = function () {
+              p.name = ($('#cpi-name').value || p.name).trim();
+              p.role = ($('#cpi-role').value || '').trim();
+              p.profile = p.profile || {};
+              p.profile.union = $('#cpi-union').value.trim();
+              p.profile.agency = $('#cpi-agency').value.trim();
+              p.profile.emergency = $('#cpi-em').value.trim();
+              p.profile.measurements = $('#cpi-ms').value.trim();
+              p.profile.dietary = $('#cpi-diet').value.trim();
+              p.profile.skills = $('#cpi-sk').value.trim();
+              p.profile.notes = $('#cpi-notes').value.trim();
+              saveCast(roster); AH.Modal.close(); AH.Router.go('cast-crew'); toast('Profile saved · ' + p.name);
+            };
+          }
+        });
+    },
+    profilePDF: function (id) {
+      var p = loadCast().find(function (x) { return x.id === id; }); if (!p) return;
+      var pr = p.profile || {};
+      var body = PDF.header('Cast Profile · ' + p.name, getActiveProd().title) +
+        PDF.section('Roster line', '<div class="pdf-grid2">' +
+          PDF.field('Role', p.role || '') +
+          PDF.field('Dept', p.dept || '') +
+          PDF.field('Phone', p.phone || '') +
+          PDF.field('Email', p.email || '') +
+          PDF.field('Union', pr.union || '') +
+          PDF.field('Agency', pr.agency || '') +
+        '</div>') +
+        PDF.section('Wardrobe & wellbeing', '<div class="pdf-grid2">' +
+          PDF.field('Measurements', pr.measurements || '—') +
+          PDF.field('Dietary / allergies', pr.dietary || '—') +
+          PDF.field('Emergency', pr.emergency || '—') +
+          PDF.field('Special skills', pr.skills || '—') +
+        '</div>') +
+        (pr.notes ? PDF.section('Notes', '<div class="pdf-p">' + clean(pr.notes) + '</div>') : '') +
+        PDF.footer();
+      PDF.openDoc(body, 'Cast_Profile_' + slugify(p.name));
+      toast('Cast profile PDF generated');
     }
   };
   AH.hooks['cast-crew:mount'] = function () {
@@ -9321,13 +9545,17 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     fieldModal('Call Sheet', [
       { id: 'cs-date',      label: 'Shoot date',     type: 'date' },
       { id: 'cs-day',       label: 'Day #',          def: '1' },
-      { id: 'cs-crewcall',  label: 'Crew call',      type: 'time', def: '07:00' },
+      { id: 'cs-crewcall',  label: 'General crew call', type: 'time', def: '07:00' },
       { id: 'cs-shoot',     label: 'Shooting call',  type: 'time', def: '08:00' },
+      { id: 'cs-split',     label: 'Split call (optional)', type: 'time', def: '' },
+      { id: 'cs-advance',   label: 'Advance schedule (tomorrow)', type: 'textarea', full: true, rows: 2, def: '' },
+      { id: 'cs-scenes',    label: 'Scene schedule (one per line)', type: 'textarea', full: true, rows: 4, def: '' },
       { id: 'cs-bl',        label: 'Breakfast location', full: true, def: 'Base camp · catering tent' },
       { id: 'cs-loc',       label: 'Primary location',   full: true, def: 'Set 1 · interior' },
-      { id: 'cs-loc-addr',  label: 'Location address',   full: true, def: '' },
+      { id: 'cs-loc-addr',  label: 'Location address / map pin', full: true, def: '' },
+      { id: 'cs-parking',   label: 'Parking / base camp', full: true, def: '' },
       { id: 'cs-weather',   label: 'Weather · sunrise/sunset', full: true, def: 'Clear · 62°F / 74°F · SR 06:42 · SS 20:11' },
-      { id: 'cs-nearest',   label: 'Nearest hospital',   full: true, def: '' },
+      { id: 'cs-nearest',   label: 'Nearest hospital / ER', full: true, def: '' },
       { id: 'cs-notes',     label: 'Safety + special notes', type: 'textarea', full: true, rows: 4 }
     ], function () {
       var prod = getActiveProd();
@@ -9335,21 +9563,29 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       var castRows = (cast.length ? cast : [{ n: '—', r: '—', cw: '—', t: '—' }]).map(function (c) {
         return '<tr><td>' + clean(c.r || c.role || '') + '</td><td>' + clean(c.n || c.name || '') + '</td><td>' + clean(c.cw || c.callTime || '') + '</td><td>' + clean(c.t || c.transport || '') + '</td></tr>';
       }).join('');
-      var crew = AH.Storage.local.get('ah_cast_' + STATE.activeProdId, []);
+      var crewRows = (cast.length ? cast : [{ n: '—', r: '—', cw: '—', t: '—' }]).map(function (c) {
+        return '<tr><td>' + clean(c.dept || 'DEPT') + '</td><td>' + clean(c.role || '') + '</td><td>' + clean(c.name || '') + '</td><td>' + clean(c.phone || '') + '</td></tr>';
+      }).join('');
+      var sceneBlock = (gv('cs-scenes') || '').trim().replace(/\n/g, '<br/>');
       var body = PDF.header('Call Sheet', 'Day ' + gv('cs-day') + ' · ' + prod.title) +
         PDF.section('Schedule', '<div class="pdf-grid2">' +
           PDF.field('Date', gv('cs-date')) +
-          PDF.field('Crew call', gv('cs-crewcall')) +
+          PDF.field('General crew call', gv('cs-crewcall')) +
           PDF.field('Shooting call', gv('cs-shoot')) +
+          PDF.field('Split call', gv('cs-split') || '—') +
           PDF.field('Breakfast', gv('cs-bl')) +
         '</div>') +
         PDF.section('Location', '<div class="pdf-grid2">' +
           PDF.field('Primary', gv('cs-loc')) +
-          PDF.field('Address', gv('cs-loc-addr')) +
+          PDF.field('Address / pin', gv('cs-loc-addr')) +
+          PDF.field('Parking / base', gv('cs-parking')) +
           PDF.field('Weather / daylight', gv('cs-weather')) +
           PDF.field('Nearest hospital', gv('cs-nearest')) +
         '</div>') +
+        (sceneBlock ? PDF.section('Scene schedule', '<div class="pdf-p">' + sceneBlock + '</div>') : '') +
+        (gv('cs-advance') ? PDF.section('Advance schedule', '<div class="pdf-p">' + clean(gv('cs-advance')) + '</div>') : '') +
         PDF.section('Cast', '<table class="pdf-table"><thead><tr><th>Role</th><th>Name</th><th>Call time</th><th>Transport</th></tr></thead><tbody>' + castRows + '</tbody></table>') +
+        PDF.section('Key crew', '<table class="pdf-table"><thead><tr><th>Dept</th><th>Role</th><th>Name</th><th>Phone</th></tr></thead><tbody>' + crewRows + '</tbody></table>') +
         PDF.section('Safety + notes', '<div class="pdf-p">' + clean(gv('cs-notes') || 'Maintain social distancing during rehearsals. Hydrate frequently.') + '</div>') +
         PDF.footer();
       PDF.openDoc(body, 'Call_Sheet_' + slugify(prodTitle()) + '_D' + gv('cs-day'));
@@ -10497,8 +10733,20 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     var walkie = loadWalkie().slice(0, 8);
     var scs = loadScenes().slice(0, 6);
     var hot = loadHotsheet().filter(function (h) { return h.when === 'TODAY'; });
+    var sm = (function () {
+      try { StoryMap.load(); return StoryMap.state; } catch (_) { return { nodes: [], links: [] }; }
+    })();
+    var smNodes = (sm.nodes || []).slice(0, 14);
     return (
       AH.Views.renderHero(m, { primary: 'NEW TAKE', primaryFn: "AH.OnSet.newTake()", secondary: 'EXPORT LOG', secondaryFn: "AH.OnSet.exportPDF()" }) +
+      '<div class="section" style="margin-top:0;"><div class="card" style="padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
+        '<span style="font-family:var(--f-mono);font-size:10px;letter-spacing:0.2em;color:var(--fg-45);">ON-SET</span>' +
+        '<button type="button" class="btn btn--primary" id="onset-tab-ops" onclick="AH.OnSet.setTab(\'ops\')">OPS</button>' +
+        '<button type="button" class="btn btn--ghost" id="onset-tab-map" onclick="AH.OnSet.setTab(\'map\')">STORY MAP</button>' +
+        '<div style="flex:1;"></div>' +
+        '<button type="button" class="btn btn--ghost" onclick="AH.Router.go(\'storymap\')">OPEN FULL MAP</button>' +
+      '</div></div>' +
+      '<div id="onset-panel-ops">' +
       // Live hub grid
       '<div class="section" style="display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1fr);gap:12px;">' +
         '<div class="card" style="padding:0;overflow:hidden;">' +
@@ -10548,20 +10796,39 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
             (hot.length ? hot.map(function (h) { return '<div style="padding:6px 0;font-size:12px;border-bottom:1px solid var(--edge);"><span class="chip ' + h.cls + '" style="margin-right:8px;">' + clean(h.dept) + '</span>' + clean(h.txt) + '</div>'; }).join('') : '<div style="color:var(--mint);font-size:12px;">Day clear · no issues flagged.</div>') +
           '</div>' +
         '</div>' +
+      '</div>' +
+      '<div id="onset-panel-map" style="display:none;" class="section">' +
+        '<div class="card" style="margin-bottom:12px;">' +
+          '<div class="section__title" style="margin-bottom:8px;">Story structure · live read</div>' +
+          '<div style="font-size:13px;color:var(--fg-65);line-height:1.55;">' + (sm.nodes || []).length + ' nodes · ' + (sm.links || []).length + ' edges · start <code style="color:var(--mint);">' + clean(sm.startNodeId || '—') + '</code></div>' +
+          '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">' +
+            '<button class="btn btn--primary" onclick="AH.Router.go(\'storymap\')">EDIT GRAPH</button>' +
+            '<button class="btn btn--ghost" onclick="AH.StoryMap.syncFromScript && AH.StoryMap.syncFromScript();AH.Router.go(\'onset\');toast(\'Story Map synced from script\')">SYNC FROM SCRIPT</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="card" style="padding:0;max-height:420px;overflow:auto;">' +
+          '<table class="table"><thead><tr><th>Node</th><th>Type</th><th>Tension</th><th>Scene #</th></tr></thead><tbody>' +
+            (smNodes.length ? smNodes.map(function (n) {
+              return '<tr><td><strong>' + clean(n.label) + '</strong><div style="font-size:11px;color:var(--fg-50);">' + clean((n.note || '').slice(0, 80)) + (n.note && n.note.length > 80 ? '…' : '') + '</div></td>' +
+                '<td><span class="chip">' + clean(n.nodeType || 'scene') + '</span></td>' +
+                '<td class="num">' + (n.emotionTension != null ? n.emotionTension : '—') + '</td>' +
+                '<td class="num">' + (n.sceneSlug ? clean(n.sceneSlug) : (typeof n.sceneLineIdx === 'number' ? 'L' + n.sceneLineIdx : '—')) + '</td></tr>';
+            }).join('') : '<tr><td colspan="4" style="color:var(--fg-45);">No story map data yet. Open Story Map once to seed the graph.</td></tr>') +
+          '</tbody></table>' +
+        '</div>' +
       '</div>'
     );
   });
-  AH.hooks['onset:mount'] = function () {
-    var tick = function () {
-      var el = document.getElementById('onset-clock'); if (!el) { clearInterval(AH.OnSet._clock); return; }
-      var d = new Date();
-      el.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
-    };
-    if (AH.OnSet._clock) clearInterval(AH.OnSet._clock);
-    tick();
-    AH.OnSet._clock = setInterval(tick, 1000);
-  };
   AH.OnSet = {
+    _tab: 'ops',
+    setTab: function (t) {
+      AH.OnSet._tab = t || 'ops';
+      var o = $('#onset-panel-ops'), m = $('#onset-panel-map'), b1 = $('#onset-tab-ops'), b2 = $('#onset-tab-map');
+      if (o) o.style.display = AH.OnSet._tab === 'ops' ? '' : 'none';
+      if (m) m.style.display = AH.OnSet._tab === 'map' ? '' : 'none';
+      if (b1) { b1.className = 'btn ' + (AH.OnSet._tab === 'ops' ? 'btn--primary' : 'btn--ghost'); }
+      if (b2) { b2.className = 'btn ' + (AH.OnSet._tab === 'map' ? 'btn--primary' : 'btn--ghost'); }
+    },
     newTake: function () {
       AH.Modal.prompt('New take', 'Roll · Scn · Take · Status · TC', 'A001 · 03 · 1 · CIRCLED · 00:00:00:00', function (v) {
         if (!v) return;
@@ -10586,6 +10853,17 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       PDF.openDoc(body, 'Take_Log_' + slugify(prodTitle()));
       toast('Take log PDF generated');
     }
+  };
+  AH.hooks['onset:mount'] = function () {
+    AH.OnSet.setTab(AH.OnSet._tab || 'ops');
+    var tick = function () {
+      var el = document.getElementById('onset-clock'); if (!el) { clearInterval(AH.OnSet._clock); return; }
+      var d = new Date();
+      el.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+    };
+    if (AH.OnSet._clock) clearInterval(AH.OnSet._clock);
+    tick();
+    AH.OnSet._clock = setInterval(tick, 1000);
   };
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -10883,15 +11161,16 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   }
   AH.register('crm-prod', function (m) { return crmView('prod', m); });
   AH.register('crm-biz', function (m) { return crmView('biz', m); });
-  AH.hooks['crm-prod:mount'] = function () { wireKanban('prod'); };
-  AH.hooks['crm-biz:mount']  = function () { wireKanban('biz'); };
+  AH.hooks['crm-prod:mount'] = function () { wireKanban('prod', 'crm-prod'); };
+  AH.hooks['crm-biz:mount']  = function () { wireKanban('biz', 'crm-biz'); };
   // V1-style short IDs (`prod` / `biz`) alias the same renderers + mount hooks.
   RENDERERS['prod'] = RENDERERS['crm-prod'];
   RENDERERS['biz'] = RENDERERS['crm-biz'];
   AH.hooks['prod:mount'] = AH.hooks['crm-prod:mount'];
   AH.hooks['biz:mount'] = AH.hooks['crm-biz:mount'];
-  function wireKanban(kind) {
+  function wireKanban(kind, routeId) {
     var dragId = null;
+    var go = function () { AH.Router.go(routeId || (kind === 'prod' ? 'crm-prod' : 'crm-biz')); };
     $$('.kanban__card').forEach(function (c) {
       on(c, 'dragstart', function () { dragId = c.getAttribute('data-id'); c.style.opacity = 0.4; });
       on(c, 'dragend', function () { c.style.opacity = 1; });
@@ -10902,7 +11181,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       on(col, 'drop', function (e) {
         e.preventDefault(); col.style.borderColor = 'var(--edge)';
         var d = loadCRM(kind); var it = d.find(function (x) { return x.id === dragId; });
-        if (it) { it.stage = col.getAttribute('data-stage'); it.last = 'now'; saveCRM(kind, d); AH.Router.go(kind === 'prod' ? 'crm-prod' : 'crm-biz'); toast('Moved · ' + it.stage); }
+        if (it) { it.stage = col.getAttribute('data-stage'); it.last = 'now'; saveCRM(kind, d); go(); toast('Moved · ' + it.stage); }
       });
     });
   }
@@ -10916,6 +11195,139 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       });
     }
   };
+  var CRM_DIAL_STATUSES = ['No contact', 'Left VM', 'Scheduled', 'Meeting set', 'Contract sent', 'Won', 'Lost'];
+  function loadDialQueue(kind) {
+    var k = 'ah_dialq_' + kind;
+    var d = AH.Storage.local.get(k, null);
+    if (!d) {
+      d = kind === 'prod'
+        ? [{ id: uid('dq'), org: 'SIDEQUEST · Talent', phone: '+1 555 0102', status: 'Scheduled', last: '2h', note: 'Callback after lunch' },
+           { id: uid('dq'), org: 'ONFN · Investors', phone: '+1 555 0199', status: 'Left VM', last: '1d', note: 'Fund II intro' }]
+        : [{ id: uid('dq'), org: 'AGBO', phone: '+1 555 0140', status: 'Meeting set', last: '6h', note: 'Zoom Thu 10a' },
+           { id: uid('dq'), org: 'Netflix · Docs', phone: '+1 555 0177', status: 'No contact', last: '3d', note: 'Cold outreach' }];
+      AH.Storage.local.set(k, d);
+    }
+    return d;
+  }
+  function saveDialQueue(kind, d) { AH.Storage.local.set('ah_dialq_' + kind, d); }
+  function loadIntel(kind) {
+    var k = 'ah_intel_' + kind;
+    var d = AH.Storage.local.get(k, null);
+    if (!d) {
+      d = kind === 'prod'
+        ? [{ id: uid('in'), title: 'Distributor appetite · Q3', body: 'Three buyers asked for sizzle + lookbook. Follow with watermark policy.', tags: 'dist,sizzle', ts: Date.now() - 86400000 }]
+        : [{ id: uid('in'), title: 'Brand RFP · Google', body: 'RFP closes 30 Apr. Need rate card + case studies.', tags: 'rfp,google', ts: Date.now() - 43200000 }];
+      AH.Storage.local.set(k, d);
+    }
+    return d;
+  }
+  function saveIntel(kind, d) { AH.Storage.local.set('ah_intel_' + kind, d); }
+  function crmDialView(kind, m) {
+    var rows = loadDialQueue(kind);
+    var lab = kind === 'prod' ? 'Production' : 'Business';
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'LOG CALL',
+        primaryFn: "AH.CRMDial.log('" + kind + "')",
+        secondary: 'OPEN DIAL PAD',
+        secondaryFn: "AH.Router.go('dialer')"
+      }) +
+      '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
+        '<table class="table"><thead><tr><th>Org</th><th>Phone</th><th>Call state</th><th>Last touch</th><th>Note</th><th></th></tr></thead><tbody>' +
+          rows.map(function (r) {
+            return '<tr><td><strong>' + clean(r.org) + '</strong></td><td class="num">' + clean(r.phone) + '</td><td><span class="chip chip--aqua">' + clean(r.status) + '</span></td><td class="num">' + clean(r.last) + '</td><td style="font-size:12px;color:var(--fg-65);">' + clean(r.note) + '</td>' +
+              '<td style="text-align:right;"><button class="btn btn--ghost" onclick="AH.CRMDial.setStatus(\'' + kind + '\',\'' + r.id + '\')">STATE</button> <button class="btn btn--ghost" onclick="AH.CRMDial.call(\'' + clean(r.phone) + '\')">CALL</button></td></tr>';
+          }).join('') +
+        '</tbody></table></div>' +
+      '<div class="section"><div class="card" style="font-size:13px;color:var(--fg-70);line-height:1.6;">' + lab + ' dial queue is separate from the kanban pipeline: use it for outbound cadence, voicemail trails, and meeting scheduling. Status values mirror a typical sales motion.</div></div>'
+    );
+  }
+  function crmIntelView(kind, m) {
+    var notes = loadIntel(kind);
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'NEW INTEL NOTE',
+        primaryFn: "AH.CRMIntel.add('" + kind + "')",
+        secondary: 'EXPORT TXT',
+        secondaryFn: "AH.CRMIntel.export('" + kind + "')"
+      }) +
+      '<div class="section">' + notes.map(function (n) {
+        return '<div class="card" style="margin-bottom:10px;">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">' +
+            '<div><div class="section__title" style="margin-bottom:6px;">' + clean(n.title) + '</div>' +
+            '<div style="font-size:12px;color:var(--fg-55);">' + new Date(n.ts).toLocaleString() + (n.tags ? ' · ' + clean(n.tags) : '') + '</div>' +
+            '<div style="margin-top:10px;font-size:13px;color:var(--fg-80);line-height:1.55;">' + clean(n.body) + '</div></div>' +
+            '<button class="btn btn--ghost" onclick="AH.CRMIntel.del(\'' + kind + '\',\'' + n.id + '\')">×</button>' +
+          '</div></div>';
+      }).join('') + '</div>'
+    );
+  }
+  AH.CRMDial = {
+    call: function (phone) { AH.Router.go('dialer'); setTimeout(function () { var i = $('#dial-number'); if (i) i.value = phone; }, 120); },
+    setStatus: function (kind, id) {
+      var row = loadDialQueue(kind).find(function (x) { return x.id === id; }); if (!row) return;
+      AH.Modal.open('Call state · ' + clean(row.org),
+        '<div class="sh-field"><label>Status</label><select id="dq-st">' + CRM_DIAL_STATUSES.map(function (s) { return '<option' + (row.status === s ? ' selected' : '') + '>' + clean(s) + '</option>'; }).join('') + '</select></div>' +
+        '<div class="sh-field"><label>Note</label><textarea id="dq-note" rows="2">' + clean(row.note || '') + '</textarea></div>',
+        {
+          size: 'sm',
+          modalId: 'modal-dial-state',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="dq-save">SAVE</button>',
+          onMount: function () {
+            $('#dq-save').onclick = function () {
+              var d = loadDialQueue(kind);
+              var r = d.find(function (x) { return x.id === id; }); if (!r) return;
+              r.status = $('#dq-st').value; r.note = ($('#dq-note').value || '').trim(); r.last = 'now';
+              saveDialQueue(kind, d); AH.Modal.close(); AH.Router.go(kind === 'prod' ? 'prod-dialer' : 'biz-dialer'); toast('Call state updated');
+            };
+          }
+        });
+    },
+    log: function (kind) {
+      AH.Modal.prompt('Log call', 'Org · phone · status · note', 'New org · +1 555 … · Left VM · Spoke with EA', function (v) {
+        if (!v) return;
+        var p = v.split(/\s*·\s*/);
+        var d = loadDialQueue(kind);
+        d.unshift({ id: uid('dq'), org: p[0] || 'Org', phone: p[1] || '', status: p[2] || 'No contact', last: 'now', note: p[3] || '' });
+        saveDialQueue(kind, d); AH.Router.go(kind === 'prod' ? 'prod-dialer' : 'biz-dialer'); toast('Call logged');
+      });
+    }
+  };
+  AH.CRMIntel = {
+    add: function (kind) {
+      AH.Modal.open('New intel note',
+        '<div class="sh-field"><label>Title</label><input id="in-t" placeholder="Headline"/></div>' +
+        '<div class="sh-field"><label>Tags (comma separated)</label><input id="in-g" placeholder="netflix, hbo, rfp"/></div>' +
+        '<div class="sh-field"><label>Body</label><textarea id="in-b" rows="5" placeholder="Research notes, links, competitive signals…"></textarea></div>',
+        {
+          size: 'md',
+          modalId: 'modal-intel-note',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="in-sv">SAVE</button>',
+          onMount: function () {
+            $('#in-sv').onclick = function () {
+              var title = ($('#in-t').value || '').trim(); if (!title) { toast('Title required', 'warn'); return; }
+              var d = loadIntel(kind);
+              d.unshift({ id: uid('in'), title: title, body: ($('#in-b').value || '').trim(), tags: ($('#in-g').value || '').trim(), ts: Date.now() });
+              saveIntel(kind, d); AH.Modal.close(); AH.Router.go(kind === 'prod' ? 'prod-intel' : 'biz-intel'); toast('Intel saved');
+            };
+          }
+        });
+    },
+    del: function (kind, id) { saveIntel(kind, loadIntel(kind).filter(function (x) { return x.id !== id; })); AH.Router.go(kind === 'prod' ? 'prod-intel' : 'biz-intel'); },
+    export: function (kind) {
+      var txt = loadIntel(kind).map(function (n) { return '---\n' + n.title + '\n' + new Date(n.ts).toISOString() + '\n' + (n.tags || '') + '\n\n' + n.body + '\n'; }).join('\n');
+      Editor._download('intel_' + kind + '_' + slugify(prodTitle()) + '.txt', txt);
+      toast('Intel exported');
+    }
+  };
+  AH.register('prod-pipeline', function (m) { return crmView('prod', m); });
+  AH.register('biz-pipeline', function (m) { return crmView('biz', m); });
+  AH.hooks['prod-pipeline:mount'] = function () { wireKanban('prod', 'prod-pipeline'); };
+  AH.hooks['biz-pipeline:mount']  = function () { wireKanban('biz', 'biz-pipeline'); };
+  AH.register('prod-dialer', function (m) { return crmDialView('prod', m); });
+  AH.register('biz-dialer', function (m) { return crmDialView('biz', m); });
+  AH.register('prod-intel', function (m) { return crmIntelView('prod', m); });
+  AH.register('biz-intel', function (m) { return crmIntelView('biz', m); });
 
   // ══════════════════════════════════════════════════════════════════════════
   //  DIALER
@@ -11013,6 +11425,290 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         ev.push({ y: parsed.getFullYear(), m: parsed.getMonth(), d: parsed.getDate(), t: t, cls: 'chip--mint' });
         AH.Storage.local.set('ah_events', ev); AH.Router.go('calendar'); toast('Event added');
       });
+    }
+  };
+
+  // ══════════════════════════════════════════════════════════════════════════
+  //  ONBOARDING · SHORTCUTS · SCRIPT IMPORT · BREAKDOWNS · BUDGET · AUTOMATION · PREFLIGHT
+  // ══════════════════════════════════════════════════════════════════════════
+  AH.register('getting-started', function (m) {
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'IMPORT A SCRIPT',
+        primaryFn: 'AH.ScriptImport.open()',
+        secondary: 'OPEN PRODUCTIONS',
+        secondaryFn: "AH.Router.go('production-library')"
+      }) +
+      '<div class="section">' +
+        '<div class="card" style="margin-bottom:12px;">' +
+          '<div class="section__title" style="margin-bottom:10px;">First 10 minutes</div>' +
+          '<ol style="margin:0 0 0 18px;line-height:1.85;font-size:14px;color:var(--fg-78);">' +
+            '<li>Pick <strong>Demo</strong> or <strong>Cloud</strong> on the splash — cloud syncs Firebase under your account.</li>' +
+            '<li>Create or select a production in <strong>Productions</strong>, then import a script via <strong>Script Import</strong> or Script Studio.</li>' +
+            '<li>Run <strong>Stripboard</strong> + <strong>Breakdown</strong> — the AI breakdown reads your Fountain/FDX scenes.</li>' +
+            '<li>Build the <strong>Story Map</strong> (DAG) and link nodes to script lines in the inspector.</li>' +
+            '<li>Generate paperwork from <strong>Documents</strong> or the <strong>Forms &amp; generators</strong> palette on the dashboard.</li>' +
+          '</ol></div>' +
+        '<div class="grid grid--2 section">' +
+          '<div class="card"><div class="section__title" style="margin-bottom:8px;">Keyboard</div><p style="font-size:13px;color:var(--fg-65);line-height:1.6;">Press <kbd style="padding:2px 6px;border-radius:4px;background:var(--ink-2);">⌘K</kbd> anywhere. In Script Studio: <kbd>⌘S</kbd> save, <kbd>⌘F</kbd> find, <kbd>G</kbd> story map.</p>' +
+            '<button class="btn btn--ghost" onclick="AH.Router.go(\'shortcuts\')">FULL SHORTCUT LIST</button></div>' +
+          '<div class="card"><div class="section__title" style="margin-bottom:8px;">Data</div><p style="font-size:13px;color:var(--fg-65);line-height:1.6;">Everything lives in <code>ah_*</code> keys per production. Use <strong>Export &amp; Backup</strong> for JSON archives.</p>' +
+            '<button class="btn btn--ghost" onclick="AH.Router.go(\'export\')">EXPORT CENTER</button></div>' +
+        '</div></div>'
+    );
+  });
+  AH.register('shortcuts', function (m) {
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'SCRIPT STUDIO KEYS',
+        primaryFn: 'AH.Router.go(\'script-editor\');setTimeout(function(){if(AH.Editor&&AH.Editor.openKeys)AH.Editor.openKeys();},300);',
+        secondary: 'COMMAND PALETTE',
+        secondaryFn: 'AH.CmdK.open()'
+      }) +
+      '<div class="section"><div class="card">' +
+        '<div class="section__title" style="margin-bottom:12px;">Global</div>' +
+        '<div class="sh-keys-grid">' +
+          '<div class="sh-keys-col"><h4>Navigation</h4>' +
+            '<div class="sh-keys-row"><span>Command palette</span><kbd>⌘K</kbd></div>' +
+            '<div class="sh-keys-row"><span>Close palette / modal</span><kbd>Esc</kbd></div>' +
+          '</div>' +
+          '<div class="sh-keys-col"><h4>Script Studio</h4>' +
+            '<div class="sh-keys-row"><span>Save</span><kbd>⌘S</kbd></div>' +
+            '<div class="sh-keys-row"><span>Find</span><kbd>⌘F</kbd></div>' +
+            '<div class="sh-keys-row"><span>Scene navigator</span><kbd>⌘P</kbd></div>' +
+            '<div class="sh-keys-row"><span>Story Map</span><kbd>G</kbd></div>' +
+          '</div></div>' +
+        '<div class="section__title" style="margin:22px 0 12px;">Story Map (when focused)</div>' +
+        '<div class="sh-keys-grid">' +
+          '<div class="sh-keys-col">' +
+            '<div class="sh-keys-row"><span>Undo / Redo</span><kbd>⌘Z</kbd> / <kbd>⌘⇧Z</kbd></div>' +
+            '<div class="sh-keys-row"><span>New node / fork / merge</span><kbd>N</kbd> · <kbd>F</kbd> · <kbd>M</kbd></div>' +
+          '</div></div>' +
+      '</div></div>'
+    );
+  });
+  AH.register('preflight', function (m) {
+    var scs = loadScenes();
+    var cast = loadCast();
+    var locs = loadLocs();
+    var risks = loadRisk();
+    var issues = [];
+    if (!scs.length) issues.push('Stripboard has no scenes — add strips or import script.');
+    if (!cast.length) issues.push('Cast &amp; crew roster is empty.');
+    if (!locs.length) issues.push('No locations on file.');
+    if (risks.some(function (r) { return (r.lvl || '').toUpperCase() === 'HIGH'; })) issues.push('High-severity risks logged — review Risk Matrix.');
+    var html = issues.length
+      ? '<ul style="margin-left:18px;line-height:1.8;font-size:14px;color:var(--amber);">' + issues.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>'
+      : '<div style="color:var(--mint);font-weight:700;">✓ PREFLIGHT CLEAR</div><p style="margin-top:10px;font-size:14px;color:var(--fg-70);">Stripboard, people, locations, and risk posture look ready for a shoot day.</p>';
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'RE-RUN CHECKS',
+        primaryFn: "AH.Router.go('preflight')",
+        secondary: 'RISK MATRIX',
+        secondaryFn: "AH.Router.go('risk')"
+      }) +
+      '<div class="section"><div class="card">' + html + '</div>' +
+      '<div class="card" style="margin-top:12px;"><div class="section__title" style="margin-bottom:8px;">Counts</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;font-family:var(--f-mono);font-size:12px;">' +
+          '<div>Scenes<br/><strong style="font-size:18px;color:var(--mint);">' + scs.length + '</strong></div>' +
+          '<div>People<br/><strong style="font-size:18px;color:var(--mint);">' + cast.length + '</strong></div>' +
+          '<div>Locations<br/><strong style="font-size:18px;color:var(--mint);">' + locs.length + '</strong></div>' +
+          '<div>Risks<br/><strong style="font-size:18px;color:var(--mint);">' + risks.length + '</strong></div>' +
+        '</div></div></div>'
+    );
+  });
+
+  AH.register('script-import', function (m) {
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'OPEN IMPORT MODAL',
+        primaryFn: 'AH.ScriptImport.open()',
+        secondary: 'OPEN SCRIPT STUDIO',
+        secondaryFn: "AH.Router.go('script-editor')"
+      }) +
+      '<div class="section">' +
+        '<div class="card">' +
+          '<div class="section__title" style="margin-bottom:10px;">Pipeline</div>' +
+          '<p style="font-size:14px;color:var(--fg-70);line-height:1.6;margin-bottom:16px;">Import a screenplay before you open Script Studio. The same importer runs inside the editor — this route is the dedicated entry from the rail.</p>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:10px;">' +
+            '<button class="btn btn--primary" onclick="AH.ScriptImport.open()">IMPORT SCRIPT…</button>' +
+            '<button class="btn btn--ghost" onclick="AH.Router.go(\'script-editor\')">OPEN SCRIPT STUDIO</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  });
+  AH.ScriptImport = {
+    open: function () {
+      if (AH.Editor && AH.Editor.openImportModal) AH.Editor.openImportModal();
+      else toast('Script importer not ready', 'warn');
+    }
+  };
+
+  function loadBudgetLines() {
+    var k = 'ah_budget_lines_' + STATE.activeProdId;
+    var d = AH.Storage.local.get(k, null);
+    if (!d) {
+      d = [
+        { id: uid('bl'), cat: 'ATL', name: 'Writer / story rights', est: 85000, act: 42000, own: 'Legal' },
+        { id: uid('bl'), cat: 'Production', name: 'Camera package', est: 120000, act: 118500, own: 'Camera' },
+        { id: uid('bl'), cat: 'Post', name: 'Offline + online', est: 95000, act: 22000, own: 'Post' }
+      ];
+      AH.Storage.local.set(k, d);
+    }
+    return d;
+  }
+  function saveBudgetLines(d) {
+    AH.Storage.local.set('ah_budget_lines_' + STATE.activeProdId, d);
+    AH.syncProductionBlob && AH.syncProductionBlob({ budgetLines: d, budgetLinesUpdatedAt: Date.now() });
+  }
+  AH.register('budget', function (m) {
+    var lines = loadBudgetLines();
+    var totE = lines.reduce(function (a, r) { return a + (+r.est || 0); }, 0);
+    var totA = lines.reduce(function (a, r) { return a + (+r.act || 0); }, 0);
+    var finFn = RENDERERS.financials;
+    var finBody = (typeof finFn === 'function' ? finFn(m) : '') || '';
+    var idx = finBody.indexOf('<div class="section"');
+    if (idx > 0) finBody = finBody.slice(idx);
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'ADD LINE ITEM',
+        primaryFn: 'AH.BudgetLines.add()',
+        secondary: 'OPEN LEDGER',
+        secondaryFn: 'AH.Fin.openLedger()'
+      }) +
+      '<div class="section" style="margin-top:0;"><div class="card" style="padding:14px 18px;">' +
+        '<div style="display:flex;flex-wrap:wrap;gap:16px;font-family:var(--f-mono);font-size:12px;color:var(--fg-70);">' +
+          '<div>ESTIMATED TOTAL<br/><strong style="font-size:20px;color:var(--mint);">$' + totE.toLocaleString() + '</strong></div>' +
+          '<div>ACTUALS TO DATE<br/><strong style="font-size:20px;color:var(--aqua);">$' + totA.toLocaleString() + '</strong></div>' +
+          '<div>VARIANCE<br/><strong style="font-size:20px;color:' + (totA <= totE ? 'var(--mint)' : 'var(--rose)') + ';">' + (totE ? Math.round((1 - totA / totE) * 100) : 0) + '% under/over</strong></div>' +
+        '</div></div></div>' +
+      '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
+        '<table class="table"><thead><tr><th>Category</th><th>Line</th><th>Est.</th><th>Actual</th><th>Owner</th><th></th></tr></thead><tbody>' +
+          lines.map(function (r) {
+            return '<tr><td><span class="chip">' + clean(r.cat) + '</span></td><td>' + clean(r.name) + '</td><td class="num">$' + (+r.est || 0).toLocaleString() + '</td><td class="num">$' + (+r.act || 0).toLocaleString() + '</td><td>' + clean(r.own || '') + '</td>' +
+              '<td style="text-align:right;"><button class="btn btn--ghost" onclick="AH.BudgetLines.edit(\'' + r.id + '\')">EDIT</button> <button class="btn btn--ghost" onclick="AH.BudgetLines.del(\'' + r.id + '\')">×</button></td></tr>';
+          }).join('') +
+        '</tbody></table></div></div>' +
+      '<div class="section">' + finBody + '</div>'
+    );
+  });
+  AH.BudgetLines = {
+    add: function () {
+      AH.Modal.prompt('Budget line', 'Category · Name · Est · Actual · Owner', 'Production · Lighting truck · 45000 · 12000 · Gaffer', function (v) {
+        if (!v) return;
+        var p = v.split(/\s*·\s*/);
+        var d = loadBudgetLines();
+        d.push({ id: uid('bl'), cat: p[0] || 'General', name: p[1] || 'Line', est: parseFloat((p[2] || '0').replace(/[^0-9.]/g, '')) || 0, act: parseFloat((p[3] || '0').replace(/[^0-9.]/g, '')) || 0, own: p[4] || '' });
+        saveBudgetLines(d); AH.Router.go('budget'); toast('Line added');
+      });
+    },
+    edit: function (id) {
+      var r = loadBudgetLines().find(function (x) { return x.id === id; }); if (!r) return;
+      AH.Modal.open('Edit budget line',
+        '<div class="sh-field"><label>Category</label><input id="bl-c" value="' + clean(r.cat) + '"/></div>' +
+        '<div class="sh-field"><label>Name</label><input id="bl-n" value="' + clean(r.name) + '"/></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+          '<div class="sh-field"><label>Estimated</label><input id="bl-e" type="number" value="' + (+r.est || 0) + '"/></div>' +
+          '<div class="sh-field"><label>Actual</label><input id="bl-a" type="number" value="' + (+r.act || 0) + '"/></div></div>' +
+        '<div class="sh-field"><label>Owner</label><input id="bl-o" value="' + clean(r.own || '') + '"/></div>',
+        {
+          size: 'md',
+          modalId: 'modal-budget-line',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="bl-sv">SAVE</button>',
+          onMount: function () {
+            $('#bl-sv').onclick = function () {
+              r.cat = $('#bl-c').value.trim(); r.name = $('#bl-n').value.trim();
+              r.est = parseFloat($('#bl-e').value) || 0; r.act = parseFloat($('#bl-a').value) || 0; r.own = $('#bl-o').value.trim();
+              saveBudgetLines(loadBudgetLines()); AH.Modal.close(); AH.Router.go('budget'); toast('Line saved');
+            };
+          }
+        });
+    },
+    del: function (id) { saveBudgetLines(loadBudgetLines().filter(function (x) { return x.id !== id; })); AH.Router.go('budget'); }
+  };
+
+  AH.register('breakdowns', function (m) {
+    var bd = loadBreakdown();
+    var head = '<tr><th class="num">Scn</th>' + BREAKDOWN_CATEGORIES.map(function (c) { return '<th>' + c.icon + ' ' + c.name + '</th>'; }).join('') + '</tr>';
+    var rows = bd.map(function (r) {
+      return '<tr data-scn="' + clean(r.scn) + '">' +
+        '<td class="num"><strong>' + clean(r.scn) + '</strong></td>' +
+        BREAKDOWN_CATEGORIES.map(function (c) {
+          var arr = r[c.id] || [];
+          return '<td>' + (arr.length ? '<div class="tag-list">' + arr.map(function (t) { return '<span class="chip ' + c.color + '">' + clean(t) + '</span>'; }).join('') + '</div>' : '<span style="color:var(--fg-45)">—</span>') + '</td>';
+        }).join('') +
+      '</tr>';
+    }).join('');
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'RE-RUN AI BREAKDOWN',
+        primaryFn: 'AH.Break.runAI()',
+        secondary: 'ELEMENTS PDF',
+        secondaryFn: 'AH.Break.exportPDF()'
+      }) +
+      '<div class="section"><div class="card" style="padding:0;overflow:auto;">' +
+        '<table class="table" style="min-width:880px;"><thead>' + head + '</thead><tbody>' + rows + '</tbody></table>' +
+      '</div></div>'
+    );
+  });
+
+  function loadAutoRules() {
+    var k = 'ah_auto_' + STATE.activeProdId;
+    var d = AH.Storage.local.get(k, null);
+    if (!d) {
+      d = [
+        { id: uid('ar'), name: 'Publish stripboard PDF on day rollover', on: true, trig: 'Midnight · ET', act: 'Email PDF to distro + log in vault' },
+        { id: uid('ar'), name: 'Sync Story Map → Beat Board after script save', on: true, trig: 'On script save', act: 'Queue beat sync (manual confirm in Beat Board)' },
+        { id: uid('ar'), name: 'Hot sheet escalation if risk score > 7', on: false, trig: 'Every 4h during shoot', act: 'Notify AD + prod office' }
+      ];
+      AH.Storage.local.set(k, d);
+    }
+    return d;
+  }
+  function saveAutoRules(d) {
+    AH.Storage.local.set('ah_auto_' + STATE.activeProdId, d);
+    AH.syncProductionBlob && AH.syncProductionBlob({ productionAutomation: d, automationUpdatedAt: Date.now() });
+  }
+  AH.register('production-automation', function (m) {
+    var rules = loadAutoRules();
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'NEW AUTOMATION',
+        primaryFn: 'AH.Auto.add()',
+        secondary: 'RUN ALL ENABLED',
+        secondaryFn: 'AH.Auto.runAll()'
+      }) +
+      '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
+        '<table class="table"><thead><tr><th>Rule</th><th>Trigger</th><th>Action</th><th>On</th><th></th></tr></thead><tbody>' +
+          rules.map(function (r) {
+            return '<tr><td><strong>' + clean(r.name) + '</strong></td><td class="num" style="font-size:12px;">' + clean(r.trig) + '</td><td style="font-size:12px;color:var(--fg-70);">' + clean(r.act) + '</td><td><span class="chip ' + (r.on ? 'chip--mint' : 'chip--amber') + '">' + (r.on ? 'ON' : 'OFF') + '</span></td>' +
+              '<td style="text-align:right;"><button class="btn btn--ghost" onclick="AH.Auto.toggle(\'' + r.id + '\')">TOGGLE</button> <button class="btn btn--ghost" onclick="AH.Auto.del(\'' + r.id + '\')">×</button></td></tr>';
+          }).join('') +
+        '</tbody></table>' +
+      '</div></div>' +
+      '<div class="section"><div class="card" style="font-size:13px;color:var(--fg-65);line-height:1.6;">Automation runs in-browser for this build: rules are stored per production and fire on the triggers you configure. Cloud mode can sync the same <code>ah_auto_*</code> keys via backup/restore.</div></div>'
+    );
+  });
+  AH.Auto = {
+    add: function () {
+      AH.Modal.prompt('New automation', 'Name · trigger · action', 'Dailies ingest · On wrap · Notify post', function (v) {
+        if (!v) return;
+        var p = v.split(/\s*·\s*/);
+        var d = loadAutoRules();
+        d.unshift({ id: uid('ar'), name: p[0] || 'Rule', on: true, trig: p[1] || 'Manual', act: p[2] || '' });
+        saveAutoRules(d); AH.Router.go('production-automation'); toast('Automation added');
+      });
+    },
+    toggle: function (id) {
+      var d = loadAutoRules().map(function (r) { return r.id === id ? Object.assign({}, r, { on: !r.on }) : r; });
+      saveAutoRules(d); AH.Router.go('production-automation');
+    },
+    del: function (id) { saveAutoRules(loadAutoRules().filter(function (r) { return r.id !== id; })); AH.Router.go('production-automation'); },
+    runAll: function () {
+      var n = loadAutoRules().filter(function (r) { return r.on; }).length;
+      AH.Notif.push('Automation batch · ' + n + ' rules simulated · check logs', { kind: 'warn' });
+      toast('Ran ' + n + ' enabled rules (simulated)');
     }
   };
 
@@ -11806,7 +12502,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           { id: 'l8', source: 'n7', target: 'n8', type: 'standard' }
         ],
         nodeCounter: 8, linkCounter: 8, trackCounter: 3, phaseCounter: 3,
-        startNodeId: 'n1'
+        startNodeId: 'n1',
+        checkpoints: []
       };
     },
     load: function () {
@@ -11818,6 +12515,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       d.phases = d.phases || [];
       d.nodes  = d.nodes || [];
       d.links  = d.links || [];
+      d.checkpoints = d.checkpoints || [];
       StoryMap.state = d;
       return d;
     },
@@ -12085,6 +12783,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           '<div><label>Track</label><select id="ins-track">' + trackOpts + '</select></div>' +
           '<div><label>Phase · Act</label><select id="ins-phase">' + phaseOpts + '</select></div>' +
           '<div><label>Note · beat</label><textarea id="ins-note">' + clean(n.note || '') + '</textarea></div>' +
+          '<div><label>Emotional tension (0–10)</label><input id="ins-emotion" type="number" min="0" max="10" step="0.5" value="' + (n.emotionTension != null && n.emotionTension !== '' ? clean(String(n.emotionTension)) : '') + '" placeholder="e.g. 7.5"/></div>' +
+          '<div><label>Scene slug (links to stripboard)</label><input id="ins-slug" value="' + clean(n.sceneSlug || '') + '" placeholder="01 / 12A"/></div>' +
           '<div><label>Scene line reference</label><input id="ins-line" type="number" value="' + (typeof n.sceneLineIdx === 'number' ? n.sceneLineIdx : '') + '" placeholder="Line index in script"/></div>' +
           '<div><label>Video URL · Alacrity Player</label><input id="ins-video" value="' + clean(n.videoUrl || '') + '" placeholder="StreamingAssets/Films/&lt;film&gt;/scene_01.mp4"/></div>' +
           '<div><label>Audio URL (ambient)</label><input id="ins-audio" value="' + clean(n.audioUrl || '') + '" placeholder="StreamingAssets/Audio/ambient_01.wav"/></div>' +
@@ -12114,6 +12814,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           '</select></div>' +
           '<div><label>Label</label><input id="ins-llabel" value="' + clean(l.label || '') + '"/></div>' +
           '<div><label>Choice text (Alacrity Player)</label><input id="ins-choice" value="' + clean(l.choiceText || '') + '"/></div>' +
+          '<div><label>Traversal weight (simulator bias)</label><input id="ins-lweight" type="number" min="0" step="0.1" value="' + (l.weight != null ? clean(String(l.weight)) : '1') + '" placeholder="1"/></div>' +
           '<div style="display:flex;gap:6px;margin-top:6px;">' +
             '<button class="btn btn--primary" style="flex:1;" onclick="AH.StoryMap.saveLink()">SAVE</button>' +
             '<button class="btn btn--ghost" onclick="AH.StoryMap.deleteLink()">DELETE</button>' +
@@ -12206,6 +12907,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       n.phaseId = v('ins-phase') || n.phaseId;
       n.note = v('ins-note') || '';
       var li = v('ins-line'); n.sceneLineIdx = li === '' ? null : Number(li);
+      var em = v('ins-emotion'); n.emotionTension = em === '' ? null : Number(em);
+      n.sceneSlug = (v('ins-slug') || '').trim() || null;
       n.videoUrl = v('ins-video') || '';
       n.audioUrl = v('ins-audio') || '';
       n.thumb    = v('ins-thumb') || '';
@@ -12229,6 +12932,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       l.type = v('ins-ltype') || 'standard';
       l.label = v('ins-llabel') || '';
       l.choiceText = v('ins-choice') || '';
+      var w = v('ins-lweight'); l.weight = w === '' ? 1 : Math.max(0, Number(w) || 0);
       StoryMap.dirty(); toast('Edge saved');
     },
     deleteLink: function () {
@@ -12251,6 +12955,41 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       setTimeout(function () {
         if (AH.Editor && AH.Editor.scrollToLine) AH.Editor.scrollToLine(n.sceneLineIdx);
       }, 200);
+    },
+    saveCheckpoint: function () {
+      StoryMap._beforeMutate();
+      var s = StoryMap.state;
+      s.checkpoints = s.checkpoints || [];
+      var snap = JSON.parse(JSON.stringify({ nodes: s.nodes, links: s.links, tracks: s.tracks, phases: s.phases, startNodeId: s.startNodeId, nodeCounter: s.nodeCounter, linkCounter: s.linkCounter }));
+      s.checkpoints.push({ id: 'cp_' + Date.now(), at: Date.now(), label: 'Checkpoint · ' + new Date().toLocaleString(), data: snap });
+      if (s.checkpoints.length > 12) s.checkpoints = s.checkpoints.slice(-12);
+      StoryMap.dirty(); toast('Checkpoint saved · ' + s.checkpoints.length + ' in history');
+    },
+    loadCheckpoint: function () {
+      var s = StoryMap.state;
+      var cps = s.checkpoints || [];
+      if (!cps.length) { toast('No checkpoints yet', 'warn'); return; }
+      var opts = cps.slice().reverse().map(function (c) { return '<option value="' + c.id + '">' + clean(c.label) + '</option>'; }).join('');
+      AH.Modal.open('Restore checkpoint',
+        '<div class="sh-modal__label">Pick a saved graph snapshot. Current canvas is snapshotted to undo before restore.</div>' +
+        '<div class="sh-field"><label>Checkpoint</label><select id="sm-cp">' + opts + '</select></div>',
+        {
+          size: 'sm',
+          modalId: 'modal-storymap-checkpoint',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="sm-cp-go">RESTORE</button>',
+          onMount: function () {
+            $('#sm-cp-go').onclick = function () {
+              var id = $('#sm-cp').value;
+              var cp = cps.find(function (x) { return x.id === id; }); if (!cp || !cp.data) return;
+              StoryMapX.snapshot();
+              var d = cp.data;
+              s.nodes = d.nodes || []; s.links = d.links || []; s.tracks = d.tracks || s.tracks; s.phases = d.phases || s.phases;
+              s.startNodeId = d.startNodeId || s.startNodeId; s.nodeCounter = d.nodeCounter || s.nodeCounter; s.linkCounter = d.linkCounter || s.linkCounter;
+              StoryMap.sel = { nodeId: null, linkId: null };
+              AH.Modal.close(); StoryMap.dirty(); toast('Checkpoint restored');
+            };
+          }
+        });
     },
 
     addTrack: function () {
@@ -12438,7 +13177,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           _version: 1, _app: 'DC ALACRITY Story Map', _exported: new Date().toISOString(),
           nodes: s.nodes, links: s.links, tracks: s.tracks, phases: s.phases,
           nodeCounter: s.nodeCounter, linkCounter: s.linkCounter,
-          trackCounter: s.trackCounter, phaseCounter: s.phaseCounter
+          trackCounter: s.trackCounter, phaseCounter: s.phaseCounter,
+          checkpoints: s.checkpoints || []
         }
       };
       var videoEntries = s.nodes.filter(function (n) { return (n.nodeType || 'scene') === 'scene' || n.nodeType === 'start' || n.nodeType === 'end'; })
@@ -12861,6 +13601,11 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       visited = visited.concat([curId]);
       var outs = s.links.filter(function (l) { return l.source === curId; });
       var open = outs.filter(function (l) { return StoryMapX._evalCond(l.conditions || [], flags, inv); });
+      open = open.slice().sort(function (a, b) {
+        var wa = (a.weight != null ? +a.weight : 1) || 0;
+        var wb = (b.weight != null ? +b.weight : 1) || 0;
+        return wb - wa;
+      });
       var closed = outs.filter(function (l) { return !StoryMapX._evalCond(l.conditions || [], flags, inv); });
       var nodeTypeCls = (node.nodeType || 'scene');
       var isEnd = !outs.length || node.nodeType === 'end';
@@ -12870,6 +13615,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
             '<div style="font-family:var(--f-mono);font-size:10px;letter-spacing:0.22em;color:var(--fg-45);text-transform:uppercase;">NODE · ' + clean(curId) + ' · ' + nodeTypeCls.toUpperCase() + '</div>' +
             '<div style="font-family:var(--f-display);font-size:22px;font-weight:800;margin:4px 0 10px;">' + clean(node.label || '—') + '</div>' +
             (node.note ? '<div style="font-size:13px;line-height:1.6;color:var(--fg-80);margin-bottom:12px;">' + clean(node.note) + '</div>' : '') +
+            ((node.emotionTension != null && node.emotionTension !== '') ? '<div class="sh-modal__label">Emotional tension · <strong>' + clean(String(node.emotionTension)) + '</strong> / 10</div>' : '') +
             (node.videoUrl ? '<div class="sh-modal__label">Video · <code>' + clean(node.videoUrl) + '</code></div>' : '') +
             (isEnd
               ? '<div style="padding:16px;border-radius:12px;background:linear-gradient(135deg,rgba(23,255,197,0.18),rgba(20,175,223,0.12));border:1px solid var(--edge-mint);margin-top:12px;"><strong>END REACHED.</strong><br/>Visited ' + visited.length + ' nodes · ' + inv.length + ' inventory items · ' + Object.keys(flags).filter(function (k) { return flags[k]; }).length + ' flags set.</div>'
@@ -12877,9 +13623,10 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
                 '<div style="display:flex;flex-direction:column;gap:8px;">' +
                 open.map(function (l) {
                   var tgt = StoryMap.nodeById(l.target) || {};
-                  return '<button class="btn btn--primary" onclick="AH.StoryMapX._step(\'' + l.id + '\', ' + JSON.stringify(visited).replace(/"/g, '&quot;') + ')" style="justify-content:flex-start;">' +
+                  var w = (l.weight != null ? +l.weight : 1) || 0;
+                  return '<button class="btn btn--primary" onclick="AH.StoryMapX._step(\'' + l.id + '\')" style="justify-content:flex-start;">' +
                     '<span style="flex:1;text-align:left;">' + clean(l.choiceText || l.label || (tgt.label || l.target)) + '</span>' +
-                    '<span style="font-family:var(--f-mono);font-size:10px;letter-spacing:0.14em;color:var(--fg-60);">→ ' + clean(l.target) + '</span>' +
+                    '<span style="font-family:var(--f-mono);font-size:10px;letter-spacing:0.14em;color:var(--fg-60);">w=' + w + ' · → ' + clean(l.target) + '</span>' +
                   '</button>';
                 }).join('') +
                 closed.map(function (l) {
@@ -13347,6 +14094,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
             '<button class="dag-tbtn" onclick="AH.StoryMapX.analytics()">ANALYTICS</button>' +
             '<button class="dag-tbtn" onclick="AH.StoryMap.syncFromScript()">SYNC ⇄ SCRIPT</button>' +
             '<button class="dag-tbtn" onclick="AH.StoryMapX.editFlags()">FLAGS</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.saveCheckpoint()">CHECKPOINT</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.loadCheckpoint()">RESTORE</button>' +
           '</div>' +
           '<div class="dag-toolbar__group">' +
             '<button class="dag-tbtn" onclick="AH.StoryMap.exportJSON()">JSON</button>' +
@@ -13417,138 +14166,6 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     }
   };
 
-  // ══════════════════════════════════════════════════════════════════════════
-  //  V2 FORMS · Named modal flows (data-modal on #sh-modal)
-  // ══════════════════════════════════════════════════════════════════════════
-
-  AH.register('script-import', function (m) {
-    return (
-      AH.Views.renderHero(m, {
-        primary: 'OPEN IMPORT MODAL',
-        primaryFn: 'AH.ScriptImport.open()',
-        secondary: 'OPEN SCRIPT STUDIO',
-        secondaryFn: "AH.Router.go('script-editor')"
-      }) +
-      '<div class="section">' +
-        '<div class="card">' +
-          '<div class="section__title" style="margin-bottom:10px;">Pipeline</div>' +
-          '<p style="font-size:14px;color:var(--fg-70);line-height:1.6;margin-bottom:16px;">Import a screenplay before you open Script Studio. The same importer runs inside the editor — this route is the dedicated entry from the rail.</p>' +
-          '<div style="display:flex;flex-wrap:wrap;gap:10px;">' +
-            '<button class="btn btn--primary" onclick="AH.ScriptImport.open()">IMPORT SCRIPT…</button>' +
-            '<button class="btn btn--ghost" onclick="AH.Router.go(\'script-editor\')">OPEN SCRIPT STUDIO</button>' +
-          '</div>' +
-        '</div>' +
-      '</div>'
-    );
-  });
-  AH.ScriptImport = {
-    open: function () {
-      if (AH.Editor && AH.Editor.openImportModal) AH.Editor.openImportModal();
-      else toast('Script importer not ready', 'warn');
-    }
-  };
-
-  AH.register('budget', function (m) {
-    var finFn = RENDERERS.financials;
-    var finBody = (typeof finFn === 'function' ? finFn(m) : '') || '';
-    var idx = finBody.indexOf('<div class="section"');
-    if (idx > 0) finBody = finBody.slice(idx);
-    return (
-      AH.Views.renderHero(m, {
-        primary: 'OPEN LEDGER',
-        primaryFn: 'AH.Fin.openLedger()',
-        secondary: 'EXPORT CSV',
-        secondaryFn: 'AH.ExportCenter.csvFin()'
-      }) +
-      '<div class="section" style="margin-top:0;"><div class="card" style="padding:14px 18px;font-size:13px;color:var(--fg-70);line-height:1.55;">This view mirrors <strong>Financials</strong> with a budget-first lens: categories, ledger, and the scale simulator. Use Financials for the full P&amp;L table; use Budget when you want the top sheet and exports in one place.</div></div>' +
-      finBody
-    );
-  });
-
-  AH.register('breakdowns', function (m) {
-    var bd = loadBreakdown();
-    var head = '<tr><th class="num">Scn</th>' + BREAKDOWN_CATEGORIES.map(function (c) { return '<th>' + c.icon + ' ' + c.name + '</th>'; }).join('') + '</tr>';
-    var rows = bd.map(function (r) {
-      return '<tr data-scn="' + clean(r.scn) + '">' +
-        '<td class="num"><strong>' + clean(r.scn) + '</strong></td>' +
-        BREAKDOWN_CATEGORIES.map(function (c) {
-          var arr = r[c.id] || [];
-          return '<td>' + (arr.length ? '<div class="tag-list">' + arr.map(function (t) { return '<span class="chip ' + c.color + '">' + clean(t) + '</span>'; }).join('') + '</div>' : '<span style="color:var(--fg-45)">—</span>') + '</td>';
-        }).join('') +
-      '</tr>';
-    }).join('');
-    return (
-      AH.Views.renderHero(m, {
-        primary: 'RE-RUN AI BREAKDOWN',
-        primaryFn: 'AH.Break.runAI()',
-        secondary: 'ELEMENTS PDF',
-        secondaryFn: 'AH.Break.exportPDF()'
-      }) +
-      '<div class="section"><div class="card" style="padding:0;overflow:auto;">' +
-        '<table class="table" style="min-width:880px;"><thead>' + head + '</thead><tbody>' + rows + '</tbody></table>' +
-      '</div></div>'
-    );
-  });
-
-  function loadAutoRules() {
-    var k = 'ah_auto_' + STATE.activeProdId;
-    var d = AH.Storage.local.get(k, null);
-    if (!d) {
-      d = [
-        { id: uid('ar'), name: 'Publish stripboard PDF on day rollover', on: true, trig: 'Midnight · ET', act: 'Email PDF to distro + log in vault' },
-        { id: uid('ar'), name: 'Sync Story Map → Beat Board after script save', on: true, trig: 'On script save', act: 'Queue beat sync (manual confirm in Beat Board)' },
-        { id: uid('ar'), name: 'Hot sheet escalation if risk score > 7', on: false, trig: 'Every 4h during shoot', act: 'Notify AD + prod office' }
-      ];
-      AH.Storage.local.set(k, d);
-    }
-    return d;
-  }
-  function saveAutoRules(d) {
-    AH.Storage.local.set('ah_auto_' + STATE.activeProdId, d);
-    AH.syncProductionBlob && AH.syncProductionBlob({ productionAutomation: d, automationUpdatedAt: Date.now() });
-  }
-  AH.register('production-automation', function (m) {
-    var rules = loadAutoRules();
-    return (
-      AH.Views.renderHero(m, {
-        primary: 'NEW AUTOMATION',
-        primaryFn: 'AH.Auto.add()',
-        secondary: 'RUN ALL ENABLED',
-        secondaryFn: 'AH.Auto.runAll()'
-      }) +
-      '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
-        '<table class="table"><thead><tr><th>Rule</th><th>Trigger</th><th>Action</th><th>On</th><th></th></tr></thead><tbody>' +
-          rules.map(function (r) {
-            return '<tr><td><strong>' + clean(r.name) + '</strong></td><td class="num" style="font-size:12px;">' + clean(r.trig) + '</td><td style="font-size:12px;color:var(--fg-70);">' + clean(r.act) + '</td><td><span class="chip ' + (r.on ? 'chip--mint' : 'chip--amber') + '">' + (r.on ? 'ON' : 'OFF') + '</span></td>' +
-              '<td style="text-align:right;"><button class="btn btn--ghost" onclick="AH.Auto.toggle(\'' + r.id + '\')">TOGGLE</button> <button class="btn btn--ghost" onclick="AH.Auto.del(\'' + r.id + '\')">×</button></td></tr>';
-          }).join('') +
-        '</tbody></table>' +
-      '</div></div>' +
-      '<div class="section"><div class="card" style="font-size:13px;color:var(--fg-65);line-height:1.6;">Automation runs in-browser for this build: rules are stored per production and fire on the triggers you configure. Cloud mode can sync the same <code>ah_auto_*</code> keys via backup/restore.</div></div>'
-    );
-  });
-  AH.Auto = {
-    add: function () {
-      AH.Modal.prompt('New automation', 'Name · trigger · action', 'Dailies ingest · On wrap · Notify post', function (v) {
-        if (!v) return;
-        var p = v.split(/\s*·\s*/);
-        var d = loadAutoRules();
-        d.unshift({ id: uid('ar'), name: p[0] || 'Rule', on: true, trig: p[1] || 'Manual', act: p[2] || '' });
-        saveAutoRules(d); AH.Router.go('production-automation'); toast('Automation added');
-      });
-    },
-    toggle: function (id) {
-      var d = loadAutoRules().map(function (r) { return r.id === id ? Object.assign({}, r, { on: !r.on }) : r; });
-      saveAutoRules(d); AH.Router.go('production-automation');
-    },
-    del: function (id) { saveAutoRules(loadAutoRules().filter(function (r) { return r.id !== id; })); AH.Router.go('production-automation'); },
-    runAll: function () {
-      var n = loadAutoRules().filter(function (r) { return r.on; }).length;
-      AH.Notif.push('Automation batch · ' + n + ' rules simulated · check logs', { kind: 'warn' });
-      toast('Ran ' + n + ' enabled rules (simulated)');
-    }
-  };
-
   AH.V2Forms = {
     open: function (id) {
       var fn = AH.V2Forms._routes[id];
@@ -13582,7 +14199,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       'modal-biz-lead': function () { AH.CRM.add('biz'); },
       'modal-prod-income': function () { AH.Router.go('financials'); setTimeout(function () { AH.Fin.openLedger(); }, 200); },
       'modal-biz-income': function () { AH.Router.go('financials'); setTimeout(function () { AH.Fin.openLedger(); }, 200); },
-      'modal-banner': function () { AH.Modal.prompt('Banner / hero line', 'Text for dashboard hero', getActiveProd().title + ' · wrap incoming', function (v) { if (!v) return; STATE.bannerLine = v; saveState(); AH.Router.go('dashboard'); toast('Banner updated'); }); }
+      'modal-banner': function () { AH.Modal.prompt('Banner / hero line', 'Text for dashboard hero', getActiveProd().title + ' · wrap incoming', function (v) { if (!v) return; STATE.bannerLine = v; saveState(); AH.Router.go('dashboard'); toast('Banner updated'); }); },
+      'modal-cast-info': function () { AH.Cast.profileSheet(); }
     },
     paletteHTML: function () {
       var groups = [
@@ -13621,7 +14239,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           ['modal-biz-lead', 'Business CRM · new lead'],
           ['modal-prod-income', 'Open ledger (prod view)'],
           ['modal-biz-income', 'Open ledger (biz view)'],
-          ['modal-banner', 'Dashboard banner line']
+          ['modal-banner', 'Dashboard banner line'],
+          ['modal-cast-info', 'Cast profile sheet']
         ]}
       ];
       return groups.map(function (g) {
@@ -13661,6 +14280,10 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         { id: 'act:new-prod', label: 'New production', group: 'Actions', icon: 'plus', fn: function () { AH.Prod.newProduction(); } },
         { id: 'act:forms', label: 'Forms & document generators', group: 'Actions', icon: 'doc', fn: function () { AH.V2Forms.openPalette(); } },
         { id: 'act:import', label: 'Import script (file / paste)', group: 'Actions', icon: 'upload', fn: function () { AH.ScriptImport.open(); } },
+        { id: 'act:onboard', label: 'Open Getting Started', group: 'Actions', icon: 'check', fn: function () { AH.Router.go('getting-started'); } },
+        { id: 'act:shortcuts', label: 'Open Shortcuts reference', group: 'Actions', icon: 'gear', fn: function () { AH.Router.go('shortcuts'); } },
+        { id: 'act:preflight', label: 'Run Preflight checks', group: 'Actions', icon: 'check', fn: function () { AH.Router.go('preflight'); } },
+        { id: 'act:cast-info', label: 'Cast profile sheet…', group: 'Actions', icon: 'users', fn: function () { AH.V2Forms.open('modal-cast-info'); } },
         { id: 'act:toggle-theme', label: 'Toggle theme', group: 'Actions', icon: 'globe', fn: function () { AH.Theme.toggle(); } },
         { id: 'act:sign-in', label: 'Sign in with Google', group: 'Actions', icon: 'shield', fn: function () { AH.Auth.openLogin(); } },
         { id: 'act:sign-out', label: 'Sign out', group: 'Actions', icon: 'shield', fn: function () { AH.Auth.signOut(); } },
