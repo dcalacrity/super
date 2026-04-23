@@ -4029,15 +4029,21 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     //
     // All writes use `update()` so partial writes do NOT clobber the rest
     // of the production subtree (avoids V1→V2 data-loss on script autosave).
+    // Demo-mode guard. V1's pattern is to wrap every Firebase write with
+    // `if (Auth.user && !Auth.isDemoMode)`. We centralize it so no site can
+    // accidentally leak local data to the cloud when the user is in Demo.
+    _canWrite: function () {
+      return !!(this.ready && this.db && this.user && window.AH && window.AH.Auth && !window.AH.Auth.isDemoMode);
+    },
     pushProductionData: function (prodId, data) {
-      if (!this.ready || !this.db || !this.user) return Promise.resolve(false);
+      if (!this._canWrite()) return Promise.resolve(false);
       try {
         var p = this.ref(this.db, 'users/' + this.user.uid + '/productions/' + prodId);
         return this.update(p, data).then(function () { return true; }).catch(function (e) { console.warn(e); return false; });
       } catch (_) { return Promise.resolve(false); }
     },
     setProductionData: function (prodId, data) {
-      if (!this.ready || !this.db || !this.user) return Promise.resolve(false);
+      if (!this._canWrite()) return Promise.resolve(false);
       try {
         var p = this.ref(this.db, 'users/' + this.user.uid + '/productions/' + prodId);
         return this.set(p, data).then(function () { return true; }).catch(function () { return false; });
@@ -4051,7 +4057,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       } catch (_) { return Promise.resolve(null); }
     },
     pushProductionsList: function (list) {
-      if (!this.ready || !this.db || !this.user) return Promise.resolve(false);
+      if (!this._canWrite()) return Promise.resolve(false);
       try {
         var p = this.ref(this.db, 'users/' + this.user.uid + '/productionsList');
         return this.set(p, list).then(function () { return true; }).catch(function () { return false; });
@@ -4065,7 +4071,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       } catch (_) { return Promise.resolve(null); }
     },
     pushBizCRM: function (blob) {
-      if (!this.ready || !this.db || !this.user) return Promise.resolve(false);
+      if (!this._canWrite()) return Promise.resolve(false);
       try {
         var p = this.ref(this.db, 'users/' + this.user.uid + '/business/crm');
         return this.set(p, blob).then(function () { return true; }).catch(function () { return false; });
@@ -4853,7 +4859,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         spellCheck: false,
         language: 'en-US',
         revColor: 'white',
-        lockedPages: {},
+        lockedPages: [],
+        revisionHistory: [],
         changes: [],
         voices: {},
         _dirty: false,
@@ -4879,8 +4886,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       AH.Storage.put('script', pid, s);
       s._dirty = false;
       Editor.updateDirty();
-      // Sync to Firebase if available (non-destructive update)
-      if (AH.Firebase.ready && AH.Firebase.user) {
+      // Sync to Firebase if authenticated AND not in demo mode (V1 parity)
+      if (AH.canCloudSync()) {
         AH.Firebase.pushProductionData(pid, { script: { lines: s.lines, title: s.title, titlePage: s.titlePage, updatedAt: Date.now() } });
       }
       toast('Script saved');
@@ -11423,7 +11430,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     },
     save: function () {
       AH.Storage.local.set('ah_dag_' + STATE.activeProdId, StoryMap.state);
-      if (AH.Firebase && AH.Firebase.ready && AH.Firebase.user) {
+      if (typeof AH.canCloudSync === 'function' && AH.canCloudSync()) {
         AH.Firebase.pushProductionData(STATE.activeProdId, { storyMap: StoryMap.state, storyMapUpdatedAt: Date.now() });
       }
       AH.Bus && AH.Bus.emit('storyMap:changed', { nodes: (StoryMap.state.nodes || []).length, links: (StoryMap.state.links || []).length });
