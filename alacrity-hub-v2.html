@@ -1694,6 +1694,48 @@ html[data-theme="light"] .prod-card {
   top: 14px; left: 14px;
   z-index: 2;
 }
+.prod-card__badges {
+  position: absolute; top: 14px; right: 14px;
+  z-index: 2;
+  display: flex; flex-direction: column; gap: 6px;
+  align-items: flex-end;
+}
+.prod-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 10px; border-radius: 999px;
+  font-family: var(--f-mono); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  border: 1px solid;
+}
+.prod-badge--cloud-only { color: #c4b5fd; background: rgba(139,92,246,0.2); border-color: rgba(139,92,246,0.4); }
+.prod-badge--offline    { color: #fde68a; background: rgba(251,191,36,0.2); border-color: rgba(251,191,36,0.4); }
+.prod-badge--synced     { color: #6ee7b7; background: rgba(16,185,129,0.2); border-color: rgba(16,185,129,0.4); }
+.prod-badge--newer      { color: #93c5fd; background: rgba(59,130,246,0.22); border-color: rgba(59,130,246,0.44); }
+.prod-badge--local      { color: var(--fg-60); background: rgba(255,255,255,0.06); border-color: var(--edge); }
+.prod-badge--scale      { color: var(--aqua); background: rgba(20,175,223,0.08); border-color: rgba(20,175,223,0.28); }
+.prod-badge--ok         { color: var(--mint); background: rgba(23,255,197,0.1); border-color: var(--edge-mint); }
+.prod-card__subbadges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+
+.prod-card__actions {
+  display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px;
+  padding-top: 12px; border-top: 1px solid var(--edge);
+}
+.prod-card__btn {
+  flex: 0 0 auto;
+  height: 30px; padding: 0 12px;
+  border-radius: 999px;
+  background: var(--glass-2); border: 1px solid var(--edge); color: var(--fg-80);
+  font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.14em;
+  text-transform: uppercase; font-weight: 700;
+  cursor: pointer; transition: all 0.18s var(--ease);
+}
+.prod-card__btn:hover { border-color: var(--mint); color: var(--mint); }
+.prod-card__btn--load { flex: 1; background: linear-gradient(135deg, var(--mint), var(--aqua)); color: var(--ink-0); border-color: transparent; }
+.prod-card__btn--load:hover { color: var(--ink-0); filter: brightness(1.06); }
+.prod-card__btn--cloud { color: #fbbf24; border-color: rgba(251,191,36,0.4); background: rgba(251,191,36,0.12); }
+.prod-card__btn--cloud:hover { color: #fde68a; border-color: #fbbf24; }
+.prod-card__btn--del { color: var(--rose); border-color: rgba(255,122,168,0.3); }
+.prod-card__btn--del:hover { color: #fff; background: var(--rose); border-color: var(--rose); }
 .prod-card__body { padding: 18px 20px; }
 .prod-card__title {
   font-family: var(--f-display);
@@ -4606,21 +4648,53 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     );
   }
   function prodCard(p) {
+    // Storage badge (V1 parity: CLOUD ONLY · OFFLINE ONLY · CLOUD SYNCED · NEWER IN CLOUD)
+    var storageBadge = '';
+    if (p.cloudOnly) {
+      storageBadge = '<span class="prod-badge prod-badge--cloud-only">☁ CLOUD ONLY</span>';
+    } else if (p.isOfflineOnly) {
+      storageBadge = '<span class="prod-badge prod-badge--offline">💾 OFFLINE ONLY</span>';
+    } else if (p.isCloudSynced) {
+      storageBadge = '<span class="prod-badge prod-badge--synced">☁ CLOUD SYNCED</span>';
+    } else {
+      storageBadge = '<span class="prod-badge prod-badge--local">💾 LOCAL</span>';
+    }
+    if (p.cloudNewer) storageBadge += '<span class="prod-badge prod-badge--newer">⬇ NEWER IN CLOUD</span>';
+
+    // Script/scale sub-badges
+    var scaleBadge = p.budgetScale ? '<span class="prod-badge prod-badge--scale">⚙ ' + clean(p.budgetScale) + '</span>' : '';
+    var scriptBadge = p._scriptSaved ? '<span class="prod-badge prod-badge--ok">✓ Script imported</span>' : '';
+
+    // Per-card cloud-upload button — V1 shows this on OFFLINE ONLY cards when
+    // the user is in cloud mode. We show it when the card is offline-only.
+    var cloudBtn = p.isOfflineOnly
+      ? '<button class="prod-card__btn prod-card__btn--cloud" onclick="event.preventDefault();event.stopPropagation();AH.Prod.uploadToCloud(\'' + p.id + '\')">☁ UPLOAD</button>'
+      : '';
+    var loadLabel = p.cloudOnly ? '⬇ DOWNLOAD & LOAD' : 'LOAD';
+
     return (
-      '<a class="prod-card" data-prod="' + p.id + '">' +
+      '<div class="prod-card" data-prod="' + p.id + '">' +
         '<div class="prod-card__poster" style="background-image:url(\'' + p.img + '\')">' +
-          '<span class="chip ' + p.chipClass + '">' + p.status + '</span>' +
+          (p.status ? '<span class="chip ' + p.chipClass + '">' + p.status + '</span>' : '') +
+          '<div class="prod-card__badges">' + storageBadge + '</div>' +
         '</div>' +
         '<div class="prod-card__body">' +
           '<div class="prod-card__title">' + clean(p.title) + '</div>' +
-          '<div class="prod-card__meta">' + clean(p.type) + '</div>' +
+          '<div class="prod-card__meta">' + clean(p.type || '—') + (p.client ? ' · ' + clean(p.client) : '') + '</div>' +
+          '<div class="prod-card__subbadges">' + scaleBadge + scriptBadge + '</div>' +
           '<div class="prod-card__stats">' +
-            '<div><div class="prod-card__stat-l">Days</div><div class="prod-card__stat-v">' + p.days + '</div></div>' +
-            '<div><div class="prod-card__stat-l">Scenes</div><div class="prod-card__stat-v">' + p.scenes + '</div></div>' +
-            '<div><div class="prod-card__stat-l">Budget</div><div class="prod-card__stat-v">' + p.budget + '</div></div>' +
+            '<div><div class="prod-card__stat-l">Days</div><div class="prod-card__stat-v">' + (p.days || 0) + '</div></div>' +
+            '<div><div class="prod-card__stat-l">Scenes</div><div class="prod-card__stat-v">' + (p.scenes || 0) + '</div></div>' +
+            '<div><div class="prod-card__stat-l">Budget</div><div class="prod-card__stat-v">' + clean(p.budget || '—') + '</div></div>' +
+          '</div>' +
+          '<div class="prod-card__actions">' +
+            '<button class="prod-card__btn prod-card__btn--load" onclick="event.preventDefault();AH.Prod.loadProduction(\'' + p.id + '\')">' + loadLabel + '</button>' +
+            cloudBtn +
+            '<button class="prod-card__btn prod-card__btn--edit" onclick="event.preventDefault();event.stopPropagation();AH.Prod.editProduction(\'' + p.id + '\')" title="Edit production details">✎ EDIT</button>' +
+            '<button class="prod-card__btn prod-card__btn--del" onclick="event.preventDefault();event.stopPropagation();AH.Prod.deleteProduction(\'' + p.id + '\')" title="Delete">🗑</button>' +
           '</div>' +
         '</div>' +
-      '</a>'
+      '</div>'
     );
   }
   AH.Views.statCard = statCard;
@@ -7507,27 +7581,301 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       });
     });
   };
+  // Production types from V1 PopupConfigs.production
+  var PROD_TYPES = ['Film','TV Series','Commercial','Music Video','Documentary','Short','Corporate','Event','VR/XR Experience','Other'];
+  var PROD_STATUSES = ['BID','R&D','PRE-PROD','IN PROD','POST','WRAP','SHELVED'];
+  var CHIP_BY_STATUS = {
+    'PRE-PROD':'chip--aqua','IN PROD':'chip--mint','WRAP':'chip--lime',
+    'POST':'chip--violet','BID':'chip--rose','R&D':'chip--violet','SHELVED':'chip--rose'
+  };
+  var DEFAULT_PROD_IMG = 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=1200&q=80';
+
+  function slugifyId(s) {
+    return (s || 'untitled').toString().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 48) || 'prod_' + Date.now();
+  }
+
   AH.Prod = {
+    // Read per-production detail record (V1-style dc_alacrity_prod_<id> key)
+    _loadPD: function (prodId) {
+      try { return JSON.parse(localStorage.getItem('dc_alacrity_prod_' + prodId) || '{}'); } catch (_) { return {}; }
+    },
+    _savePD: function (prodId, pd) {
+      try { localStorage.setItem('dc_alacrity_prod_' + prodId, JSON.stringify(pd)); } catch (_) {}
+    },
+
+    setActive: function (id) {
+      STATE.activeProdId = id; saveState();
+      AH.Bus && AH.Bus.emit('production:switched', { prodId: id });
+    },
+
+    // V1 parity: capture all production metadata at creation time.
     newProduction: function () {
-      AH.Modal.open('New Production',
-        '<div class="sh-field"><label>Title</label><input id="np-title" placeholder="The next one"/></div>' +
-        '<div class="sh-field"><label>Type</label><input id="np-type" placeholder="EPISODIC · S01 / FEATURE · NOIR / etc."/></div>' +
-        '<div class="sh-field"><label>Status</label><select id="np-status"><option>PRE-PROD</option><option>IN PROD</option><option>WRAP</option><option>POST</option><option>BID</option><option>R&D</option></select></div>' +
-        '<div class="sh-field"><label>Budget</label><input id="np-budget" placeholder="$1.5M"/></div>',
+      var scales = (typeof BUDGET_SCALES === 'object') ? Object.keys(BUDGET_SCALES) : [];
+      var scaleOpts = scales.length ? '<div class="sh-field"><label>Budget scale</label><select id="np-scale"><option value="">— No scale set —</option>' + scales.map(function (k) { var s = BUDGET_SCALES[k]; return '<option value="' + k + '">' + clean(s.label + ' · ≤ $' + (s.ceiling / 1000000) + 'M') + '</option>'; }).join('') + '</select></div>' : '';
+
+      AH.Modal.open('Create New Production',
+        '<div class="sh-modal__label">Set up a new production project. All fields sync to cloud when you\'re signed in.</div>' +
+        '<div class="sh-field"><label>Production name</label><input id="np-name" type="text" maxlength="80" placeholder="e.g., Summer Beach Commercial" autofocus/></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+          '<div class="sh-field"><label>Production type</label><select id="np-type">' + PROD_TYPES.map(function (t) { return '<option' + (t === 'Film' ? ' selected' : '') + '>' + clean(t) + '</option>'; }).join('') + '</select></div>' +
+          '<div class="sh-field"><label>Client / Studio</label><input id="np-client" placeholder="Client or studio name"/></div>' +
+          '<div class="sh-field"><label>Director</label><input id="np-director" placeholder="Director name"/></div>' +
+          '<div class="sh-field"><label>Shooting start</label><input id="np-start" type="date"/></div>' +
+        '</div>' +
+        '<div class="sh-field"><label>Description</label><textarea id="np-description" rows="3" placeholder="Brief description of the production"></textarea></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+          '<div class="sh-field"><label>Initial budget</label><input id="np-budget" placeholder="e.g., $1.5M or 1500000"/></div>' +
+          '<div class="sh-field"><label>Status</label><select id="np-status">' + PROD_STATUSES.map(function (s) { return '<option' + (s === 'PRE-PROD' ? ' selected' : '') + '>' + clean(s) + '</option>'; }).join('') + '</select></div>' +
+        '</div>' +
+        scaleOpts +
+        '<div class="sh-field" style="margin-top:6px;"><label style="display:flex;align-items:center;gap:8px;font-weight:500;font-size:12px;"><input id="np-cloud" type="checkbox"' + (AH.Auth && !AH.Auth.isDemoMode ? ' checked' : '') + '/> Upload to Cloud (if signed in)</label></div>' +
+        '<div id="np-err" style="color:var(--rose);font-size:12px;min-height:16px;"></div>',
         {
-          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="np-save">CREATE</button>',
+          size: 'lg',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="np-save">CREATE PRODUCTION</button>',
           onMount: function () {
             $('#np-save').onclick = function () {
-              var title = $('#np-title').value.trim(); if (!title) { toast('Title required', 'warn'); return; }
-              var chipByStatus = { 'PRE-PROD':'chip--aqua','IN PROD':'chip--mint','WRAP':'chip--lime','POST':'chip--violet','BID':'chip--rose','R&D':'chip--violet' };
-              var id = title.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0, 16) + Math.random().toString(36).slice(2, 5);
-              STATE.productions.push({ id: id, title: title, type: $('#np-type').value || 'FEATURE', status: $('#np-status').value, days: 0, scenes: 0, budget: $('#np-budget').value || '$0', img: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=1200&q=80', chipClass: chipByStatus[$('#np-status').value] || 'chip--mint' });
-              saveState(); AH.Modal.close();
+              var name = ($('#np-name').value || '').trim();
+              var err = $('#np-err');
+              if (!name) { err.textContent = 'Name is required.'; return; }
+              if (name.length > 80) { err.textContent = 'Max 80 characters.'; return; }
+              var id = slugifyId(name);
+              if (STATE.productions.some(function (p) { return p.id === id; })) {
+                err.textContent = '"' + name + '" already exists.'; return;
+              }
+              var type = $('#np-type').value;
+              var status = $('#np-status').value;
+              var client = ($('#np-client').value || '').trim();
+              var director = ($('#np-director').value || '').trim();
+              var description = ($('#np-description').value || '').trim();
+              var budget = ($('#np-budget').value || '').trim() || '$0';
+              var shootStart = $('#np-start').value;
+              var scale = $('#np-scale') ? $('#np-scale').value : '';
+              var wantsCloud = $('#np-cloud') && $('#np-cloud').checked;
+
+              // Summary card record (lives in STATE.productions for fast list rendering)
+              var card = {
+                id: id, title: name, type: type, status: status,
+                client: client, director: director, description: description,
+                days: 0, scenes: 0, budget: budget,
+                shootStart: shootStart,
+                budgetScale: scale ? (BUDGET_SCALES[scale] && BUDGET_SCALES[scale].label) : '',
+                img: DEFAULT_PROD_IMG,
+                chipClass: CHIP_BY_STATUS[status] || 'chip--mint',
+                created: Date.now(), lastModified: Date.now(),
+                isOfflineOnly: !wantsCloud
+              };
+              STATE.productions.push(card);
+              saveState();
+
+              // Full production record (V1 key: dc_alacrity_prod_<id>)
+              var pd = {
+                name: name, type: type, status: status,
+                client: client, director: director, description: description,
+                shootStart: shootStart, budget: { amount: budget, scale: scale || null },
+                created: card.created, lastModified: card.lastModified,
+                rename_log: [],
+                schedule: { strips: [] }, shotlist: [], milestones: [], risks: [], tasks: [],
+                continuity: [], cast: {}, crew: {},
+                financials: { categories: {}, budget: 0, spent: 0, remaining: 0 },
+                _cloudSynced: false
+              };
+              AH.Prod._savePD(id, pd);
+              AH.Prod.setActive(id);
+
+              // Cloud upload (only if user is authenticated and in cloud mode)
+              if (wantsCloud && AH.canCloudSync()) {
+                AH.Prod.uploadToCloud(id, true);
+              } else if (wantsCloud && (!AH.Auth || AH.Auth.isDemoMode)) {
+                toast('Demo mode — production saved locally. Upgrade to Cloud Mode to sync.', 'warn');
+              }
+
+              AH.Modal.close();
               AH.Router.go('production-library');
-              toast('Production · ' + title);
+              toast('Production created · ' + name);
+              AH.Notif.push('Production created · ' + name);
             };
+            $('#np-name').onkeydown = function (e) { if (e.key === 'Enter') $('#np-save').click(); };
           }
         });
+    },
+
+    // V1 parity: rich edit modal with all fields + rename history log.
+    editProduction: function (prodId) {
+      var card = STATE.productions.find(function (p) { return p.id === prodId; });
+      if (!card) { toast('Production not found', 'error'); return; }
+      var pd = AH.Prod._loadPD(prodId);
+      if (!pd.name) pd = Object.assign(pd, {
+        name: card.title, type: card.type, status: card.status,
+        client: card.client || '', director: card.director || '',
+        description: card.description || '', shootStart: card.shootStart || '',
+        budget: { amount: card.budget || '$0', scale: null }, rename_log: []
+      });
+
+      var scales = (typeof BUDGET_SCALES === 'object') ? Object.keys(BUDGET_SCALES) : [];
+      var curScale = (pd.budget && pd.budget.scale) || '';
+      var scaleOpts = scales.length ? '<div class="sh-field"><label>Budget scale</label><select id="ep-scale"><option value="">— No scale set —</option>' + scales.map(function (k) { var s = BUDGET_SCALES[k]; return '<option value="' + k + '"' + (k === curScale ? ' selected' : '') + '>' + clean(s.label + ' · ≤ $' + (s.ceiling / 1000000) + 'M') + '</option>'; }).join('') + '</select></div>' : '';
+
+      var logHTML = (pd.rename_log || []).length
+        ? '<div style="margin-top:14px;padding:12px;border-radius:10px;background:var(--glass-2);border:1px solid var(--edge);">' +
+            '<div style="font-family:var(--f-mono);font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--fg-45);margin-bottom:8px;">Name history</div>' +
+            pd.rename_log.slice(-5).reverse().map(function (r) {
+              return '<div style="font-family:var(--f-mono);font-size:10.5px;color:var(--fg-60);padding:3px 0;border-bottom:1px solid var(--edge);">' +
+                clean(new Date(r.ts).toLocaleDateString()) + ' · "' + clean(r.from) + '" → "' + clean(r.to) + '" · ' + clean(r.user || 'local') +
+              '</div>';
+            }).join('') +
+          '</div>'
+        : '';
+
+      AH.Modal.open('Edit Production',
+        '<div class="sh-modal__label">Production Settings · ' + clean(prodId) + '</div>' +
+        '<div class="sh-field"><label>Production name</label><input id="ep-name" type="text" maxlength="80" value="' + clean(pd.name || '') + '"/></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+          '<div class="sh-field"><label>Production type</label><select id="ep-type">' + PROD_TYPES.map(function (t) { return '<option' + ((pd.type || '') === t ? ' selected' : '') + '>' + clean(t) + '</option>'; }).join('') + '</select></div>' +
+          '<div class="sh-field"><label>Client / Studio</label><input id="ep-client" value="' + clean(pd.client || '') + '"/></div>' +
+          '<div class="sh-field"><label>Director</label><input id="ep-director" value="' + clean(pd.director || '') + '"/></div>' +
+          '<div class="sh-field"><label>Shooting start</label><input id="ep-start" type="date" value="' + clean(pd.shootStart || '') + '"/></div>' +
+        '</div>' +
+        '<div class="sh-field"><label>Description</label><textarea id="ep-description" rows="3">' + clean(pd.description || '') + '</textarea></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+          '<div class="sh-field"><label>Budget</label><input id="ep-budget" value="' + clean((pd.budget && pd.budget.amount) || card.budget || '$0') + '"/></div>' +
+          '<div class="sh-field"><label>Status</label><select id="ep-status">' + PROD_STATUSES.map(function (s) { return '<option' + ((pd.status || card.status) === s ? ' selected' : '') + '>' + clean(s) + '</option>'; }).join('') + '</select></div>' +
+        '</div>' +
+        scaleOpts +
+        '<div id="ep-err" style="color:var(--rose);font-size:12px;min-height:16px;"></div>' +
+        logHTML,
+        {
+          size: 'lg',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="ep-save">SAVE CHANGES</button>',
+          onMount: function () {
+            $('#ep-save').onclick = function () {
+              var newName = ($('#ep-name').value || '').trim();
+              var err = $('#ep-err');
+              if (!newName) { err.textContent = 'Name is required.'; return; }
+              if (newName.length > 80) { err.textContent = 'Max 80 characters.'; return; }
+              var currentName = pd.name || card.title;
+              var isRename = (newName !== currentName);
+
+              // Write pd fields
+              pd.name = newName;
+              pd.type = $('#ep-type').value;
+              pd.status = $('#ep-status').value;
+              pd.client = ($('#ep-client').value || '').trim();
+              pd.director = ($('#ep-director').value || '').trim();
+              pd.description = ($('#ep-description').value || '').trim();
+              pd.shootStart = $('#ep-start').value || '';
+              pd.budget = pd.budget || {};
+              pd.budget.amount = ($('#ep-budget').value || '').trim();
+              var scaleEl = $('#ep-scale'); if (scaleEl) pd.budget.scale = scaleEl.value || null;
+              pd.lastModified = Date.now();
+              if (isRename) {
+                pd.rename_log = pd.rename_log || [];
+                pd.rename_log.push({
+                  from: currentName, to: newName, ts: new Date().toISOString(),
+                  user: (AH.Auth && AH.Auth.user && (AH.Auth.user.email || AH.Auth.user.displayName)) || 'local'
+                });
+              }
+              AH.Prod._savePD(prodId, pd);
+
+              // Mirror to card summary
+              card.title = newName; card.type = pd.type; card.status = pd.status;
+              card.client = pd.client; card.director = pd.director;
+              card.description = pd.description; card.shootStart = pd.shootStart;
+              card.budget = pd.budget.amount;
+              card.budgetScale = pd.budget.scale ? (BUDGET_SCALES[pd.budget.scale] && BUDGET_SCALES[pd.budget.scale].label) : '';
+              card.chipClass = CHIP_BY_STATUS[pd.status] || 'chip--mint';
+              card.lastModified = pd.lastModified;
+              saveState();
+
+              // Cloud sync
+              if (AH.canCloudSync()) AH.Prod.uploadToCloud(prodId, false);
+
+              AH.Modal.close();
+              AH.Router.go('production-library');
+              toast('Production updated · ' + newName + (isRename ? ' (renamed)' : ''));
+              if (isRename) AH.Notif.push('Production renamed · "' + currentName + '" → "' + newName + '"');
+            };
+            $('#ep-name').focus(); $('#ep-name').select();
+            $('#ep-name').onkeydown = function (e) { if (e.key === 'Enter') $('#ep-save').click(); if (e.key === 'Escape') AH.Modal.close(); };
+          }
+        });
+    },
+
+    loadProduction: function (prodId) {
+      var card = STATE.productions.find(function (p) { return p.id === prodId; });
+      if (!card) { toast('Production not found', 'error'); return; }
+      if (card.cloudOnly) {
+        // Download from cloud first
+        if (!AH.canCloudSync()) { toast('Cloud mode required to download this production', 'warn'); return; }
+        AH.Firebase.loadProductionData(prodId).then(function (pd) {
+          if (pd) {
+            AH.Prod._savePD(prodId, pd);
+            card.cloudOnly = false; card.isCloudSynced = true;
+            // Backfill card summary from pd
+            if (pd.name) card.title = pd.name;
+            card.type = pd.type || card.type; card.status = pd.status || card.status;
+            card.lastModified = pd.lastModified || Date.now();
+            saveState();
+            toast('Downloaded · ' + card.title);
+            AH.Prod.setActive(prodId);
+            AH.Router.go('dashboard');
+          } else { toast('Could not fetch from cloud', 'error'); }
+        });
+        return;
+      }
+      AH.Prod.setActive(prodId);
+      toast('Active · ' + card.title);
+      AH.Router.go('dashboard');
+    },
+
+    deleteProduction: function (prodId) {
+      var card = STATE.productions.find(function (p) { return p.id === prodId; });
+      if (!card) return;
+      AH.Modal.confirm('Delete production?', 'This deletes "' + card.title + '" from your library. If it\'s synced to cloud it will also be removed there. This can\'t be undone.', function () {
+        // Remove from STATE
+        STATE.productions = STATE.productions.filter(function (p) { return p.id !== prodId; });
+        if (STATE.activeProdId === prodId) STATE.activeProdId = (STATE.productions[0] && STATE.productions[0].id) || 'sq';
+        saveState();
+        // Remove per-production detail record
+        try { localStorage.removeItem('dc_alacrity_prod_' + prodId); } catch (_) {}
+        // Remove per-production scoped storage keys (script, scenes, cast, etc.)
+        Object.keys(localStorage).forEach(function (k) { if (k.indexOf('_' + prodId) > 0 || k.endsWith(prodId)) { try { localStorage.removeItem(k); } catch (_) {} } });
+        // Cloud delete
+        if (AH.canCloudSync() && AH.Firebase.remove && AH.Firebase.ref && AH.Firebase.db) {
+          try { AH.Firebase.remove(AH.Firebase.ref(AH.Firebase.db, 'users/' + AH.Firebase.user.uid + '/productions/' + prodId)); } catch (_) {}
+        }
+        AH.Router.go('production-library');
+        toast('Deleted · ' + card.title);
+      });
+    },
+
+    uploadToCloud: function (prodId, silent) {
+      if (!AH.canCloudSync()) { toast('Cloud mode required to upload. Click UPGRADE TO CLOUD in the banner.', 'warn'); return; }
+      var pd = AH.Prod._loadPD(prodId);
+      var card = STATE.productions.find(function (p) { return p.id === prodId; });
+      var payload = Object.assign({}, pd, {
+        _summary: card ? { title: card.title, type: card.type, status: card.status, budget: card.budget, director: card.director, client: card.client } : {},
+        _cloudSynced: true, _uploadedAt: Date.now()
+      });
+      // update() instead of set() so other subtrees on that prod aren't clobbered
+      AH.Firebase.pushProductionData(prodId, payload).then(function (ok) {
+        if (ok) {
+          if (card) { card.isOfflineOnly = false; card.isCloudSynced = true; card.cloudOnly = false; saveState(); }
+          // Also append to productionsList
+          AH.Firebase.loadProductionsList().then(function (list) {
+            list = Array.isArray(list) ? list : [];
+            if (!list.some(function (x) { return (x.id || x.name || x) === prodId; })) {
+              list.push({ id: prodId, title: (card && card.title) || pd.name || prodId, type: (card && card.type) || pd.type });
+              AH.Firebase.pushProductionsList(list);
+            }
+          });
+          if (!silent) toast('Uploaded · ' + (card ? card.title : prodId));
+          if (!silent) AH.Notif.push('Cloud upload complete · ' + (card ? card.title : prodId));
+          AH.Router.go('production-library');
+        } else {
+          toast('Upload failed — check connection or sign in again', 'error');
+        }
+      });
     }
   };
 
