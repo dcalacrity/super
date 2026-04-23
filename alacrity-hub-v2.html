@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Alacrity Hub — Production Command System</title>
+<title>Alacrity Hub | D.C Alacrity's Production Command System</title>
 <meta name="description" content="Alacrity Hub — the AI-augmented, zero-trust production command system. Stripboards, ledgers, continuity, node-graph narrative, one pipeline, one story." />
 <meta name="theme-color" content="#04070d" />
 
@@ -1152,6 +1152,61 @@ html[data-theme="light"] .topbar__search kbd { background: #fff; }
   white-space: nowrap;
 }
 .pill:hover { transform: translateY(-2px); border-color: var(--edge-mint); color: var(--mint); }
+.user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(280px, 36vw);
+  height: 36px;
+  padding: 0 12px 0 4px;
+  border-radius: 999px;
+  background: var(--glass-1);
+  border: 1px solid var(--edge);
+  color: var(--fg-80);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  cursor: pointer;
+  transition: transform 0.22s var(--ease), border-color 0.22s var(--ease), color 0.22s var(--ease);
+}
+.user-chip:hover { transform: translateY(-2px); border-color: var(--edge-mint); color: var(--mint); }
+.user-chip__av {
+  width: 28px; height: 28px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #0b1220;
+  background: linear-gradient(135deg, #17FFC5, #14AFDF);
+  flex-shrink: 0;
+}
+.user-chip__meta { min-width: 0; text-align: left; line-height: 1.25; }
+.user-chip__name {
+  display: block;
+  font-family: var(--f-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.user-chip__sub {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-45);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .pill .dot {
   width: 7px; height: 7px;
   border-radius: 999px;
@@ -2234,6 +2289,27 @@ html[data-theme="light"] .gantt__track { background: var(--ink-1); }
   max-width: 560px;
   margin: 0 auto 32px;
   line-height: 1.6;
+}
+.splash__sig {
+  font-family: var(--f-display);
+  font-size: clamp(18px, 2.2vw, 26px);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255,255,255,0.92);
+  margin: -8px auto 20px;
+  max-width: 640px;
+  line-height: 1.35;
+}
+.splash__sig em {
+  font-style: italic;
+  font-weight: 500;
+  color: rgba(23,255,197,0.95);
+}
+.splash__divider {
+  width: min(420px, 88%);
+  height: 1px;
+  margin: 0 auto 28px;
+  background: linear-gradient(90deg, transparent, var(--seam), transparent);
 }
 .splash__cta {
   display: inline-flex;
@@ -3609,10 +3685,12 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     </div>
     <div class="splash__eyebrow">Zero-Trust · Virtual Production</div>
     <h1 class="splash__title">Welcome to the <em>Hub.</em></h1>
+    <p class="splash__sig">A production command system by <em>D.C. Alacrity</em></p>
     <p class="splash__lede">
       The AI-augmented production command system. Stripboards, ledgers, continuity,
       branching-narrative graph — one pipeline, one story.
     </p>
+    <div class="splash__divider" aria-hidden="true"></div>
     <div class="splash__ctas">
       <button class="splash__cta splash__cta--demo" id="splash-demo" type="button" title="Demo Mode · runs entirely in your browser">
         <span>DEMO MODE</span>
@@ -3686,8 +3764,15 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       </button>
 
       <div class="topbar__actions">
+        <button type="button" class="user-chip" id="user-chip" title="Account & collaboration" aria-label="Open account">
+          <span class="user-chip__av" id="user-chip-av">?</span>
+          <span class="user-chip__meta">
+            <span class="user-chip__name" id="user-chip-name">Not signed in</span>
+            <span class="user-chip__sub" id="user-chip-sub">Local session</span>
+          </span>
+        </button>
         <div class="pill" title="Zero-trust uplink"><span class="dot"></span><span>Uplink Stable</span></div>
-        <div class="pill"><span>Budget</span><span id="pill-budget">On Track</span></div>
+        <div class="pill" id="pill-budget-wrap" title="Budget status"><span>Budget</span><span id="pill-budget">On Track</span></div>
         <button class="icon-btn" id="btn-notify" aria-label="Notifications">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
         </button>
@@ -4179,7 +4264,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         { id: uid('n'), dot: true, text: 'Call Sheet · D04 published.', time: '18m' },
         { id: uid('n'), dot: false, text: 'Arri Alexa 35 requested for D05.', time: '1h' }
       ],
-      notes: ''
+      notes: '',
+      bannerLine: ''
     };
   };
   var STATE = AH.Storage.local.get(STATE_KEY, null) || defaultState();
@@ -4273,6 +4359,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
 
     // BUSINESS
     { id: 'financials',          label: 'Financials',        group: 'BIZ',       parent: 'biz',      icon: 'dollar',  crumb: 'BIZ · FINANCIALS',      img: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'budget',              label: 'Budget',            group: 'BIZ',       parent: 'biz',      icon: 'dollar',  crumb: 'BIZ · BUDGET',          img: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=1800&q=80' },
     { id: 'gantt',               label: 'Timeline',          group: 'BIZ',       parent: 'biz',      icon: 'timeline',crumb: 'BIZ · TIMELINE',        img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1800&q=80' },
     { id: 'milestones',          label: 'Milestones',        group: 'BIZ',       parent: 'biz',      icon: 'check',   crumb: 'BIZ · MILESTONES',      img: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=1800&q=80' },
     { id: 'documents',           label: 'Documents',         group: 'BIZ',       parent: 'biz',      icon: 'doc',     crumb: 'BIZ · DOCUMENTS',       img: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1800&q=80' },
@@ -4331,6 +4418,11 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       $('#sh-modal-title').textContent = title;
       $('#sh-modal-body').innerHTML = bodyHTML;
       $('#sh-modal').className = 'sh-modal' + (opts.size ? ' sh-modal--' + opts.size : '');
+      var sm = $('#sh-modal');
+      if (sm) {
+        if (opts.modalId) sm.setAttribute('data-modal', opts.modalId);
+        else sm.removeAttribute('data-modal');
+      }
       $('#sh-modal-foot').innerHTML = (opts.footer || '');
       $('#sh-modal-back').classList.add('is-open');
       if (opts.onMount) try { opts.onMount($('#sh-modal-body'), $('#sh-modal-foot')); } catch (_) {}
@@ -4338,6 +4430,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     },
     close: function () {
       $('#sh-modal-back').classList.remove('is-open');
+      var sm = $('#sh-modal');
+      if (sm) sm.removeAttribute('data-modal');
       document.body.style.overflow = '';
     },
     confirm: function (title, msg, onYes) {
@@ -4365,6 +4459,55 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           }
         });
     }
+  };
+
+  // Floating menu for budget scale (used by new/edit production modals + financials)
+  AH.UI = AH.UI || {};
+  AH.UI._scaleMenuEl = null;
+  AH.UI._closeScaleMenu = function () {
+    if (AH.UI._scaleMenuEl && AH.UI._scaleMenuEl.parentNode) AH.UI._scaleMenuEl.parentNode.removeChild(AH.UI._scaleMenuEl);
+    AH.UI._scaleMenuEl = null;
+    document.removeEventListener('click', AH.UI._scaleMenuDocClose, true);
+  };
+  AH.UI._scaleMenuDocClose = function (e) {
+    if (!AH.UI._scaleMenuEl) return;
+    if (AH.UI._scaleMenuEl.contains(e.target)) return;
+    AH.UI._closeScaleMenu();
+  };
+  AH.UI.scalePickerMenu = function (anchorEl, selectId, scalesObj) {
+    if (!anchorEl || !scalesObj) return;
+    AH.UI._closeScaleMenu();
+    var sel = $('#' + selectId);
+    var menu = document.createElement('div');
+    menu.className = 'scale-flyout';
+    menu.setAttribute('role', 'menu');
+    menu.style.cssText = 'position:absolute;z-index:12000;min-width:min(340px,92vw);max-height:min(52vh,420px);overflow:auto;padding:8px;border-radius:12px;background:var(--glass-2);border:1px solid var(--edge);box-shadow:0 18px 48px rgba(0,0,0,0.45);backdrop-filter:blur(12px);';
+    Object.keys(scalesObj).forEach(function (k) {
+      var s = scalesObj[k];
+      var row = document.createElement('button');
+      row.type = 'button';
+      row.setAttribute('role', 'menuitem');
+      row.style.cssText = 'display:block;width:100%;text-align:left;padding:10px 12px;margin:0;border:0;border-radius:8px;background:transparent;color:var(--fg);font-family:var(--f-mono);font-size:11.5px;cursor:pointer;line-height:1.45;';
+      row.innerHTML = '<strong style="font-family:var(--f-display);font-size:13px;">' + clean(s.label) + '</strong><br/><span style="color:var(--fg-60);">≤ $' + (s.ceiling / 1000000) + 'M ceiling</span>';
+      row.onmouseenter = function () { row.style.background = 'var(--glass-1)'; };
+      row.onmouseleave = function () { row.style.background = 'transparent'; };
+      row.onclick = function (ev) {
+        ev.preventDefault(); ev.stopPropagation();
+        if (sel) sel.value = k;
+        AH.UI._closeScaleMenu();
+        toast('Budget scale · ' + s.label);
+      };
+      menu.appendChild(row);
+    });
+    var wrap = anchorEl.closest('#np-scale-wrap') || anchorEl.closest('#ep-scale-wrap') || anchorEl.parentElement;
+    if (wrap && getComputedStyle(wrap).position === 'static') wrap.style.position = 'relative';
+    (wrap || document.body).appendChild(menu);
+    AH.UI._scaleMenuEl = menu;
+    var r = anchorEl.getBoundingClientRect();
+    var pr = (wrap || document.body).getBoundingClientRect();
+    menu.style.left = Math.max(0, r.left - pr.left) + 'px';
+    menu.style.top = (r.bottom - pr.top + 6) + 'px';
+    setTimeout(function () { document.addEventListener('click', AH.UI._scaleMenuDocClose, true); }, 0);
   };
 
   // ────────────────────────────────────────────────────────────────────────
@@ -4573,10 +4716,12 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       'production-library':  'Every active and archived production in one secure, zero-trust library. Ship them as an interactive APK on demand.',
       'schedule':            'Stripboard · shooting order · call sheets. Optimized across locations, daylight, and union rules.',
       'breakdown':           'Scene-by-scene analysis. Props, wardrobe, SFX, stunts — elements tagged and tracked across every day.',
+      'breakdowns':          'Scene breakdown workbook: one row per scene with every element category in one place.',
       'shotlist':            'Shots · lenses · coverage. Ordered for the DP, ready for the 1st AD to block the day around.',
       'cast-crew':           'Directory, availability, and crew chain-of-command for every production on the slate.',
       'contacts':            'Call register · departments · departments chain of command. One click to dial.',
       'financials':          'Budget, actuals, variance. Live P&L with per-scene cost attribution and aerospace-grade audit trail.',
+      'budget':              'Top-sheet view of the production budget, ledger, and scale model — same ledger as Financials.',
       'vault':               'Zero-trust encrypted assets. Rushes, drives, keys. Every read logged, every egress gated.',
       'gantt':               'Dependency graph and critical path across departments, locations, and post phases.',
       'tech':                'Gear inventory · asset tracking. Checkouts, insurance value, service history, cross-prod loans.',
@@ -4584,6 +4729,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       'continuity':          'On-set continuity logs. Wardrobe, blocking, props, weather, and clock state per scene.',
       'documents':           'Contracts · call sheets · legal · releases · vendor MSAs. Signed, timestamped, auditable.',
       'script-editor':       'Script Studio · write, annotate, shot-list, revise. Pages paginate, elements auto-format, annotations travel with scenes.',
+      'script-import':       'Bring Fountain, FDX, PDF, or text into Script Studio before you open the editor.',
       'storymap':            'Node-graph of your narrative. Branches, converges, pathways, emotion-core beats.',
       'crm-prod':            'Production pipeline. Investors, distributors, agencies. Live pipeline stages.',
       'crm-biz':             'Business development. Clients, vendors, talent reps. Calls · notes · follow-ups.',
@@ -4591,6 +4737,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       'dialer':              'Click-to-dial with call logging. Routes through your softphone.',
       'integrations':        'n8n · ComfyUI · OpenClaw · Zapier. Map your studio\'s data to every tool it touches.',
       'risk':                'Every hazard flagged, every mitigation logged. Covered by insurance and by plan.',
+      'production-automation': 'Rules, triggers, and batch actions that keep stripboards, exports, and notifications in sync.',
       'locations':           'Scout sheets, release forms, permit state, photos. One record per place.',
       'onset':               'Day-of rolling cards. Scene · take · roll · sound · timecode · marker.',
       'walkie':              'Channel log. Who, what, when, and why across dept. radios.',
@@ -4610,10 +4757,12 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       'production-library': { n: '14',  l: 'In library' },
       'schedule':           { n: '24',  l: 'Shoot days' },
       'breakdown':          { n: '47',  l: 'Scenes broken' },
+      'breakdowns':         { n: '47',  l: 'Scene rows' },
       'shotlist':           { n: '312', l: 'Shots planned' },
       'cast-crew':          { n: '38',  l: 'On the slate' },
       'contacts':           { n: '112', l: 'Registered' },
       'financials':         { n: '92%', l: 'On budget' },
+      'budget':             { n: '92%', l: 'Top sheet' },
       'vault':              { n: 'ZTA', l: 'L4 compliant' },
       'gantt':              { n: '5',   l: 'Critical paths' },
       'tech':               { n: '164', l: 'Tracked assets' },
@@ -4621,6 +4770,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       'continuity':         { n: '47',  l: 'Scenes logged' },
       'documents':          { n: '86',  l: 'Documents live' },
       'script-editor':      { n: '47',  l: 'Scenes' },
+      'script-import':      { n: '↑',   l: 'Pipeline' },
       'storymap':           { n: '12',  l: 'Branches' },
       'crm-prod':           { n: '29',  l: 'Active leads' },
       'crm-biz':            { n: '52',  l: 'Open pipeline' },
@@ -4628,6 +4778,10 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       'dialer':             { n: '8',   l: 'Calls today' },
       'integrations':       { n: '14',  l: 'Connectors' },
       'risk':               { n: '3',   l: 'High' },
+      'production-automation': { n: '12', l: 'Rules live' },
+      'beatboard':          { n: '5',   l: 'Beats' },
+      'music':              { n: '4',   l: 'Cues' },
+      'post':               { n: '8',   l: 'Phases' },
       'locations':          { n: '17',  l: 'Scouted' },
       'onset':              { n: '23',  l: 'Takes · last' },
       'walkie':             { n: '6',   l: 'Channels live' },
@@ -7448,8 +7602,17 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     var contactCount = (castLocal.length || 0) + (contactsLocal.length || 0);
     var totalDays = prods.reduce(function (a, p) { return a + (p.days || 0); }, 0);
     var today = new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    var heroTitle = ((STATE.bannerLine || '').trim())
+      ? ('Command <em>center.</em><br/><span style="display:block;margin-top:12px;font-size:clamp(15px,2.1vw,22px);font-weight:500;letter-spacing:0.03em;line-height:1.35;color:rgba(255,255,255,0.9);">' + clean(STATE.bannerLine) + '</span>')
+      : 'Command <em>center.</em>';
     return (
-      AH.Views.renderHero(m, { title: 'Command <em>center.</em>', primary: 'OPEN STRIPBOARD', primaryFn: "AH.Router.go('schedule')" }) +
+      AH.Views.renderHero(m, {
+        title: heroTitle,
+        primary: 'OPEN STRIPBOARD',
+        primaryFn: "AH.Router.go('schedule')",
+        secondary: 'FORMS & GENERATORS',
+        secondaryFn: 'AH.V2Forms.openPalette()'
+      }) +
       // Intel strip (at-a-glance) — derived from actual productions
       '<div class="ticker section">' +
         '<div class="ticker__item">● <b>' + prods.length + '</b> ACTIVE</div>' +
@@ -7634,13 +7797,24 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           '<div class="sh-field"><label>Initial budget</label><input id="np-budget" placeholder="e.g., $1.5M or 1500000"/></div>' +
           '<div class="sh-field"><label>Status</label><select id="np-status">' + PROD_STATUSES.map(function (s) { return '<option' + (s === 'PRE-PROD' ? ' selected' : '') + '>' + clean(s) + '</option>'; }).join('') + '</select></div>' +
         '</div>' +
-        scaleOpts +
+        '<div id="np-scale-wrap">' + scaleOpts + '</div>' +
         '<div class="sh-field" style="margin-top:6px;"><label style="display:flex;align-items:center;gap:8px;font-weight:500;font-size:12px;"><input id="np-cloud" type="checkbox"' + (AH.Auth && !AH.Auth.isDemoMode ? ' checked' : '') + '/> Upload to Cloud (if signed in)</label></div>' +
         '<div id="np-err" style="color:var(--rose);font-size:12px;min-height:16px;"></div>',
         {
           size: 'lg',
+          modalId: 'modal-new-production',
           footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="np-save">CREATE PRODUCTION</button>',
           onMount: function () {
+            var sw = $('#np-scale-wrap');
+            if (sw && scales.length) {
+              sw.style.position = 'relative';
+              sw.innerHTML = sw.innerHTML +
+                '<div style="margin-top:8px;"><button type="button" class="btn btn--ghost" id="np-scale-menu-btn" style="font-size:11px;letter-spacing:0.12em;">CHOOSE BUDGET SCALE…</button></div>';
+              $('#np-scale-menu-btn').onclick = function (ev) {
+                ev.preventDefault();
+                AH.UI.scalePickerMenu(ev.target, 'np-scale', BUDGET_SCALES);
+              };
+            }
             $('#np-save').onclick = function () {
               var name = ($('#np-name').value || '').trim();
               var err = $('#np-err');
@@ -7748,13 +7922,24 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           '<div class="sh-field"><label>Budget</label><input id="ep-budget" value="' + clean((pd.budget && pd.budget.amount) || card.budget || '$0') + '"/></div>' +
           '<div class="sh-field"><label>Status</label><select id="ep-status">' + PROD_STATUSES.map(function (s) { return '<option' + ((pd.status || card.status) === s ? ' selected' : '') + '>' + clean(s) + '</option>'; }).join('') + '</select></div>' +
         '</div>' +
-        scaleOpts +
+        '<div id="ep-scale-wrap">' + scaleOpts + '</div>' +
         '<div id="ep-err" style="color:var(--rose);font-size:12px;min-height:16px;"></div>' +
         logHTML,
         {
           size: 'lg',
+          modalId: 'modal-rename-production',
           footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="ep-save">SAVE CHANGES</button>',
           onMount: function () {
+            var esw = $('#ep-scale-wrap');
+            if (esw && scales.length) {
+              esw.style.position = 'relative';
+              esw.innerHTML = esw.innerHTML +
+                '<div style="margin-top:8px;"><button type="button" class="btn btn--ghost" id="ep-scale-menu-btn" style="font-size:11px;letter-spacing:0.12em;">CHOOSE BUDGET SCALE…</button></div>';
+              $('#ep-scale-menu-btn').onclick = function (ev) {
+                ev.preventDefault();
+                AH.UI.scalePickerMenu(ev.target, 'ep-scale', BUDGET_SCALES);
+              };
+            }
             $('#ep-save').onclick = function () {
               var newName = ($('#ep-name').value || '').trim();
               var err = $('#ep-err');
@@ -7904,7 +8089,15 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     scs.forEach(function (s) { (byDay[s.day] = byDay[s.day] || []).push(s); });
     var days = Object.keys(byDay).sort();
     return (
-      AH.Views.renderHero(m, { primary: 'CALL SHEET', primaryFn: 'AH.Schedule.exportCall()', secondary: 'STRIPBOARD PDF', secondaryFn: 'AH.Schedule.exportPDF()' }) +
+      AH.Views.renderHero(m, {
+        primary: 'CALL SHEET',
+        primaryFn: 'AH.Schedule.exportCall()',
+        secondary: 'STRIPBOARD PDF',
+        secondaryFn: 'AH.Schedule.exportPDF()',
+        lede: heroLede('schedule') +
+          ' <span style="color:var(--fg-50);">·</span> <button type="button" class="btn btn--ghost" style="display:inline;height:auto;padding:2px 8px;font-size:12px;vertical-align:middle;" onclick="AH.Schedule.editSceneModal()">Scene editor</button>' +
+          ' <span style="color:var(--fg-50);">·</span> <button type="button" class="btn btn--ghost" style="display:inline;height:auto;padding:2px 8px;font-size:12px;vertical-align:middle;" onclick="AH.Schedule.dayBreakModal()">Day break</button>'
+      }) +
       '<div class="section" style="margin-top:0;"><div class="card" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
         '<strong style="font-family:var(--f-mono);font-size:10.5px;letter-spacing:0.22em;color:var(--fg-45);text-transform:uppercase;">BOARD</strong>' +
         '<button class="btn btn--ghost" onclick="AH.Schedule.exportPDF()">STRIPBOARD PDF</button>' +
@@ -8010,6 +8203,67 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     });
   };
   AH.Schedule = {
+    editSceneModal: function (sceneId) {
+      var scs = loadScenes();
+      var s = sceneId ? scs.find(function (x) { return x.id === sceneId; }) : null;
+      if (!s && scs.length) s = scs[0];
+      if (!s) { toast('Add scenes on the stripboard first', 'warn'); AH.Router.go('schedule'); return; }
+      AH.Modal.open('Scene · ' + clean(s.n),
+        '<div class="sh-modal__label">Edit slug, INT/EXT, location, pages, and shoot day.</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+          '<div class="sh-field"><label>Scene #</label><input id="scn-num" value="' + clean(s.n) + '"/></div>' +
+          '<div class="sh-field"><label>Shoot day</label><input id="scn-day" value="' + clean(s.day) + '"/></div>' +
+          '<div class="sh-field" style="grid-column:1/3;"><label>Slug / title</label><input id="scn-title" value="' + clean(s.title) + '"/></div>' +
+          '<div class="sh-field"><label>Type</label><select id="scn-int"><option value="int"' + (s.int ? ' selected' : '') + '>INT</option><option value="ext"' + (!s.int ? ' selected' : '') + '>EXT</option></select></div>' +
+          '<div class="sh-field"><label>Location</label><input id="scn-loc" value="' + clean(s.loc) + '"/></div>' +
+          '<div class="sh-field" style="grid-column:1/3;"><label>Pages (e.g. 2 1/8)</label><input id="scn-pages" value="' + clean(s.pages) + '"/></div>' +
+        '</div>',
+        {
+          size: 'md',
+          modalId: 'modal-scene',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="scn-save">SAVE</button><button class="btn btn--ghost" style="color:var(--rose);" id="scn-del">DELETE</button>',
+          onMount: function () {
+            $('#scn-save').onclick = function () {
+              s.n = ($('#scn-num').value || s.n).trim();
+              s.day = ($('#scn-day').value || s.day).trim();
+              s.title = ($('#scn-title').value || s.title).trim();
+              s.int = $('#scn-int').value === 'int';
+              s.loc = ($('#scn-loc').value || s.loc).trim();
+              s.pages = ($('#scn-pages').value || s.pages).trim();
+              saveScenes(scs); AH.Modal.close(); AH.Router.go('schedule'); toast('Scene updated');
+            };
+            $('#scn-del').onclick = function () {
+              AH.Modal.confirm('Delete scene', 'Remove scene ' + clean(s.n) + ' from the stripboard?', function () {
+                saveScenes(scs.filter(function (x) { return x.id !== s.id; })); AH.Router.go('schedule'); toast('Scene removed');
+              });
+            };
+          }
+        });
+    },
+    dayBreakModal: function () {
+      var scs = loadScenes();
+      var days = Array.from(new Set(scs.map(function (x) { return x.day; }))).sort();
+      AH.Modal.open('Insert day break',
+        '<div class="sh-modal__label">Insert a blank separator strip after the last scene of a shoot day (useful for meal breaks or company moves).</div>' +
+        '<div class="sh-field"><label>After day</label><select id="db-day">' + days.map(function (d) { return '<option value="' + clean(d) + '">' + clean(d) + '</option>'; }).join('') + '</select></div>' +
+        '<div class="sh-field"><label>Separator label</label><input id="db-label" value="DAY BREAK · COMPANY MOVE"/></div>',
+        {
+          size: 'sm',
+          modalId: 'modal-daybreak',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="db-go">INSERT</button>',
+          onMount: function () {
+            $('#db-go').onclick = function () {
+              var day = $('#db-day').value;
+              var label = ($('#db-label').value || 'DAY BREAK').trim();
+              var idx = -1;
+              for (var i = scs.length - 1; i >= 0; i--) { if (scs[i].day === day) { idx = i; break; } }
+              if (idx < 0) { toast('No scenes on that day', 'warn'); return; }
+              scs.splice(idx + 1, 0, { id: uid('sc'), n: '—', title: label.toUpperCase(), int: true, loc: 'BREAK', pages: '—', day: day, isBreak: true });
+              saveScenes(scs); AH.Modal.close(); AH.Router.go('schedule'); toast('Day break inserted');
+            };
+          }
+        });
+    },
     addScene: function () {
       var scs = loadScenes();
       scs.push({ id: uid('sc'), n: pad(scs.length + 1, 2), title: 'NEW SCENE', int: true, loc: 'STUDIO', pages: '1', day: 'D01' });
@@ -8986,6 +9240,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     '</div>' + (extra || '');
     AH.Modal.open(title, html, {
       size: 'lg',
+      modalId: 'modal-doc-generator',
       footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button>' +
               '<button class="btn btn--primary" id="doc-gen-btn">Generate PDF ↗</button>',
       onMount: function () {
@@ -10138,6 +10393,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       '<div class="section"><div class="grid grid--3">' +
         locs.map(function (l) {
           return '<div class="card" style="position:relative;">' +
+            '<button class="btn btn--ghost" style="position:absolute;top:10px;right:44px;height:28px;padding:0 10px;font-size:11px;" onclick="AH.Loc.detailModal(\'' + l.id + '\')">EDIT</button>' +
             '<button class="btn btn--ghost" style="position:absolute;top:10px;right:10px;height:28px;padding:0 10px;" onclick="AH.Loc.del(\'' + l.id + '\')">×</button>' +
             '<div class="section__title" style="margin-bottom:6px;">' + clean(l.n) + '</div>' +
             '<div class="section__sub">' + clean(l.city) + '</div>' +
@@ -10165,6 +10421,47 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       });
     },
     del: function (id) { saveLocs(loadLocs().filter(function (l) { return l.id !== id; })); AH.Router.go('locations'); },
+    detailModal: function (locId) {
+      var locs = loadLocs();
+      var l = locId ? locs.find(function (x) { return x.id === locId; }) : locs[0];
+      if (!l) { toast('No locations yet', 'warn'); AH.Router.go('locations'); return; }
+      AH.Modal.open('Location · ' + clean(l.n),
+        '<div class="sh-modal__label">Scout sheet · permits · contacts</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+          '<div class="sh-field" style="grid-column:1/3;"><label>Name</label><input id="loc-n" value="' + clean(l.n) + '"/></div>' +
+          '<div class="sh-field" style="grid-column:1/3;"><label>City / region</label><input id="loc-city" value="' + clean(l.city) + '"/></div>' +
+          '<div class="sh-field"><label>Status</label><input id="loc-st" value="' + clean(l.st) + '"/></div>' +
+          '<div class="sh-field"><label>Permit</label><input id="loc-permit" value="' + clean(l.permit || '') + '"/></div>' +
+          '<div class="sh-field"><label>Contact</label><input id="loc-contact" value="' + clean(l.contact || '') + '"/></div>' +
+          '<div class="sh-field"><label>Chip class key</label><select id="loc-cls">' +
+            ['chip--mint','chip--aqua','chip--amber','chip--rose','chip--lime','chip--violet'].map(function (c) {
+              return '<option value="' + c + '"' + (l.cls === c ? ' selected' : '') + '>' + c.replace('chip--','') + '</option>';
+            }).join('') +
+          '</select></div>' +
+          '<div class="sh-field" style="grid-column:1/3;"><label>Notes</label><textarea id="loc-note" rows="3">' + clean(l.note || '') + '</textarea></div>' +
+        '</div>' +
+        '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">' +
+          '<button type="button" class="btn btn--ghost" onclick="AH.Docs.gen(\'locationAgreementFull\')">FULL AGREEMENT</button>' +
+          '<button type="button" class="btn btn--ghost" onclick="AH.Docs.gen(\'locationRelease\')">LOCATION RELEASE</button>' +
+        '</div>',
+        {
+          size: 'lg',
+          modalId: 'modal-location-full',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Close</button><button class="btn btn--primary" id="loc-save">SAVE</button>',
+          onMount: function () {
+            $('#loc-save').onclick = function () {
+              l.n = ($('#loc-n').value || l.n).trim();
+              l.city = ($('#loc-city').value || '').trim();
+              l.st = ($('#loc-st').value || l.st).trim();
+              l.permit = ($('#loc-permit').value || '').trim();
+              l.contact = ($('#loc-contact').value || '').trim();
+              l.cls = $('#loc-cls').value || l.cls;
+              l.note = ($('#loc-note').value || '').trim();
+              saveLocs(locs); AH.Bus && AH.Bus.emit('location:updated', {}); AH.Modal.close(); AH.Router.go('locations'); toast('Location saved');
+            };
+          }
+        });
+    },
     exportPDF: function () {
       var d = loadLocs();
       var rows = d.map(function (l) { return '<tr><td>' + clean(l.n) + '</td><td>' + clean(l.city) + '</td><td>' + clean(l.st) + '</td><td>' + clean(l.permit || '') + '</td><td>' + clean(l.contact || '') + '</td></tr>'; }).join('');
@@ -10426,34 +10723,119 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   // ══════════════════════════════════════════════════════════════════════════
   //  TIMELINE (Gantt)
   // ══════════════════════════════════════════════════════════════════════════
+  function loadGanttTasks() {
+    var k = 'ah_gantt_' + STATE.activeProdId;
+    var d = AH.Storage.local.get(k, null);
+    if (!d) {
+      d = [
+        { id: uid('gt'), label: 'Script lock',         days: 14, status: 'COMPLETE',   pct: 100 },
+        { id: uid('gt'), label: 'Breakdown',           days: 24, status: 'COMPLETE',   pct: 100 },
+        { id: uid('gt'), label: 'Pre-prod',            days: 42, status: 'IN PROG · 82%', pct: 82 },
+        { id: uid('gt'), label: 'Principal photo',     days: 66, status: 'D04 · 20%',   pct: 20 },
+        { id: uid('gt'), label: 'Post · picture',      days: 12, status: 'QUEUED',      pct: 0 },
+        { id: uid('gt'), label: 'Post · audio',       days: 8,  status: 'QUEUED',      pct: 0 },
+        { id: uid('gt'), label: 'Color',               days: 5,  status: 'QUEUED',      pct: 0 },
+        { id: uid('gt'), label: 'Delivery',            days: 3,  status: 'QUEUED',      pct: 0 }
+      ];
+      AH.Storage.local.set(k, d);
+    }
+    return d;
+  }
+  function saveGanttTasks(d) {
+    AH.Storage.local.set('ah_gantt_' + STATE.activeProdId, d);
+    AH.syncProductionBlob && AH.syncProductionBlob({ ganttTasks: d, ganttUpdatedAt: Date.now() });
+  }
   AH.register('gantt', function (m) {
+    var tasks = loadGanttTasks();
     return (
-      AH.Views.renderHero(m, { primary: 'EXPORT PDF', primaryFn: "AH.Timeline.exportPDF()" }) +
+      AH.Views.renderHero(m, {
+        primary: 'ADD TASK',
+        primaryFn: 'AH.Timeline.addTaskModal()',
+        secondary: 'EXPORT PDF',
+        secondaryFn: 'AH.Timeline.exportPDF()'
+      }) +
       '<div class="section"><div class="card">' +
-        '<div class="section__title" style="margin-bottom:14px;">' + clean(getActiveProd().title) + ' · Critical path</div>' +
+        '<div class="section__title" style="margin-bottom:14px;">' + clean(getActiveProd().title) + ' · Critical path · ' + tasks.length + ' tasks</div>' +
         '<div class="gantt">' +
-          gantt('Script lock',         14, 'COMPLETE') +
-          gantt('Breakdown',           24, 'COMPLETE') +
-          gantt('Pre-prod',            42, 'IN PROG · 82%') +
-          gantt('Principal photo',     66, 'D04 · 20%') +
-          gantt('Post · picture',      12, 'QUEUED') +
-          gantt('Post · audio',         8, 'QUEUED') +
-          gantt('Color',                5, 'QUEUED') +
-          gantt('Delivery',             3, 'QUEUED') +
+          tasks.map(function (t) {
+            return '<div style="margin-bottom:12px;">' +
+              '<div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:6px;">' +
+                '<button type="button" class="btn btn--ghost" style="height:26px;padding:0 10px;font-size:10px;letter-spacing:0.08em;" onclick="AH.Timeline.editTask(\'' + t.id + '\')">EDIT</button>' +
+                '<button type="button" class="btn btn--ghost" style="height:26px;padding:0 10px;font-size:10px;color:var(--rose);" onclick="AH.Timeline.delTask(\'' + t.id + '\')">×</button>' +
+              '</div>' +
+              gantt(t.label, Math.max(4, Math.min(100, t.pct || 0)), clean(t.status || '')) +
+            '</div>';
+          }).join('') +
         '</div>' +
       '</div></div>'
     );
   });
   AH.Timeline = {
+    addTaskModal: function () {
+      AH.Modal.open('Add timeline task',
+        '<div class="sh-modal__label">Phase or work package on the critical path.</div>' +
+        '<div class="sh-field"><label>Label</label><input id="gt-label" placeholder="e.g. Picture lock"/></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+          '<div class="sh-field"><label>Duration (days)</label><input id="gt-days" type="number" min="1" value="5"/></div>' +
+          '<div class="sh-field"><label>Progress %</label><input id="gt-pct" type="number" min="0" max="100" value="0"/></div>' +
+        '</div>' +
+        '<div class="sh-field"><label>Status tag</label><input id="gt-st" placeholder="QUEUED · IN PROG · COMPLETE"/></div>',
+        {
+          size: 'sm',
+          modalId: 'modal-gantt-task',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="gt-add">ADD</button>',
+          onMount: function () {
+            $('#gt-add').onclick = function () {
+              var d = loadGanttTasks();
+              d.push({
+                id: uid('gt'),
+                label: ($('#gt-label').value || 'Task').trim(),
+                days: Math.max(1, parseInt($('#gt-days').value, 10) || 1),
+                status: ($('#gt-st').value || 'QUEUED').trim(),
+                pct: Math.max(0, Math.min(100, parseInt($('#gt-pct').value, 10) || 0))
+              });
+              saveGanttTasks(d); AH.Modal.close(); AH.Router.go('gantt'); toast('Task added');
+            };
+          }
+        });
+    },
+    editTask: function (id) {
+      var d = loadGanttTasks();
+      var t = d.find(function (x) { return x.id === id; });
+      if (!t) return;
+      AH.Modal.open('Edit task · ' + clean(t.label),
+        '<div class="sh-field"><label>Label</label><input id="gte-l" value="' + clean(t.label) + '"/></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+          '<div class="sh-field"><label>Days</label><input id="gte-d" type="number" min="1" value="' + (t.days || 1) + '"/></div>' +
+          '<div class="sh-field"><label>Progress %</label><input id="gte-p" type="number" min="0" max="100" value="' + (t.pct || 0) + '"/></div>' +
+        '</div>' +
+        '<div class="sh-field"><label>Status</label><input id="gte-s" value="' + clean(t.status) + '"/></div>',
+        {
+          size: 'sm',
+          modalId: 'modal-gantt-task',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="gte-save">SAVE</button>',
+          onMount: function () {
+            $('#gte-save').onclick = function () {
+              t.label = ($('#gte-l').value || t.label).trim();
+              t.days = Math.max(1, parseInt($('#gte-d').value, 10) || 1);
+              t.pct = Math.max(0, Math.min(100, parseInt($('#gte-p').value, 10) || 0));
+              t.status = ($('#gte-s').value || t.status).trim();
+              saveGanttTasks(d); AH.Modal.close(); AH.Router.go('gantt'); toast('Task updated');
+            };
+          }
+        });
+    },
+    delTask: function (id) {
+      var d = loadGanttTasks().filter(function (x) { return x.id !== id; });
+      saveGanttTasks(d); AH.Router.go('gantt'); toast('Task removed');
+    },
     exportPDF: function () {
-      var phases = [
-        ['Script lock',14,'COMPLETE'],['Breakdown',24,'COMPLETE'],['Pre-prod',42,'IN PROG · 82%'],
-        ['Principal photo',66,'D04 · 20%'],['Post · picture',12,'QUEUED'],['Post · audio',8,'QUEUED'],
-        ['Color',5,'QUEUED'],['Delivery',3,'QUEUED']
-      ];
-      var rows = phases.map(function (p) { return '<tr><td>' + clean(p[0]) + '</td><td>' + p[1] + ' days</td><td>' + clean(p[2]) + '</td></tr>'; }).join('');
+      var tasks = loadGanttTasks();
+      var rows = tasks.map(function (t) {
+        return '<tr><td>' + clean(t.label) + '</td><td>' + (t.days || 0) + '</td><td>' + (t.pct || 0) + '%</td><td>' + clean(t.status || '') + '</td></tr>';
+      }).join('');
       var body = PDF.header('Timeline · Critical Path', getActiveProd().title) +
-        PDF.section('Phases', '<table class="pdf-table"><thead><tr><th>Phase</th><th>Duration</th><th>Status</th></tr></thead><tbody>' + rows + '</tbody></table>') +
+        PDF.section('Tasks · ' + tasks.length, '<table class="pdf-table"><thead><tr><th>Phase</th><th>Duration (days)</th><th>Progress</th><th>Status</th></tr></thead><tbody>' + rows + '</tbody></table>') +
         PDF.footer();
       PDF.openDoc(body, 'Timeline_' + slugify(prodTitle()));
       toast('Timeline PDF generated');
@@ -10503,6 +10885,11 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   AH.register('crm-biz', function (m) { return crmView('biz', m); });
   AH.hooks['crm-prod:mount'] = function () { wireKanban('prod'); };
   AH.hooks['crm-biz:mount']  = function () { wireKanban('biz'); };
+  // V1-style short IDs (`prod` / `biz`) alias the same renderers + mount hooks.
+  RENDERERS['prod'] = RENDERERS['crm-prod'];
+  RENDERERS['biz'] = RENDERERS['crm-biz'];
+  AH.hooks['prod:mount'] = AH.hooks['crm-prod:mount'];
+  AH.hooks['biz:mount'] = AH.hooks['crm-biz:mount'];
   function wireKanban(kind) {
     var dragId = null;
     $$('.kanban__card').forEach(function (c) {
@@ -10784,7 +11171,11 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     }
     return d;
   }
-  function saveBeats(d) { AH.Storage.local.set('ah_beats_' + STATE.activeProdId, d); AH.emit && AH.emit('beats:updated'); }
+  function saveBeats(d) {
+    AH.Storage.local.set('ah_beats_' + STATE.activeProdId, d);
+    AH.syncProductionBlob && AH.syncProductionBlob({ beatboard: d, beatboardUpdatedAt: Date.now() });
+    AH.emit && AH.emit('beats:updated');
+  }
   AH.register('beatboard', function (m) {
     var beats = loadBeats();
     var actFilter = AH.Storage.local.get('ah_beat_filter', 'ALL');
@@ -11261,12 +11652,14 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         var d = loadMusic();
         d.push({ id: uid('mu'), n: (p[0] || 'M-???') + ' · ' + (p[1] || ''), pl: 'Scene ' + (p[2] || '??'), st: p[3] || 'DEMO', cls: 'chip--aqua', rights: 'TBD' });
         AH.Storage.local.set('ah_music_' + STATE.activeProdId, d);
+        AH.syncProductionBlob && AH.syncProductionBlob({ musicCues: d, musicUpdatedAt: Date.now() });
         AH.Router.go('music'); toast('Cue added');
       });
     },
     del: function (id) {
       var d = loadMusic().filter(function (c) { return c.id !== id; });
       AH.Storage.local.set('ah_music_' + STATE.activeProdId, d);
+      AH.syncProductionBlob && AH.syncProductionBlob({ musicCues: d, musicUpdatedAt: Date.now() });
       AH.Router.go('music'); toast('Cue removed');
     },
     exportCueSheet: function () {
@@ -13025,6 +13418,236 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   };
 
   // ══════════════════════════════════════════════════════════════════════════
+  //  V2 FORMS · Named modal flows (data-modal on #sh-modal)
+  // ══════════════════════════════════════════════════════════════════════════
+
+  AH.register('script-import', function (m) {
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'OPEN IMPORT MODAL',
+        primaryFn: 'AH.ScriptImport.open()',
+        secondary: 'OPEN SCRIPT STUDIO',
+        secondaryFn: "AH.Router.go('script-editor')"
+      }) +
+      '<div class="section">' +
+        '<div class="card">' +
+          '<div class="section__title" style="margin-bottom:10px;">Pipeline</div>' +
+          '<p style="font-size:14px;color:var(--fg-70);line-height:1.6;margin-bottom:16px;">Import a screenplay before you open Script Studio. The same importer runs inside the editor — this route is the dedicated entry from the rail.</p>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:10px;">' +
+            '<button class="btn btn--primary" onclick="AH.ScriptImport.open()">IMPORT SCRIPT…</button>' +
+            '<button class="btn btn--ghost" onclick="AH.Router.go(\'script-editor\')">OPEN SCRIPT STUDIO</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  });
+  AH.ScriptImport = {
+    open: function () {
+      if (AH.Editor && AH.Editor.openImportModal) AH.Editor.openImportModal();
+      else toast('Script importer not ready', 'warn');
+    }
+  };
+
+  AH.register('budget', function (m) {
+    var finFn = RENDERERS.financials;
+    var finBody = (typeof finFn === 'function' ? finFn(m) : '') || '';
+    var idx = finBody.indexOf('<div class="section"');
+    if (idx > 0) finBody = finBody.slice(idx);
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'OPEN LEDGER',
+        primaryFn: 'AH.Fin.openLedger()',
+        secondary: 'EXPORT CSV',
+        secondaryFn: 'AH.ExportCenter.csvFin()'
+      }) +
+      '<div class="section" style="margin-top:0;"><div class="card" style="padding:14px 18px;font-size:13px;color:var(--fg-70);line-height:1.55;">This view mirrors <strong>Financials</strong> with a budget-first lens: categories, ledger, and the scale simulator. Use Financials for the full P&amp;L table; use Budget when you want the top sheet and exports in one place.</div></div>' +
+      finBody
+    );
+  });
+
+  AH.register('breakdowns', function (m) {
+    var bd = loadBreakdown();
+    var head = '<tr><th class="num">Scn</th>' + BREAKDOWN_CATEGORIES.map(function (c) { return '<th>' + c.icon + ' ' + c.name + '</th>'; }).join('') + '</tr>';
+    var rows = bd.map(function (r) {
+      return '<tr data-scn="' + clean(r.scn) + '">' +
+        '<td class="num"><strong>' + clean(r.scn) + '</strong></td>' +
+        BREAKDOWN_CATEGORIES.map(function (c) {
+          var arr = r[c.id] || [];
+          return '<td>' + (arr.length ? '<div class="tag-list">' + arr.map(function (t) { return '<span class="chip ' + c.color + '">' + clean(t) + '</span>'; }).join('') + '</div>' : '<span style="color:var(--fg-45)">—</span>') + '</td>';
+        }).join('') +
+      '</tr>';
+    }).join('');
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'RE-RUN AI BREAKDOWN',
+        primaryFn: 'AH.Break.runAI()',
+        secondary: 'ELEMENTS PDF',
+        secondaryFn: 'AH.Break.exportPDF()'
+      }) +
+      '<div class="section"><div class="card" style="padding:0;overflow:auto;">' +
+        '<table class="table" style="min-width:880px;"><thead>' + head + '</thead><tbody>' + rows + '</tbody></table>' +
+      '</div></div>'
+    );
+  });
+
+  function loadAutoRules() {
+    var k = 'ah_auto_' + STATE.activeProdId;
+    var d = AH.Storage.local.get(k, null);
+    if (!d) {
+      d = [
+        { id: uid('ar'), name: 'Publish stripboard PDF on day rollover', on: true, trig: 'Midnight · ET', act: 'Email PDF to distro + log in vault' },
+        { id: uid('ar'), name: 'Sync Story Map → Beat Board after script save', on: true, trig: 'On script save', act: 'Queue beat sync (manual confirm in Beat Board)' },
+        { id: uid('ar'), name: 'Hot sheet escalation if risk score > 7', on: false, trig: 'Every 4h during shoot', act: 'Notify AD + prod office' }
+      ];
+      AH.Storage.local.set(k, d);
+    }
+    return d;
+  }
+  function saveAutoRules(d) {
+    AH.Storage.local.set('ah_auto_' + STATE.activeProdId, d);
+    AH.syncProductionBlob && AH.syncProductionBlob({ productionAutomation: d, automationUpdatedAt: Date.now() });
+  }
+  AH.register('production-automation', function (m) {
+    var rules = loadAutoRules();
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'NEW AUTOMATION',
+        primaryFn: 'AH.Auto.add()',
+        secondary: 'RUN ALL ENABLED',
+        secondaryFn: 'AH.Auto.runAll()'
+      }) +
+      '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
+        '<table class="table"><thead><tr><th>Rule</th><th>Trigger</th><th>Action</th><th>On</th><th></th></tr></thead><tbody>' +
+          rules.map(function (r) {
+            return '<tr><td><strong>' + clean(r.name) + '</strong></td><td class="num" style="font-size:12px;">' + clean(r.trig) + '</td><td style="font-size:12px;color:var(--fg-70);">' + clean(r.act) + '</td><td><span class="chip ' + (r.on ? 'chip--mint' : 'chip--amber') + '">' + (r.on ? 'ON' : 'OFF') + '</span></td>' +
+              '<td style="text-align:right;"><button class="btn btn--ghost" onclick="AH.Auto.toggle(\'' + r.id + '\')">TOGGLE</button> <button class="btn btn--ghost" onclick="AH.Auto.del(\'' + r.id + '\')">×</button></td></tr>';
+          }).join('') +
+        '</tbody></table>' +
+      '</div></div>' +
+      '<div class="section"><div class="card" style="font-size:13px;color:var(--fg-65);line-height:1.6;">Automation runs in-browser for this build: rules are stored per production and fire on the triggers you configure. Cloud mode can sync the same <code>ah_auto_*</code> keys via backup/restore.</div></div>'
+    );
+  });
+  AH.Auto = {
+    add: function () {
+      AH.Modal.prompt('New automation', 'Name · trigger · action', 'Dailies ingest · On wrap · Notify post', function (v) {
+        if (!v) return;
+        var p = v.split(/\s*·\s*/);
+        var d = loadAutoRules();
+        d.unshift({ id: uid('ar'), name: p[0] || 'Rule', on: true, trig: p[1] || 'Manual', act: p[2] || '' });
+        saveAutoRules(d); AH.Router.go('production-automation'); toast('Automation added');
+      });
+    },
+    toggle: function (id) {
+      var d = loadAutoRules().map(function (r) { return r.id === id ? Object.assign({}, r, { on: !r.on }) : r; });
+      saveAutoRules(d); AH.Router.go('production-automation');
+    },
+    del: function (id) { saveAutoRules(loadAutoRules().filter(function (r) { return r.id !== id; })); AH.Router.go('production-automation'); },
+    runAll: function () {
+      var n = loadAutoRules().filter(function (r) { return r.on; }).length;
+      AH.Notif.push('Automation batch · ' + n + ' rules simulated · check logs', { kind: 'warn' });
+      toast('Ran ' + n + ' enabled rules (simulated)');
+    }
+  };
+
+  AH.V2Forms = {
+    open: function (id) {
+      var fn = AH.V2Forms._routes[id];
+      if (!fn) { toast('Form not found · ' + id, 'warn'); return; }
+      fn();
+    },
+    _routes: {
+      'modal-new-production': function () { AH.Prod.newProduction(); },
+      'modal-rename-production': function () { AH.Prod.editProduction(STATE.activeProdId); },
+      'modal-scene': function () { AH.Schedule.editSceneModal(); },
+      'modal-daybreak': function () { AH.Schedule.dayBreakModal(); },
+      'modal-callsheet': function () { AH.Docs.gen('callSheet'); },
+      'modal-location-full': function () { AH.Loc.detailModal(); },
+      'modal-location-release': function () { AH.Docs.gen('locationRelease'); },
+      'modal-gantt-task': function () { AH.Timeline.addTaskModal(); },
+      'modal-daily-report': function () { AH.Docs.gen('dailyReport'); },
+      'modal-crew-deal': function () { AH.Docs.gen('crewDealMemo'); },
+      'modal-sag-deal': function () { AH.Docs.gen('sagDayPlayerDeal'); },
+      'modal-dga-deal': function () { AH.Docs.gen('dgaDealMemo'); },
+      'modal-minor-release': function () { AH.Docs.gen('minorTalentRelease'); },
+      'modal-nudity': function () { AH.Docs.gen('nudityRider'); },
+      'modal-stunt': function () { AH.Docs.gen('stuntPerformer'); },
+      'modal-nda': function () { AH.Docs.gen('ndaAgreement'); },
+      'modal-safety': function () { AH.Docs.gen('safetyReport'); },
+      'modal-wfh': function () { AH.Docs.gen('workForHire'); },
+      'modal-bond': function () { AH.Docs.gen('completionBond'); },
+      'modal-eo': function () { AH.Docs.gen('eoInsurance'); },
+      'modal-vendor': function () { AH.Docs.gen('vendorAgreement'); },
+      'modal-hsplan': function () { AH.Docs.gen('covidPlan'); },
+      'modal-prod-lead': function () { AH.CRM.add('prod'); },
+      'modal-biz-lead': function () { AH.CRM.add('biz'); },
+      'modal-prod-income': function () { AH.Router.go('financials'); setTimeout(function () { AH.Fin.openLedger(); }, 200); },
+      'modal-biz-income': function () { AH.Router.go('financials'); setTimeout(function () { AH.Fin.openLedger(); }, 200); },
+      'modal-banner': function () { AH.Modal.prompt('Banner / hero line', 'Text for dashboard hero', getActiveProd().title + ' · wrap incoming', function (v) { if (!v) return; STATE.bannerLine = v; saveState(); AH.Router.go('dashboard'); toast('Banner updated'); }); }
+    },
+    paletteHTML: function () {
+      var groups = [
+        { t: 'Production & schedule', items: [
+          ['modal-new-production', 'New production'],
+          ['modal-rename-production', 'Rename / edit production'],
+          ['modal-scene', 'Scene add / edit'],
+          ['modal-daybreak', 'Insert day break'],
+          ['modal-callsheet', 'Call sheet generator'],
+          ['modal-daily-report', 'Daily production report']
+        ]},
+        { t: 'Locations', items: [
+          ['modal-location-full', 'Location detail'],
+          ['modal-location-release', 'Location release']
+        ]},
+        { t: 'Timeline & deals', items: [
+          ['modal-gantt-task', 'Gantt · add task'],
+          ['modal-crew-deal', 'Crew deal memo'],
+          ['modal-sag-deal', 'SAG deal memo'],
+          ['modal-dga-deal', 'DGA deal memo']
+        ]},
+        { t: 'Legal suite', items: [
+          ['modal-minor-release', 'Minor release'],
+          ['modal-nudity', 'Nudity rider'],
+          ['modal-stunt', 'Stunt agreement'],
+          ['modal-nda', 'NDA'],
+          ['modal-safety', 'Safety report'],
+          ['modal-wfh', 'Work for hire'],
+          ['modal-bond', 'Completion bond'],
+          ['modal-eo', 'E&O summary'],
+          ['modal-vendor', 'Vendor agreement'],
+          ['modal-hsplan', 'Health & safety plan']
+        ]},
+        { t: 'CRM', items: [
+          ['modal-prod-lead', 'Production CRM · new lead'],
+          ['modal-biz-lead', 'Business CRM · new lead'],
+          ['modal-prod-income', 'Open ledger (prod view)'],
+          ['modal-biz-income', 'Open ledger (biz view)'],
+          ['modal-banner', 'Dashboard banner line']
+        ]}
+      ];
+      return groups.map(function (g) {
+        return '<div style="margin-bottom:18px;"><div class="sh-modal__label">' + clean(g.t) + '</div>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:8px;">' +
+            g.items.map(function (it) {
+              return '<button type="button" class="btn btn--ghost" style="font-size:11.5px;letter-spacing:0.06em;" data-v2form="' + it[0] + '">' + clean(it[1]) + '</button>';
+            }).join('') +
+          '</div></div>';
+      }).join('');
+    },
+    openPalette: function () {
+      AH.Modal.open('Forms & generators', AH.V2Forms.paletteHTML(), {
+        size: 'lg',
+        modalId: 'modal-forms-palette',
+        footer: '<button class="btn btn--primary" onclick="AH.Modal.close()">Close</button>',
+        onMount: function (body) {
+          $$('[data-v2form]', body).forEach(function (b) {
+            b.onclick = function () { var id = b.getAttribute('data-v2form'); AH.Modal.close(); AH.V2Forms.open(id); };
+          });
+        }
+      });
+    }
+  };
+
+  // ══════════════════════════════════════════════════════════════════════════
   //  COMMAND PALETTE
   // ══════════════════════════════════════════════════════════════════════════
   var CmdK = {
@@ -13036,6 +13659,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       var prods = STATE.productions.filter(function (p) { return ql && p.title.toLowerCase().indexOf(ql) !== -1; });
       var actions = [
         { id: 'act:new-prod', label: 'New production', group: 'Actions', icon: 'plus', fn: function () { AH.Prod.newProduction(); } },
+        { id: 'act:forms', label: 'Forms & document generators', group: 'Actions', icon: 'doc', fn: function () { AH.V2Forms.openPalette(); } },
+        { id: 'act:import', label: 'Import script (file / paste)', group: 'Actions', icon: 'upload', fn: function () { AH.ScriptImport.open(); } },
         { id: 'act:toggle-theme', label: 'Toggle theme', group: 'Actions', icon: 'globe', fn: function () { AH.Theme.toggle(); } },
         { id: 'act:sign-in', label: 'Sign in with Google', group: 'Actions', icon: 'shield', fn: function () { AH.Auth.openLogin(); } },
         { id: 'act:sign-out', label: 'Sign out', group: 'Actions', icon: 'shield', fn: function () { AH.Auth.signOut(); } },
@@ -13266,6 +13891,56 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         var prod = getActiveProd();
         mbb.textContent = (prod && prod.budget) || '—';
       }
+      AH.Auth.updateUserChip();
+    },
+    updateUserChip: function () {
+      var chip = $('#user-chip');
+      var av = $('#user-chip-av');
+      var nm = $('#user-chip-name');
+      var sub = $('#user-chip-sub');
+      if (!chip || !av || !nm || !sub) return;
+      var u = AH.Auth.user;
+      var fb = AH.Firebase && AH.Firebase.user;
+      var display = (fb && (fb.displayName || fb.email)) || (u && (u.displayName || u.email)) || '';
+      var initials = '?';
+      if (display) {
+        var parts = display.replace(/[<>]/g, '').split(/\s+/).filter(Boolean);
+        initials = ((parts[0] && parts[0][0]) || '?').toUpperCase() + ((parts[1] && parts[1][0]) ? parts[1][0].toUpperCase() : '');
+      }
+      av.textContent = initials;
+      if (AH.Auth.isDemoMode) {
+        nm.textContent = 'Demo session';
+        sub.textContent = 'Local-only · invite collaborators after cloud sign-in';
+      } else if (fb || (u && u.email && u.email !== 'demo@local')) {
+        nm.textContent = display || 'Signed in';
+        sub.textContent = 'Cloud sync · collaboration ready';
+      } else {
+        nm.textContent = 'Not signed in';
+        sub.textContent = 'Local session';
+      }
+    },
+
+    openAccountModal: function () {
+      var fb = AH.Firebase && AH.Firebase.user;
+      var u = AH.Auth.user;
+      var name = (fb && (fb.displayName || fb.email)) || (u && (u.displayName || u.email)) || 'Guest';
+      var id = (fb && fb.uid) || (u && u.uid) || '—';
+      var mode = AH.Auth.isDemoMode ? 'Demo mode · data stays on this device' : (fb ? 'Cloud sync active' : 'Local session');
+      AH.Modal.open('Account · Collaboration',
+        '<div class="sh-modal__label">' + clean(mode) + '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px;">' +
+          '<div class="sh-field"><label>Identity</label><div style="font-size:14px;font-weight:600;">' + clean(name) + '</div></div>' +
+          '<div class="sh-field"><label>User ID</label><div style="font-family:var(--f-mono);font-size:11px;color:var(--fg-60);word-break:break-all;">' + clean(id) + '</div></div>' +
+        '</div>' +
+        '<div style="margin-top:18px;font-size:13px;color:var(--fg-72);line-height:1.65;">Per-production keys (<code>ah_*</code>) isolate slate data. With cloud sync, Story Map, music cues, Gantt tasks, beat board, and automation rules merge into your Firebase production document for backup and multi-device continuity.</div>',
+        {
+          size: 'md',
+          modalId: 'modal-account',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Close</button>' +
+            (fb && !AH.Auth.isDemoMode
+              ? '<button class="btn btn--primary" onclick="AH.Modal.close();AH.Auth.signOut();">Sign out</button>'
+              : '<button class="btn btn--primary" onclick="AH.Modal.close();AH.Auth._revealSplash();">Cloud sign-in…</button>')
+        });
     },
 
     async signOut() {
@@ -13291,6 +13966,11 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   // Keeps the pattern identical to V1's `if (Auth.user && !Auth.isDemoMode)`.
   AH.canCloudSync = function () {
     return !!(AH.Firebase && AH.Firebase.ready && AH.Firebase.user && AH.Auth && AH.Auth.user && !AH.Auth.isDemoMode);
+  };
+  /** Partial merge into Firebase production doc (story map already uses this). */
+  AH.syncProductionBlob = function (partial) {
+    if (!partial || typeof AH.canCloudSync !== 'function' || !AH.canCloudSync()) return;
+    try { AH.Firebase.pushProductionData(STATE.activeProdId, partial); } catch (_) {}
   };
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -13377,6 +14057,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     // Mode banner actions
     on($('#mode-banner-upgrade'), 'click', function () { AH.Auth._revealSplash(); });
     on($('#mode-banner-signout'), 'click', function () { AH.Auth.signOut(); });
+    on($('#user-chip'), 'click', function () { AH.Auth.openAccountModal(); });
     // TC + edge jitter
     var tcFrame = 0;
     function tickTC() {
@@ -13429,6 +14110,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         var nameEl = $('.rail__user__name'); if (nameEl) nameEl.textContent = u.displayName || u.email || 'Signed in';
         AH.Auth.updateModeBanner();
         toast('Signed in · ' + (u.displayName || u.email || 'user'));
+      } else {
+        AH.Auth.updateUserChip();
       }
     });
 
