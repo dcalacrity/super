@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Alacrity Hub — Production Command System</title>
+<title>Alacrity Hub | D.C Alacrity's Production Command System</title>
 <meta name="description" content="Alacrity Hub — the AI-augmented, zero-trust production command system. Stripboards, ledgers, continuity, node-graph narrative, one pipeline, one story." />
 <meta name="theme-color" content="#04070d" />
 
@@ -1099,35 +1099,40 @@ html[data-theme="light"] .topbar {
 }
 .topbar__search {
   justify-self: center;
-  width: min(460px, 100%);
-  height: 42px;
+  width: min(420px, 100%);
+  height: 40px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 16px;
+  gap: 10px;
+  padding: 0 14px 0 12px;
   border-radius: 999px;
   background: var(--glass-1);
   border: 1px solid var(--edge);
   color: var(--fg-60);
-  font-family: var(--f-mono);
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--f-body);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-transform: none;
   cursor: pointer;
-  transition: border-color 0.25s var(--ease), background 0.25s var(--ease);
+  transition: border-color 0.25s var(--ease), background 0.25s var(--ease), color 0.2s var(--ease);
 }
-.topbar__search:hover { border-color: var(--edge-mint); }
-.topbar__search svg { width: 16px; height: 16px; color: var(--fg-60); }
+.topbar__search:hover { border-color: var(--edge-mint); color: var(--fg); }
+.topbar__search svg { width: 17px; height: 17px; color: var(--fg-50); flex-shrink: 0; }
+.topbar__search__label { flex: 1; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--fg-60); }
 .topbar__search kbd {
-  margin-left: auto;
+  margin-left: 4px;
+  flex-shrink: 0;
   font-family: var(--f-mono);
-  font-size: 10px;
-  padding: 3px 7px;
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 3px 6px;
   border-radius: 6px;
   background: var(--ink-2);
   border: 1px solid var(--edge);
-  color: var(--fg-60);
-  letter-spacing: 0.08em;
+  color: var(--fg-50);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 html[data-theme="light"] .topbar__search kbd { background: #fff; }
 .topbar__actions { display: flex; align-items: center; gap: 10px; }
@@ -1152,6 +1157,61 @@ html[data-theme="light"] .topbar__search kbd { background: #fff; }
   white-space: nowrap;
 }
 .pill:hover { transform: translateY(-2px); border-color: var(--edge-mint); color: var(--mint); }
+.user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(280px, 36vw);
+  height: 36px;
+  padding: 0 12px 0 4px;
+  border-radius: 999px;
+  background: var(--glass-1);
+  border: 1px solid var(--edge);
+  color: var(--fg-80);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  cursor: pointer;
+  transition: transform 0.22s var(--ease), border-color 0.22s var(--ease), color 0.22s var(--ease);
+}
+.user-chip:hover { transform: translateY(-2px); border-color: var(--edge-mint); color: var(--mint); }
+.user-chip__av {
+  width: 28px; height: 28px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #0b1220;
+  background: linear-gradient(135deg, #17FFC5, #14AFDF);
+  flex-shrink: 0;
+}
+.user-chip__meta { min-width: 0; text-align: left; line-height: 1.25; }
+.user-chip__name {
+  display: block;
+  font-family: var(--f-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.user-chip__sub {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-45);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .pill .dot {
   width: 7px; height: 7px;
   border-radius: 999px;
@@ -2104,10 +2164,17 @@ html[data-theme="light"] .gantt__track { background: var(--ink-1); }
   border: 0;
   outline: none;
   font-family: var(--f-body);
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 450;
+  letter-spacing: 0.01em;
   color: var(--fg);
 }
-.cmdk__input::placeholder { color: var(--fg-45); }
+.cmdk__input::placeholder {
+  color: var(--fg-42);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
 .cmdk__hint {
   font-family: var(--f-mono);
   font-size: 10px;
@@ -2143,6 +2210,67 @@ html[data-theme="light"] .gantt__track { background: var(--ink-1); }
 .cmdk__item.is-active, .cmdk__item:hover { background: linear-gradient(135deg, rgba(23,255,197,0.14), rgba(20,175,223,0.1)); color: var(--fg); }
 .cmdk__item svg { width: 18px; height: 18px; }
 .cmdk__item-meta { font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-45); }
+
+/* In-app PDF preview (inline, no extra tab until print) */
+.pdf-preview {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: min(520px, 100vw - 48px);
+  z-index: 950;
+  display: flex;
+  flex-direction: column;
+  background: var(--glass-2);
+  border-left: 1px solid var(--edge-2);
+  box-shadow: -24px 0 80px rgba(0,0,0,0.45);
+  transform: translateX(100%);
+  transition: transform 0.32s var(--ease-out);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+.pdf-preview.is-open { transform: translateX(0); }
+.pdf-preview__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--edge);
+  flex-shrink: 0;
+}
+.pdf-preview__title {
+  font-family: var(--f-display);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pdf-preview__actions { display: flex; gap: 8px; flex-shrink: 0; }
+.pdf-preview__frame-wrap {
+  flex: 1;
+  min-height: 0;
+  background: var(--ink-0);
+}
+.pdf-preview iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+}
+.pdf-preview__hint {
+  padding: 10px 16px 14px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--fg-60);
+  border-top: 1px solid var(--edge);
+  flex-shrink: 0;
+}
+@media (max-width: 900px) {
+  .pdf-preview { width: 100vw; }
+}
 
 /* ── SPLASH ───────────────────────────────────────────────────────────── */
 .splash {
@@ -2234,6 +2362,27 @@ html[data-theme="light"] .gantt__track { background: var(--ink-1); }
   max-width: 560px;
   margin: 0 auto 32px;
   line-height: 1.6;
+}
+.splash__sig {
+  font-family: var(--f-display);
+  font-size: clamp(18px, 2.2vw, 26px);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255,255,255,0.92);
+  margin: -8px auto 20px;
+  max-width: 640px;
+  line-height: 1.35;
+}
+.splash__sig em {
+  font-style: italic;
+  font-weight: 500;
+  color: rgba(23,255,197,0.95);
+}
+.splash__divider {
+  width: min(420px, 88%);
+  height: 1px;
+  margin: 0 auto 28px;
+  background: linear-gradient(90deg, transparent, var(--seam), transparent);
 }
 .splash__cta {
   display: inline-flex;
@@ -3609,10 +3758,12 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     </div>
     <div class="splash__eyebrow">Zero-Trust · Virtual Production</div>
     <h1 class="splash__title">Welcome to the <em>Hub.</em></h1>
+    <p class="splash__sig">A production command system by <em>D.C. Alacrity</em></p>
     <p class="splash__lede">
       The AI-augmented production command system. Stripboards, ledgers, continuity,
       branching-narrative graph — one pipeline, one story.
     </p>
+    <div class="splash__divider" aria-hidden="true"></div>
     <div class="splash__ctas">
       <button class="splash__cta splash__cta--demo" id="splash-demo" type="button" title="Demo Mode · runs entirely in your browser">
         <span>DEMO MODE</span>
@@ -3679,15 +3830,22 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         <span id="topbar-title">Dashboard</span>
       </h1>
 
-      <button class="topbar__search" id="topbar-search" type="button">
+      <button class="topbar__search" id="topbar-search" type="button" aria-label="Open command palette">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-        <span>Search · Modules · Scenes · People</span>
+        <span class="topbar__search__label">Search the Hub…</span>
         <kbd>⌘K</kbd>
       </button>
 
       <div class="topbar__actions">
+        <button type="button" class="user-chip" id="user-chip" title="Account & collaboration" aria-label="Open account">
+          <span class="user-chip__av" id="user-chip-av">?</span>
+          <span class="user-chip__meta">
+            <span class="user-chip__name" id="user-chip-name">Not signed in</span>
+            <span class="user-chip__sub" id="user-chip-sub">Local session</span>
+          </span>
+        </button>
         <div class="pill" title="Zero-trust uplink"><span class="dot"></span><span>Uplink Stable</span></div>
-        <div class="pill"><span>Budget</span><span id="pill-budget">On Track</span></div>
+        <div class="pill" id="pill-budget-wrap" title="Budget status"><span>Budget</span><span id="pill-budget">On Track</span></div>
         <button class="icon-btn" id="btn-notify" aria-label="Notifications">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
         </button>
@@ -3751,12 +3909,26 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   <div class="cmdk">
     <div class="cmdk__header">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-      <input class="cmdk__input" id="cmdk-input" type="text" placeholder="Search modules · scenes · people · actions..." />
+      <input class="cmdk__input" id="cmdk-input" type="text" placeholder="Jump to a module, person, or action…" />
       <span class="cmdk__hint">ESC</span>
     </div>
     <div class="cmdk__list" id="cmdk-list"></div>
   </div>
 </div>
+
+<aside class="pdf-preview" id="pdf-preview" aria-hidden="true" aria-label="Document preview">
+  <div class="pdf-preview__head">
+    <div class="pdf-preview__title" id="pdf-preview-title">Preview</div>
+    <div class="pdf-preview__actions">
+      <button type="button" class="btn btn--ghost" id="pdf-preview-print">Print / Save PDF</button>
+      <button type="button" class="btn btn--primary" id="pdf-preview-close">Close</button>
+    </div>
+  </div>
+  <div class="pdf-preview__frame-wrap">
+    <iframe id="pdf-preview-frame" title="PDF preview"></iframe>
+  </div>
+  <div class="pdf-preview__hint" id="pdf-preview-hint">Use your system print dialog to save as PDF. This panel previews the same layout as generated paperwork.</div>
+</aside>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
      6 · FLOATING PANELS · SCRIPT EDITOR
@@ -4179,7 +4351,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         { id: uid('n'), dot: true, text: 'Call Sheet · D04 published.', time: '18m' },
         { id: uid('n'), dot: false, text: 'Arri Alexa 35 requested for D05.', time: '1h' }
       ],
-      notes: ''
+      notes: '',
+      bannerLine: ''
     };
   };
   var STATE = AH.Storage.local.get(STATE_KEY, null) || defaultState();
@@ -4240,17 +4413,22 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     { id: 'dashboard',           label: 'Dashboard',         group: 'OVERVIEW',  parent: 'overview', icon: 'grid',    crumb: 'OVERVIEW · COMMAND',    img: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1800&q=80' },
     { id: 'production-library',  label: 'Productions',       group: 'OVERVIEW',  parent: 'overview', icon: 'library', crumb: 'OVERVIEW · CATALOG',    img: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=1800&q=80' },
     { id: 'calendar',            label: 'Calendar',          group: 'OVERVIEW',  parent: 'overview', icon: 'calendar',crumb: 'OVERVIEW · TIME',       img: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'getting-started',     label: 'Getting Started',   group: 'OVERVIEW',  parent: 'overview', icon: 'check',   crumb: 'OVERVIEW · ONBOARD',    img: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'shortcuts',         label: 'Shortcuts',         group: 'OVERVIEW',  parent: 'overview', icon: 'gear',    crumb: 'OVERVIEW · KEYS',       img: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1800&q=80' },
 
     // STORY ROOM — writing + narrative
     { id: 'script-editor',       label: 'Script Studio',     group: 'STORY',     parent: 'story',    icon: 'script',  crumb: 'STORY · STUDIO',        img: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'script-import',       label: 'Script Import',     group: 'STORY',     parent: 'story',    icon: 'upload',  crumb: 'STORY · IMPORT',        img: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1800&q=80' },
     { id: 'storymap',            label: 'Story Map',         group: 'STORY',     parent: 'story',    icon: 'node',    crumb: 'STORY · MAP',           img: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1800&q=80' },
     { id: 'beatboard',           label: 'Beat Board',        group: 'STORY',     parent: 'story',    icon: 'layers',  crumb: 'STORY · OUTLINE',       img: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=1800&q=80' },
     { id: 'storyboard',          label: 'Storyboard',        group: 'STORY',     parent: 'story',    icon: 'camera',  crumb: 'STORY · BOARD',         img: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1800&q=80' },
     { id: 'shotlist',            label: 'Shot List',         group: 'STORY',     parent: 'story',    icon: 'camera',  crumb: 'STORY · SHOTS',         img: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'shot-list',           label: 'Shot List (legacy)', group: 'STORY',    parent: 'story',    icon: 'camera',  crumb: 'STORY · SHOTS',         img: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=1800&q=80' },
 
     // PRE-PROD — planning
     { id: 'schedule',            label: 'Stripboard',        group: 'PRE',       parent: 'pre',      icon: 'calendar',crumb: 'PRE-PROD · STRIPS',     img: 'https://images.unsplash.com/photo-1533073526757-2c8ca1df9f1c?auto=format&fit=crop&w=1800&q=80' },
     { id: 'breakdown',           label: 'Breakdown',         group: 'PRE',       parent: 'pre',      icon: 'layers',  crumb: 'PRE-PROD · ELEMENTS',   img: 'https://images.unsplash.com/photo-1560472355-536de3962603?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'breakdowns',          label: 'Scene Breakdowns',  group: 'PRE',       parent: 'pre',      icon: 'layers',  crumb: 'PRE-PROD · SCENE BD',   img: 'https://images.unsplash.com/photo-1560472355-536de3962603?auto=format&fit=crop&w=1800&q=80' },
     { id: 'days',                label: 'Shoot Days',        group: 'PRE',       parent: 'pre',      icon: 'calendar',crumb: 'PRE-PROD · DAYS',       img: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1800&q=80' },
     { id: 'locations',           label: 'Locations',         group: 'PRE',       parent: 'pre',      icon: 'location',crumb: 'PRE-PROD · LOCATIONS',  img: 'https://images.unsplash.com/photo-1487958449943-2429e8be8625?auto=format&fit=crop&w=1800&q=80' },
     { id: 'cast-crew',           label: 'Cast & Crew',       group: 'PRE',       parent: 'pre',      icon: 'users',   crumb: 'PRE-PROD · PEOPLE',     img: 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&w=1800&q=80' },
@@ -4273,6 +4451,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
 
     // BUSINESS
     { id: 'financials',          label: 'Financials',        group: 'BIZ',       parent: 'biz',      icon: 'dollar',  crumb: 'BIZ · FINANCIALS',      img: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'budget',              label: 'Budget',            group: 'BIZ',       parent: 'biz',      icon: 'dollar',  crumb: 'BIZ · BUDGET',          img: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=1800&q=80' },
     { id: 'gantt',               label: 'Timeline',          group: 'BIZ',       parent: 'biz',      icon: 'timeline',crumb: 'BIZ · TIMELINE',        img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1800&q=80' },
     { id: 'milestones',          label: 'Milestones',        group: 'BIZ',       parent: 'biz',      icon: 'check',   crumb: 'BIZ · MILESTONES',      img: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=1800&q=80' },
     { id: 'documents',           label: 'Documents',         group: 'BIZ',       parent: 'biz',      icon: 'doc',     crumb: 'BIZ · DOCUMENTS',       img: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1800&q=80' },
@@ -4331,6 +4510,11 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       $('#sh-modal-title').textContent = title;
       $('#sh-modal-body').innerHTML = bodyHTML;
       $('#sh-modal').className = 'sh-modal' + (opts.size ? ' sh-modal--' + opts.size : '');
+      var sm = $('#sh-modal');
+      if (sm) {
+        if (opts.modalId) sm.setAttribute('data-modal', opts.modalId);
+        else sm.removeAttribute('data-modal');
+      }
       $('#sh-modal-foot').innerHTML = (opts.footer || '');
       $('#sh-modal-back').classList.add('is-open');
       if (opts.onMount) try { opts.onMount($('#sh-modal-body'), $('#sh-modal-foot')); } catch (_) {}
@@ -4338,16 +4522,21 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     },
     close: function () {
       $('#sh-modal-back').classList.remove('is-open');
+      var sm = $('#sh-modal');
+      if (sm) sm.removeAttribute('data-modal');
       document.body.style.overflow = '';
     },
-    confirm: function (title, msg, onYes) {
+    confirm: function (title, msg, onYes, onNo) {
       AH.Modal.open(title,
         '<div style="font-size:14px;color:var(--fg-80);line-height:1.5;">' + clean(msg) + '</div>',
         {
           size: 'sm',
-          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button>' +
+          footer: '<button class="btn btn--ghost" id="mod-no">Cancel</button>' +
                   '<button class="btn btn--primary" id="mod-yes">Confirm</button>',
-          onMount: function (body, foot) { $('#mod-yes').onclick = function () { AH.Modal.close(); onYes && onYes(); }; }
+          onMount: function (body, foot) {
+            $('#mod-yes').onclick = function () { AH.Modal.close(); onYes && onYes(); };
+            $('#mod-no').onclick = function () { AH.Modal.close(); onNo && onNo(); };
+          }
         });
     },
     prompt: function (title, label, def, onOK) {
@@ -4365,6 +4554,55 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           }
         });
     }
+  };
+
+  // Floating menu for budget scale (used by new/edit production modals + financials)
+  AH.UI = AH.UI || {};
+  AH.UI._scaleMenuEl = null;
+  AH.UI._closeScaleMenu = function () {
+    if (AH.UI._scaleMenuEl && AH.UI._scaleMenuEl.parentNode) AH.UI._scaleMenuEl.parentNode.removeChild(AH.UI._scaleMenuEl);
+    AH.UI._scaleMenuEl = null;
+    document.removeEventListener('click', AH.UI._scaleMenuDocClose, true);
+  };
+  AH.UI._scaleMenuDocClose = function (e) {
+    if (!AH.UI._scaleMenuEl) return;
+    if (AH.UI._scaleMenuEl.contains(e.target)) return;
+    AH.UI._closeScaleMenu();
+  };
+  AH.UI.scalePickerMenu = function (anchorEl, selectId, scalesObj) {
+    if (!anchorEl || !scalesObj) return;
+    AH.UI._closeScaleMenu();
+    var sel = $('#' + selectId);
+    var menu = document.createElement('div');
+    menu.className = 'scale-flyout';
+    menu.setAttribute('role', 'menu');
+    menu.style.cssText = 'position:absolute;z-index:12000;min-width:min(340px,92vw);max-height:min(52vh,420px);overflow:auto;padding:8px;border-radius:12px;background:var(--glass-2);border:1px solid var(--edge);box-shadow:0 18px 48px rgba(0,0,0,0.45);backdrop-filter:blur(12px);';
+    Object.keys(scalesObj).forEach(function (k) {
+      var s = scalesObj[k];
+      var row = document.createElement('button');
+      row.type = 'button';
+      row.setAttribute('role', 'menuitem');
+      row.style.cssText = 'display:block;width:100%;text-align:left;padding:10px 12px;margin:0;border:0;border-radius:8px;background:transparent;color:var(--fg);font-family:var(--f-mono);font-size:11.5px;cursor:pointer;line-height:1.45;';
+      row.innerHTML = '<strong style="font-family:var(--f-display);font-size:13px;">' + clean(s.label) + '</strong><br/><span style="color:var(--fg-60);">≤ $' + (s.ceiling / 1000000) + 'M ceiling</span>';
+      row.onmouseenter = function () { row.style.background = 'var(--glass-1)'; };
+      row.onmouseleave = function () { row.style.background = 'transparent'; };
+      row.onclick = function (ev) {
+        ev.preventDefault(); ev.stopPropagation();
+        if (sel) sel.value = k;
+        AH.UI._closeScaleMenu();
+        toast('Budget scale · ' + s.label);
+      };
+      menu.appendChild(row);
+    });
+    var wrap = anchorEl.closest('#np-scale-wrap') || anchorEl.closest('#ep-scale-wrap') || anchorEl.parentElement;
+    if (wrap && getComputedStyle(wrap).position === 'static') wrap.style.position = 'relative';
+    (wrap || document.body).appendChild(menu);
+    AH.UI._scaleMenuEl = menu;
+    var r = anchorEl.getBoundingClientRect();
+    var pr = (wrap || document.body).getBoundingClientRect();
+    menu.style.left = Math.max(0, r.left - pr.left) + 'px';
+    menu.style.top = (r.bottom - pr.top + 6) + 'px';
+    setTimeout(function () { document.addEventListener('click', AH.UI._scaleMenuDocClose, true); }, 0);
   };
 
   // ────────────────────────────────────────────────────────────────────────
@@ -4544,6 +4782,23 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     var title = opts.title || (m.id === 'dashboard' ? 'Command <em>center.</em>' : m.label);
     var lede  = opts.lede  || heroLede(m.id);
     var stat  = opts.stat  || heroStat(m.id);
+    var secLabel = opts.secondary;
+    var secFn = opts.secondaryFn;
+    var terLabel = opts.tertiary;
+    var terFn = opts.tertiaryFn;
+    if (opts.hideSecondary) { secLabel = null; secFn = null; }
+    else if (secLabel == null && secFn == null) {
+      secLabel = 'Production brief';
+      secFn = 'AH.Brief.openPDF()';
+    } else if (secLabel != null && secFn == null) {
+      secFn = 'AH.Brief.openPDF()';
+    }
+    if (secLabel && secFn && !opts.hideSecondary && terLabel == null && terFn == null) {
+      if (String(secFn).indexOf('AH.Brief.openPDF') === -1) {
+        terLabel = 'Brief';
+        terFn = 'AH.Brief.openPDF()';
+      }
+    }
     return (
       '<div class="hero">' +
         '<div class="hero__img" style="background-image:url(\'' + m.img + '\')"></div>' +
@@ -4554,7 +4809,12 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           '<p class="hero__lede">' + lede + '</p>' +
           '<div class="hero__cta-row">' +
             '<button class="btn btn--primary"' + (opts.primaryFn ? ' onclick="' + opts.primaryFn + '"' : '') + '>' + (opts.primary || 'OPEN MODULE') + ' ' + ICONS.arrow + '</button>' +
-            '<button class="btn btn--ghost-light"' + (opts.secondaryFn ? ' onclick="' + opts.secondaryFn + '"' : '') + '>' + (opts.secondary || 'EXPORT BRIEF') + '</button>' +
+            (secLabel && secFn
+              ? '<button class="btn btn--ghost-light" onclick="' + secFn + '">' + secLabel + '</button>'
+              : '') +
+            (terLabel && terFn
+              ? '<button class="btn btn--ghost-light" style="opacity:0.92;border-color:rgba(255,255,255,0.22);" onclick="' + terFn + '">' + terLabel + '</button>'
+              : '') +
           '</div>' +
         '</div>' +
         '<div class="hero__card">' +
@@ -4573,10 +4833,12 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       'production-library':  'Every active and archived production in one secure, zero-trust library. Ship them as an interactive APK on demand.',
       'schedule':            'Stripboard · shooting order · call sheets. Optimized across locations, daylight, and union rules.',
       'breakdown':           'Scene-by-scene analysis. Props, wardrobe, SFX, stunts — elements tagged and tracked across every day.',
+      'breakdowns':          'Scene breakdown workbook: one row per scene with every element category in one place.',
       'shotlist':            'Shots · lenses · coverage. Ordered for the DP, ready for the 1st AD to block the day around.',
       'cast-crew':           'Directory, availability, and crew chain-of-command for every production on the slate.',
       'contacts':            'Call register · departments · departments chain of command. One click to dial.',
       'financials':          'Budget, actuals, variance. Live P&L with per-scene cost attribution and aerospace-grade audit trail.',
+      'budget':              'Top-sheet view of the production budget, ledger, and scale model — same ledger as Financials.',
       'vault':               'Zero-trust encrypted assets. Rushes, drives, keys. Every read logged, every egress gated.',
       'gantt':               'Dependency graph and critical path across departments, locations, and post phases.',
       'tech':                'Gear inventory · asset tracking. Checkouts, insurance value, service history, cross-prod loans.',
@@ -4584,6 +4846,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       'continuity':          'On-set continuity logs. Wardrobe, blocking, props, weather, and clock state per scene.',
       'documents':           'Contracts · call sheets · legal · releases · vendor MSAs. Signed, timestamped, auditable.',
       'script-editor':       'Script Studio · write, annotate, shot-list, revise. Pages paginate, elements auto-format, annotations travel with scenes.',
+      'script-import':       'Bring Fountain, FDX, PDF, or text into Script Studio before you open the editor.',
       'storymap':            'Node-graph of your narrative. Branches, converges, pathways, emotion-core beats.',
       'crm-prod':            'Production pipeline. Investors, distributors, agencies. Live pipeline stages.',
       'crm-biz':             'Business development. Clients, vendors, talent reps. Calls · notes · follow-ups.',
@@ -4591,6 +4854,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       'dialer':              'Click-to-dial with call logging. Routes through your softphone.',
       'integrations':        'n8n · ComfyUI · OpenClaw · Zapier. Map your studio\'s data to every tool it touches.',
       'risk':                'Every hazard flagged, every mitigation logged. Covered by insurance and by plan.',
+      'production-automation': 'Rules, triggers, and batch actions that keep stripboards, exports, and notifications in sync.',
       'locations':           'Scout sheets, release forms, permit state, photos. One record per place.',
       'onset':               'Day-of rolling cards. Scene · take · roll · sound · timecode · marker.',
       'walkie':              'Channel log. Who, what, when, and why across dept. radios.',
@@ -4600,7 +4864,17 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       'export':              'Package a production as an interactive APK or a complete archival backup.',
       'platform':            'Platform capabilities. Every module, every extension point, catalogued.',
       'privacy':             'Privacy policy, data processing terms, data subject rights.',
-      'security':            'Four-layer zero-trust defense posture. Independently scanned. Zero critical. Zero high.'
+      'security':            'Four-layer zero-trust defense posture. Independently scanned. Zero critical. Zero high.',
+      'getting-started':     'Onboarding path: import, schedule, story map, and paperwork — without losing the zero-trust posture.',
+      'shortcuts':           'Keyboard surface area across Script Studio, Story Map, and the command palette.',
+      'preflight':           'Shoot-day readiness: scenes, people, locations, and risk posture in one pass.',
+      'prod-pipeline':       'Production-side CRM pipeline — same data as Production CRM, focused on stage columns.',
+      'prod-dialer':         'Outbound cadence for production leads with explicit call-state tracking.',
+      'prod-intel':          'Research layer for production-side deals — separate from pipeline cards.',
+      'biz-pipeline':        'Business-side CRM pipeline — same data as Business CRM, focused on stage columns.',
+      'biz-dialer':          'Outbound cadence for business leads with explicit call-state tracking.',
+      'biz-intel':           'Research layer for business-side deals — separate from pipeline cards.',
+      'shot-list':           'Legacy route alias for Shot List — deep links from V1 resolve here.'
     };
     return L[id] || 'Production overview & status.';
   }
@@ -4610,10 +4884,12 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       'production-library': { n: '14',  l: 'In library' },
       'schedule':           { n: '24',  l: 'Shoot days' },
       'breakdown':          { n: '47',  l: 'Scenes broken' },
+      'breakdowns':         { n: '47',  l: 'Scene rows' },
       'shotlist':           { n: '312', l: 'Shots planned' },
       'cast-crew':          { n: '38',  l: 'On the slate' },
       'contacts':           { n: '112', l: 'Registered' },
       'financials':         { n: '92%', l: 'On budget' },
+      'budget':             { n: '92%', l: 'Top sheet' },
       'vault':              { n: 'ZTA', l: 'L4 compliant' },
       'gantt':              { n: '5',   l: 'Critical paths' },
       'tech':               { n: '164', l: 'Tracked assets' },
@@ -4621,6 +4897,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       'continuity':         { n: '47',  l: 'Scenes logged' },
       'documents':          { n: '86',  l: 'Documents live' },
       'script-editor':      { n: '47',  l: 'Scenes' },
+      'script-import':      { n: '↑',   l: 'Pipeline' },
       'storymap':           { n: '12',  l: 'Branches' },
       'crm-prod':           { n: '29',  l: 'Active leads' },
       'crm-biz':            { n: '52',  l: 'Open pipeline' },
@@ -4628,6 +4905,10 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       'dialer':             { n: '8',   l: 'Calls today' },
       'integrations':       { n: '14',  l: 'Connectors' },
       'risk':               { n: '3',   l: 'High' },
+      'production-automation': { n: '12', l: 'Rules live' },
+      'beatboard':          { n: '5',   l: 'Beats' },
+      'music':              { n: '4',   l: 'Cues' },
+      'post':               { n: '8',   l: 'Phases' },
       'locations':          { n: '17',  l: 'Scouted' },
       'onset':              { n: '23',  l: 'Takes · last' },
       'walkie':             { n: '6',   l: 'Channels live' },
@@ -4637,7 +4918,17 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       'export':             { n: '2',   l: 'Ready packages' },
       'platform':           { n: '32',  l: 'Capabilities' },
       'privacy':            { n: 'GDPR',l: 'Compliant' },
-      'security':           { n: '0',   l: 'Critical vulns' }
+      'security':           { n: '0',   l: 'Critical vulns' },
+      'getting-started':    { n: '10',  l: 'Min setup' },
+      'shortcuts':          { n: '⌘K',  l: 'Palette' },
+      'preflight':          { n: '✓',   l: 'Checks' },
+      'prod-pipeline':      { n: '29',  l: 'Stages' },
+      'prod-dialer':        { n: '8',   l: 'Queue' },
+      'prod-intel':         { n: '12',  l: 'Notes' },
+      'biz-pipeline':       { n: '52',  l: 'Stages' },
+      'biz-dialer':         { n: '11',  l: 'Queue' },
+      'biz-intel':          { n: '9',   l: 'Notes' },
+      'shot-list':          { n: '↗',   l: 'Alias' }
     };
     return S[id] || { n: '—', l: 'Overview' };
   }
@@ -4857,6 +5148,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         leftTab: 'scenes',
         rightTab: 'inspector',
         spellCheck: false,
+        autoContd: true,
+        autoUpperFormatting: true,
         language: 'en-US',
         revColor: 'white',
         lockedPages: [],
@@ -4876,6 +5169,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         else Editor._stateByProd[pid] = Editor._newScriptState();
       }
       Editor.state = Editor._stateByProd[pid];
+      if (Editor.state.autoContd === undefined) Editor.state.autoContd = true;
+      if (Editor.state.autoUpperFormatting === undefined) Editor.state.autoUpperFormatting = true;
       return Editor.state;
     },
 
@@ -4947,7 +5242,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       var s = Editor.getState();
       return (
         '<div class="section" style="margin-bottom:10px;">' +
-          AH.Views.renderHero(m, { primary: 'PREVIEW PDF', primaryFn: 'AH.Editor.openExportModal()' }) +
+          AH.Views.renderHero(m, { primary: 'PREVIEW PDF', primaryFn: 'AH.Editor.openExportModal()', hideSecondary: true }) +
         '</div>' +
         // Command bar
         '<div class="se-cmdbar">' +
@@ -4974,6 +5269,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         '<div class="se-probar">' +
           '<span class="se-probar__badge">PRO</span>' +
           '<button class="se-btn se-btn--xs" onclick="AH.Editor.toggleSpell()" title="Spell check">✎ SPELL</button>' +
+          '<button class="se-btn se-btn--xs' + (s.autoContd ? ' is-primary' : '') + '" id="se-fmt-contd" onclick="AH.Editor.toggleAutoContd()" title="Prompt to add (CONT\'D) when the same character speaks back-to-back">CONT\'D</button>' +
+          '<button class="se-btn se-btn--xs' + (s.autoUpperFormatting ? ' is-primary' : '') + '" id="se-fmt-uc" onclick="AH.Editor.toggleAutoUpper()" title="Auto-uppercase scene headings, transitions, and character names on blur">AUTO UC</button>' +
           '<button class="se-btn se-btn--xs" onclick="AH.Editor.openTemplates()" title="Templates">☰ TEMPLATES</button>' +
           '<button class="se-btn se-btn--xs" onclick="AH.Editor.openLang()" title="Language">⌘ LANG</button>' +
           '<div class="se-probar__sep"></div>' +
@@ -5291,6 +5588,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       var lineEl = row.querySelector('.se-line');
       var edit = lineEl.querySelector('[contenteditable]');
       on(edit, 'input', function () { ln.x = edit.innerText; Editor.markDirty(); Editor.updateStats(); });
+      on(edit, 'blur', function () { Editor.applyFormatOnBlur(idx, edit); });
       on(edit, 'keydown', function (e) { Editor.onLineKey(e, idx); });
       on(edit, 'focus', function () { Editor.selectLine(idx); });
       on(lineEl, 'click', function (e) {
@@ -5997,6 +6295,59 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     toast('Spell check · ' + (Editor.state.spellCheck ? 'ON' : 'OFF'));
   };
 
+  function _normCharName(x) {
+    return (x || '').toString().replace(/\s*\((?:CONT'?D|cont'?d)\)\s*$/i, '').replace(/\s*\([^)]*\)\s*$/g, '').trim().toUpperCase();
+  }
+  Editor.toggleAutoContd = function () {
+    Editor.state.autoContd = !Editor.state.autoContd;
+    Editor.markDirty();
+    var b = $('#se-fmt-contd'); if (b) b.classList.toggle('is-primary', !!Editor.state.autoContd);
+    toast('Auto-CONT\'D prompts · ' + (Editor.state.autoContd ? 'ON' : 'OFF'));
+  };
+  Editor.toggleAutoUpper = function () {
+    Editor.state.autoUpperFormatting = !Editor.state.autoUpperFormatting;
+    Editor.markDirty();
+    var b = $('#se-fmt-uc'); if (b) b.classList.toggle('is-primary', !!Editor.state.autoUpperFormatting);
+    toast('Auto-uppercase on blur · ' + (Editor.state.autoUpperFormatting ? 'ON' : 'OFF'));
+  };
+  Editor.applyFormatOnBlur = function (idx, editEl) {
+    var s = Editor.state; if (!s || !s.lines[idx]) return;
+    var ln = s.lines[idx];
+    var raw = (editEl && editEl.innerText != null ? editEl.innerText : (ln.x || '')).replace(/\u00a0/g, ' ');
+    ln.x = raw;
+    if (s.autoUpperFormatting) {
+      var t = ln.t;
+      if (t === 'scene' || t === 'trans' || t === 'centered' || t === 'pathway' || t === 'shot') {
+        ln.x = raw.trim().toUpperCase();
+      } else if (t === 'char') {
+        var parts = raw.split(/\n/);
+        ln.x = parts.map(function (p) { return p.trim().toUpperCase(); }).join('\n');
+      }
+      if (editEl && ln.x !== raw) { editEl.innerText = ln.x; Editor.markDirty(); }
+    }
+    if (s.autoContd && ln.t === 'char' && idx >= 2) {
+      var prevChar = s.lines[idx - 2];
+      var between = s.lines[idx - 1];
+      if (prevChar && prevChar.t === 'char' && between && between.t === 'dial') {
+        var a = _normCharName(prevChar.x);
+        var b = _normCharName(ln.x);
+        if (a && a === b && !/\(CONT'?D\)/i.test(ln.x)) {
+          AH.Modal.confirm(
+            'Continue dialogue?',
+            'Same character speaks again right after their line. Add (CONT\'D) to the character cue?',
+            function () {
+              var base = (ln.x || '').trim().replace(/\s*\([^)]*\)\s*$/g, '').trim();
+              ln.x = base + ' (CONT\'D)';
+              Editor.pushHistory(); Editor.renderScript(); Editor.markDirty(); toast('CONT\'D added');
+            },
+            function () { Editor.markDirty(); }
+          );
+        }
+      }
+    }
+    Editor.updateStats();
+  };
+
   Editor.openLang = function () {
     var langs = [
       { c: 'en-US', n: '🇺🇸 English (US)' }, { c: 'en-GB', n: '🇬🇧 English (UK)' },
@@ -6635,6 +6986,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   };
 
   Editor.openExportModal = function () {
+    var smPref = AH.Storage.local.get('ah_pdf_storymap', '0') === '1';
     var formats = [
       { k: 'pdf',       n: 'PDF · Vector',      i: '📄', d: 'Vector PDF via jsPDF · title page + scene numbers' },
       { k: 'pdf-print', n: 'PDF · Browser',     i: '🖨', d: 'Print dialog → Save-as-PDF · high-fidelity' },
@@ -6646,10 +6998,24 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     ];
     AH.Modal.open('Export Script',
       '<div class="sh-modal__label">Choose a format</div>' +
+      '<div class="sh-field" style="margin-bottom:14px;padding:10px 12px;border-radius:10px;border:1px solid var(--edge);background:var(--glass-2);display:flex;flex-direction:column;gap:10px;">' +
+        '<label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;font-size:13px;color:var(--fg-80);line-height:1.45;">' +
+          '<input type="checkbox" id="exp-storymap"' + (smPref ? ' checked' : '') + ' style="margin-top:3px;"/>' +
+          '<span>Append a <strong>Story Map</strong> page to screenplay PDFs (print + vector). Shows nodes, types, tension, and script links.</span>' +
+        '</label>' +
+        '<label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;font-size:13px;color:var(--fg-80);line-height:1.45;">' +
+          '<input type="checkbox" id="exp-inline"' + (AH.Storage.local.get('ah_pdf_inline', '1') === '1' ? ' checked' : '') + ' style="margin-top:3px;"/>' +
+          '<span>Open generated <strong>paperwork PDFs</strong> in the side preview panel first (then print). Uncheck to use a separate tab.</span>' +
+        '</label>' +
+      '</div>' +
       '<div class="sh-grid-3">' + formats.map(function (f) { return '<div class="sh-tile" data-fmt="' + f.k + '"><div class="sh-tile__ico">' + f.i + '</div><div class="sh-tile__name">' + f.n + '</div><div class="sh-tile__desc">' + f.d + '</div></div>'; }).join('') + '</div>',
       {
         size: 'lg',
         onMount: function () {
+          var cb = $('#exp-storymap');
+          if (cb) {
+            cb.onchange = function () { AH.Storage.local.set('ah_pdf_storymap', cb.checked ? '1' : '0'); };
+          }
           $$('.sh-tile[data-fmt]').forEach(function (t) { on(t, 'click', function () { Editor._export(t.getAttribute('data-fmt')); AH.Modal.close(); }); });
         }
       });
@@ -6793,6 +7159,27 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     parts.push('</FinalDraft>');
     return parts.join('\n');
   };
+  Editor._storyMapAppendixHTML = function () {
+    if (AH.Storage.local.get('ah_pdf_storymap', '0') !== '1' || !window.AH || !AH.StoryMap) return '';
+    try {
+      StoryMap.load();
+      var sn = (StoryMap.state && StoryMap.state.nodes) || [];
+      if (!sn.length) return '';
+      var rows = sn.slice(0, 60).map(function (n) {
+        var bits = [(n.label || '—'), (n.nodeType || 'scene').toUpperCase()];
+        if (n.sceneSlug) bits.push('SCN ' + String(n.sceneSlug));
+        else if (typeof n.sceneLineIdx === 'number') bits.push('L' + n.sceneLineIdx);
+        if (n.emotionTension != null && n.emotionTension !== '') bits.push('T=' + n.emotionTension);
+        return '<div class="action" style="font-size:11pt;border-bottom:1px solid #e5e7eb;padding:6pt 0;">' + clean(bits.join(' · ')) + '</div>';
+      }).join('');
+      var more = sn.length > 60 ? '<div class="action" style="margin-top:12pt;color:#64748b;">… ' + (sn.length - 60) + ' additional nodes — open Story Map for the full graph.</div>' : '';
+      return '<section class="script-body" style="page-break-before:always;padding-top:0.5in;">' +
+        '<div class="scene" style="margin-top:0;">STORY MAP · APPENDIX</div>' +
+        '<div class="action" style="margin-bottom:14pt;color:#444;">Narrative graph snapshot for this production · exported with the screenplay.</div>' +
+        rows + more +
+      '</section>';
+    } catch (_) { return ''; }
+  };
   Editor._serializeHTML = function () {
     var s = Editor.state;
     var body = s.lines.map(function (l) {
@@ -6870,6 +7257,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   };
   Editor._openPrintPDF = function () {
     var html = Editor._serializeHTML();
+    var apx = Editor._storyMapAppendixHTML();
+    if (apx) html = html.replace('</body></html>', apx + '</body></html>');
     var w = window.open('', '_blank'); if (!w) { toast('Popup blocked — allow popups for PDF export', 'warn'); return; }
     w.document.write(html); w.document.close();
     setTimeout(function () { try { w.focus(); w.print(); } catch (_) {} }, 600);
@@ -6997,6 +7386,30 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       doc.setFont('courier', 'normal'); doc.setFontSize(7); doc.setTextColor(160);
       for (var pi = 1; pi <= pages; pi++) { doc.setPage(pi); doc.text(stamp, pageW - right, pageH - 0.3, { align: 'right' }); }
       doc.setTextColor(0);
+    } catch (_) {}
+    try {
+      if (AH.Storage.local.get('ah_pdf_storymap', '0') === '1' && window.AH && AH.StoryMap) {
+        StoryMap.load();
+        var sn = (StoryMap.state && StoryMap.state.nodes) || [];
+        if (sn.length) {
+          doc.addPage();
+          y = top;
+          doc.setFont('courier', 'bold'); doc.setFontSize(14);
+          doc.text('STORY MAP APPENDIX', left, y); y += 0.32;
+          doc.setFont('courier', 'normal'); doc.setFontSize(9);
+          sn.slice(0, 48).forEach(function (n) {
+            maybeBreak(0.2);
+            var bits = [n.label || '—', (n.nodeType || 'scene').toUpperCase()];
+            if (n.sceneSlug) bits.push('SCN ' + String(n.sceneSlug));
+            else if (typeof n.sceneLineIdx === 'number') bits.push('LINE ' + n.sceneLineIdx);
+            if (n.emotionTension != null && n.emotionTension !== '') bits.push('T=' + n.emotionTension);
+            var line = bits.join(' · ');
+            var wrapped = splitAt(line, pageW - left - right);
+            wrapped.forEach(function (ln) { maybeBreak(0.16); doc.text(ln, left, y); y += 0.16; });
+          });
+          if (sn.length > 48) { maybeBreak(0.2); doc.text('… plus ' + (sn.length - 48) + ' additional nodes (see Story Map module).', left, y); }
+        }
+      }
     } catch (_) {}
     doc.save(slugify(s.title || 'script') + '.pdf');
     toast('PDF saved');
@@ -7448,8 +7861,17 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     var contactCount = (castLocal.length || 0) + (contactsLocal.length || 0);
     var totalDays = prods.reduce(function (a, p) { return a + (p.days || 0); }, 0);
     var today = new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    var heroTitle = ((STATE.bannerLine || '').trim())
+      ? ('Command <em>center.</em><br/><span style="display:block;margin-top:12px;font-size:clamp(15px,2.1vw,22px);font-weight:500;letter-spacing:0.03em;line-height:1.35;color:rgba(255,255,255,0.9);">' + clean(STATE.bannerLine) + '</span>')
+      : 'Command <em>center.</em>';
     return (
-      AH.Views.renderHero(m, { title: 'Command <em>center.</em>', primary: 'OPEN STRIPBOARD', primaryFn: "AH.Router.go('schedule')" }) +
+      AH.Views.renderHero(m, {
+        title: heroTitle,
+        primary: 'OPEN STRIPBOARD',
+        primaryFn: "AH.Router.go('schedule')",
+        secondary: 'FORMS & GENERATORS',
+        secondaryFn: 'AH.V2Forms.openPalette()'
+      }) +
       // Intel strip (at-a-glance) — derived from actual productions
       '<div class="ticker section">' +
         '<div class="ticker__item">● <b>' + prods.length + '</b> ACTIVE</div>' +
@@ -7634,13 +8056,24 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           '<div class="sh-field"><label>Initial budget</label><input id="np-budget" placeholder="e.g., $1.5M or 1500000"/></div>' +
           '<div class="sh-field"><label>Status</label><select id="np-status">' + PROD_STATUSES.map(function (s) { return '<option' + (s === 'PRE-PROD' ? ' selected' : '') + '>' + clean(s) + '</option>'; }).join('') + '</select></div>' +
         '</div>' +
-        scaleOpts +
+        '<div id="np-scale-wrap">' + scaleOpts + '</div>' +
         '<div class="sh-field" style="margin-top:6px;"><label style="display:flex;align-items:center;gap:8px;font-weight:500;font-size:12px;"><input id="np-cloud" type="checkbox"' + (AH.Auth && !AH.Auth.isDemoMode ? ' checked' : '') + '/> Upload to Cloud (if signed in)</label></div>' +
         '<div id="np-err" style="color:var(--rose);font-size:12px;min-height:16px;"></div>',
         {
           size: 'lg',
+          modalId: 'modal-new-production',
           footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="np-save">CREATE PRODUCTION</button>',
           onMount: function () {
+            var sw = $('#np-scale-wrap');
+            if (sw && scales.length) {
+              sw.style.position = 'relative';
+              sw.innerHTML = sw.innerHTML +
+                '<div style="margin-top:8px;"><button type="button" class="btn btn--ghost" id="np-scale-menu-btn" style="font-size:11px;letter-spacing:0.12em;">CHOOSE BUDGET SCALE…</button></div>';
+              $('#np-scale-menu-btn').onclick = function (ev) {
+                ev.preventDefault();
+                AH.UI.scalePickerMenu(ev.target, 'np-scale', BUDGET_SCALES);
+              };
+            }
             $('#np-save').onclick = function () {
               var name = ($('#np-name').value || '').trim();
               var err = $('#np-err');
@@ -7685,7 +8118,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
                 schedule: { strips: [] }, shotlist: [], milestones: [], risks: [], tasks: [],
                 continuity: [], cast: {}, crew: {},
                 financials: { categories: {}, budget: 0, spent: 0, remaining: 0 },
-                _cloudSynced: false
+                storyMap: null, beatboard: null, music: { cues: [] }, documents: [], locations: [], reports: [],
+                budgetLines: [], productionAutomation: [], _cloudSynced: false
               };
               AH.Prod._savePD(id, pd);
               AH.Prod.setActive(id);
@@ -7748,13 +8182,24 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           '<div class="sh-field"><label>Budget</label><input id="ep-budget" value="' + clean((pd.budget && pd.budget.amount) || card.budget || '$0') + '"/></div>' +
           '<div class="sh-field"><label>Status</label><select id="ep-status">' + PROD_STATUSES.map(function (s) { return '<option' + ((pd.status || card.status) === s ? ' selected' : '') + '>' + clean(s) + '</option>'; }).join('') + '</select></div>' +
         '</div>' +
-        scaleOpts +
+        '<div id="ep-scale-wrap">' + scaleOpts + '</div>' +
         '<div id="ep-err" style="color:var(--rose);font-size:12px;min-height:16px;"></div>' +
         logHTML,
         {
           size: 'lg',
+          modalId: 'modal-rename-production',
           footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="ep-save">SAVE CHANGES</button>',
           onMount: function () {
+            var esw = $('#ep-scale-wrap');
+            if (esw && scales.length) {
+              esw.style.position = 'relative';
+              esw.innerHTML = esw.innerHTML +
+                '<div style="margin-top:8px;"><button type="button" class="btn btn--ghost" id="ep-scale-menu-btn" style="font-size:11px;letter-spacing:0.12em;">CHOOSE BUDGET SCALE…</button></div>';
+              $('#ep-scale-menu-btn').onclick = function (ev) {
+                ev.preventDefault();
+                AH.UI.scalePickerMenu(ev.target, 'ep-scale', BUDGET_SCALES);
+              };
+            }
             $('#ep-save').onclick = function () {
               var newName = ($('#ep-name').value || '').trim();
               var err = $('#ep-err');
@@ -7896,7 +8341,11 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     if (!d) { d = AH.Views.todayScenes().map(function (s, i) { return { id: uid('sc'), n: s.n, title: s.title, int: s.int, loc: s.loc, pages: s.pages, day: s.day }; }); AH.Storage.local.set(k, d); }
     return d;
   }
-  function saveScenes(list) { AH.Storage.local.set('ah_scenes_' + STATE.activeProdId, list); }
+  function saveScenes(list) {
+    AH.Storage.local.set('ah_scenes_' + STATE.activeProdId, list);
+    AH.syncProductionBlob && AH.syncProductionBlob({ scheduleStrips: list, scheduleUpdatedAt: Date.now() });
+    AH.Bus && AH.Bus.emit('schedule:updated', { strips: (list || []).length });
+  }
 
   AH.register('schedule', function (m) {
     var scs = loadScenes();
@@ -7904,7 +8353,15 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     scs.forEach(function (s) { (byDay[s.day] = byDay[s.day] || []).push(s); });
     var days = Object.keys(byDay).sort();
     return (
-      AH.Views.renderHero(m, { primary: 'CALL SHEET', primaryFn: 'AH.Schedule.exportCall()', secondary: 'STRIPBOARD PDF', secondaryFn: 'AH.Schedule.exportPDF()' }) +
+      AH.Views.renderHero(m, {
+        primary: 'CALL SHEET',
+        primaryFn: 'AH.Schedule.exportCall()',
+        secondary: 'STRIPBOARD PDF',
+        secondaryFn: 'AH.Schedule.exportPDF()',
+        lede: heroLede('schedule') +
+          ' <span style="color:var(--fg-50);">·</span> <button type="button" class="btn btn--ghost" style="display:inline;height:auto;padding:2px 8px;font-size:12px;vertical-align:middle;" onclick="AH.Schedule.editSceneModal()">Scene editor</button>' +
+          ' <span style="color:var(--fg-50);">·</span> <button type="button" class="btn btn--ghost" style="display:inline;height:auto;padding:2px 8px;font-size:12px;vertical-align:middle;" onclick="AH.Schedule.dayBreakModal()">Day break</button>'
+      }) +
       '<div class="section" style="margin-top:0;"><div class="card" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
         '<strong style="font-family:var(--f-mono);font-size:10.5px;letter-spacing:0.22em;color:var(--fg-45);text-transform:uppercase;">BOARD</strong>' +
         '<button class="btn btn--ghost" onclick="AH.Schedule.exportPDF()">STRIPBOARD PDF</button>' +
@@ -7967,7 +8424,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     var lc = locColor(s.loc);
     var type = s.int ? 'INT' : 'EXT';
     return (
-      '<div class="board-strip ' + cls + '" draggable="true" data-sid="' + s.id + '" style="border-left:5px solid ' + lc + ';">' +
+      '<div class="board-strip ' + cls + '" draggable="true" data-sid="' + s.id + '" oncontextmenu="AH.Schedule.stripCtx(event,\'' + s.id + '\');return false;" style="border-left:5px solid ' + lc + ';">' +
         '<div class="board-strip__cell board-strip__num">' + s.n + '</div>' +
         '<div class="board-strip__cell"><span class="inline-edit" contenteditable data-f="title" data-id="' + s.id + '">' + clean(s.title) + '</span></div>' +
         '<div class="board-strip__cell" style="font-family:var(--f-mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg-60);"><span class="inline-edit" contenteditable data-f="type" data-id="' + s.id + '">' + type + '</span></div>' +
@@ -8010,6 +8467,82 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     });
   };
   AH.Schedule = {
+    stripCtx: function (e, id) {
+      e.preventDefault();
+      var html =
+        '<div class="sm-ctx__item" onclick="AH.Schedule.editSceneModal(\'' + id + '\');AH.Schedule._closeStripCtx();">Edit scene…</div>' +
+        '<div class="sm-ctx__item" onclick="AH.Router.go(\'locations\');AH.Schedule._closeStripCtx();">Open locations</div>' +
+        '<div class="sm-ctx__item" onclick="AH.Docs.gen(\'callSheet\');AH.Schedule._closeStripCtx();">Call sheet</div>';
+      AH.Schedule._closeStripCtx();
+      var m = document.createElement('div'); m.id = 'strip-ctx'; m.className = 'sm-ctx'; m.innerHTML = html;
+      m.style.left = (e.clientX || 0) + 'px'; m.style.top = (e.clientY || 0) + 'px';
+      document.body.appendChild(m);
+      setTimeout(function () {
+        document.addEventListener('click', AH.Schedule._closeStripCtx, { once: true });
+      }, 0);
+    },
+    _closeStripCtx: function () { var el = document.getElementById('strip-ctx'); if (el) el.remove(); },
+    editSceneModal: function (sceneId) {
+      var scs = loadScenes();
+      var s = sceneId ? scs.find(function (x) { return x.id === sceneId; }) : null;
+      if (!s && scs.length) s = scs[0];
+      if (!s) { toast('Add scenes on the stripboard first', 'warn'); AH.Router.go('schedule'); return; }
+      AH.Modal.open('Scene · ' + clean(s.n),
+        '<div class="sh-modal__label">Edit slug, INT/EXT, location, pages, and shoot day.</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+          '<div class="sh-field"><label>Scene #</label><input id="scn-num" value="' + clean(s.n) + '"/></div>' +
+          '<div class="sh-field"><label>Shoot day</label><input id="scn-day" value="' + clean(s.day) + '"/></div>' +
+          '<div class="sh-field" style="grid-column:1/3;"><label>Slug / title</label><input id="scn-title" value="' + clean(s.title) + '"/></div>' +
+          '<div class="sh-field"><label>Type</label><select id="scn-int"><option value="int"' + (s.int ? ' selected' : '') + '>INT</option><option value="ext"' + (!s.int ? ' selected' : '') + '>EXT</option></select></div>' +
+          '<div class="sh-field"><label>Location</label><input id="scn-loc" value="' + clean(s.loc) + '"/></div>' +
+          '<div class="sh-field" style="grid-column:1/3;"><label>Pages (e.g. 2 1/8)</label><input id="scn-pages" value="' + clean(s.pages) + '"/></div>' +
+        '</div>',
+        {
+          size: 'md',
+          modalId: 'modal-scene',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="scn-save">SAVE</button><button class="btn btn--ghost" style="color:var(--rose);" id="scn-del">DELETE</button>',
+          onMount: function () {
+            $('#scn-save').onclick = function () {
+              s.n = ($('#scn-num').value || s.n).trim();
+              s.day = ($('#scn-day').value || s.day).trim();
+              s.title = ($('#scn-title').value || s.title).trim();
+              s.int = $('#scn-int').value === 'int';
+              s.loc = ($('#scn-loc').value || s.loc).trim();
+              s.pages = ($('#scn-pages').value || s.pages).trim();
+              saveScenes(scs); AH.Modal.close(); AH.Router.go('schedule'); toast('Scene updated');
+            };
+            $('#scn-del').onclick = function () {
+              AH.Modal.confirm('Delete scene', 'Remove scene ' + clean(s.n) + ' from the stripboard?', function () {
+                saveScenes(scs.filter(function (x) { return x.id !== s.id; })); AH.Router.go('schedule'); toast('Scene removed');
+              });
+            };
+          }
+        });
+    },
+    dayBreakModal: function () {
+      var scs = loadScenes();
+      var days = Array.from(new Set(scs.map(function (x) { return x.day; }))).sort();
+      AH.Modal.open('Insert day break',
+        '<div class="sh-modal__label">Insert a blank separator strip after the last scene of a shoot day (useful for meal breaks or company moves).</div>' +
+        '<div class="sh-field"><label>After day</label><select id="db-day">' + days.map(function (d) { return '<option value="' + clean(d) + '">' + clean(d) + '</option>'; }).join('') + '</select></div>' +
+        '<div class="sh-field"><label>Separator label</label><input id="db-label" value="DAY BREAK · COMPANY MOVE"/></div>',
+        {
+          size: 'sm',
+          modalId: 'modal-daybreak',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="db-go">INSERT</button>',
+          onMount: function () {
+            $('#db-go').onclick = function () {
+              var day = $('#db-day').value;
+              var label = ($('#db-label').value || 'DAY BREAK').trim();
+              var idx = -1;
+              for (var i = scs.length - 1; i >= 0; i--) { if (scs[i].day === day) { idx = i; break; } }
+              if (idx < 0) { toast('No scenes on that day', 'warn'); return; }
+              scs.splice(idx + 1, 0, { id: uid('sc'), n: '—', title: label.toUpperCase(), int: true, loc: 'BREAK', pages: '—', day: day, isBreak: true });
+              saveScenes(scs); AH.Modal.close(); AH.Router.go('schedule'); toast('Day break inserted');
+            };
+          }
+        });
+    },
     addScene: function () {
       var scs = loadScenes();
       scs.push({ id: uid('sc'), n: pad(scs.length + 1, 2), title: 'NEW SCENE', int: true, loc: 'STUDIO', pages: '1', day: 'D01' });
@@ -8126,7 +8659,10 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     }
     return d;
   }
-  function saveBreakdown(d) { AH.Storage.local.set('ah_bdown_' + STATE.activeProdId, d); }
+  function saveBreakdown(d) {
+    AH.Storage.local.set('ah_bdown_' + STATE.activeProdId, d);
+    AH.syncProductionBlob && AH.syncProductionBlob({ breakdownRows: d, breakdownUpdatedAt: Date.now() });
+  }
 
   AH.register('breakdown', function (m) {
     var bd = loadBreakdown();
@@ -8365,6 +8901,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       });
     });
   };
+  AH.register('shot-list', RENDERERS.shotlist);
+  AH.hooks['shot-list:mount'] = AH.hooks['shotlist:mount'];
 
   // ══════════════════════════════════════════════════════════════════════════
   //  CAST & CREW · Contacts
@@ -8387,7 +8925,10 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     }
     return d;
   }
-  function saveCast(d) { AH.Storage.local.set('ah_cast_' + STATE.activeProdId, d); }
+  function saveCast(d) {
+    AH.Storage.local.set('ah_cast_' + STATE.activeProdId, d);
+    AH.Bus && AH.Bus.emit('cast:updated', { total: (d || []).length });
+  }
 
   AH.register('cast-crew', function (m) {
     var p = loadCast();
@@ -8423,6 +8964,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">' +
           '<button class="se-btn se-btn--xs" onclick="AH.Cast.call(\'' + p.id + '\')">CALL</button>' +
           '<button class="se-btn se-btn--xs" onclick="AH.Cast.edit(\'' + p.id + '\')">EDIT</button>' +
+          '<button class="se-btn se-btn--xs" onclick="AH.Cast.profileSheet(\'' + p.id + '\')">PROFILE</button>' +
           '<button class="se-btn se-btn--xs" onclick="AH.Cast.photo(\'' + p.id + '\')">PHOTO</button>' +
           '<button class="se-btn se-btn--xs" onclick="AH.Cast.dealMemoFor(\'' + p.id + '\')">DEAL MEMO</button>' +
         '</div>' +
@@ -8509,6 +9051,88 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         PDF.footer();
       PDF.openDoc(body, 'Contact_Sheet_' + slugify(prodTitle()));
       toast('Contact sheet PDF generated');
+    },
+    profileSheet: function (personId) {
+      var roster = loadCast();
+      if (!roster.length) { toast('Add cast & crew first', 'warn'); AH.Router.go('cast-crew'); return; }
+      var p = personId ? roster.find(function (x) { return x.id === personId; }) : null;
+      if (personId && !p) { toast('Person not found', 'warn'); return; }
+      if (!p && roster.length === 1) p = roster[0];
+      if (!p) {
+        var opts = '<option value="">— Select cast / crew —</option>' + roster.map(function (x) { return '<option value="' + x.id + '">' + clean(x.name) + ' · ' + clean(x.role || '') + '</option>'; }).join('');
+        AH.Modal.open('Cast profile sheet',
+          '<div class="sh-modal__label">Pick a person from the slate roster.</div>' +
+          '<div class="sh-field"><label>Person</label><select id="cpi-pick">' + opts + '</select></div>',
+          {
+            size: 'sm',
+            modalId: 'modal-cast-info',
+            footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="cpi-go">OPEN</button>',
+            onMount: function () {
+              $('#cpi-go').onclick = function () {
+                var id = $('#cpi-pick').value; if (!id) { toast('Select someone', 'warn'); return; }
+                AH.Modal.close(); AH.Cast.profileSheet(id);
+              };
+            }
+          });
+        return;
+      }
+      p.profile = p.profile || {};
+      var pr = p.profile;
+      AH.Modal.open('Cast profile · ' + clean(p.name),
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+          '<div class="sh-field" style="grid-column:1/3;"><label>Legal name</label><input id="cpi-name" value="' + clean(p.name) + '"/></div>' +
+          '<div class="sh-field"><label>Role</label><input id="cpi-role" value="' + clean(p.role || '') + '"/></div>' +
+          '<div class="sh-field"><label>Union / status</label><input id="cpi-union" value="' + clean(pr.union || '') + '" placeholder="SAG-AFTRA · Must join"/></div>' +
+          '<div class="sh-field"><label>Agency</label><input id="cpi-agency" value="' + clean(pr.agency || '') + '"/></div>' +
+          '<div class="sh-field"><label>Emergency contact</label><input id="cpi-em" value="' + clean(pr.emergency || '') + '"/></div>' +
+          '<div class="sh-field"><label>Measurements (wardrobe)</label><input id="cpi-ms" value="' + clean(pr.measurements || '') + '"/></div>' +
+          '<div class="sh-field"><label>Dietary / allergies</label><input id="cpi-diet" value="' + clean(pr.dietary || '') + '"/></div>' +
+          '<div class="sh-field"><label>Special skills</label><input id="cpi-sk" value="' + clean(pr.skills || '') + '"/></div>' +
+          '<div class="sh-field" style="grid-column:1/3;"><label>Private notes</label><textarea id="cpi-notes" rows="3">' + clean(pr.notes || '') + '</textarea></div>' +
+        '</div>',
+        {
+          size: 'lg',
+          modalId: 'modal-cast-info',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Close</button><button class="btn btn--primary" id="cpi-save">SAVE PROFILE</button><button class="btn btn--ghost" onclick="AH.Cast.profilePDF(\'' + p.id + '\')">PROFILE PDF</button>',
+          onMount: function () {
+            $('#cpi-save').onclick = function () {
+              p.name = ($('#cpi-name').value || p.name).trim();
+              p.role = ($('#cpi-role').value || '').trim();
+              p.profile = p.profile || {};
+              p.profile.union = $('#cpi-union').value.trim();
+              p.profile.agency = $('#cpi-agency').value.trim();
+              p.profile.emergency = $('#cpi-em').value.trim();
+              p.profile.measurements = $('#cpi-ms').value.trim();
+              p.profile.dietary = $('#cpi-diet').value.trim();
+              p.profile.skills = $('#cpi-sk').value.trim();
+              p.profile.notes = $('#cpi-notes').value.trim();
+              saveCast(roster); AH.Modal.close(); AH.Router.go('cast-crew'); toast('Profile saved · ' + p.name);
+            };
+          }
+        });
+    },
+    profilePDF: function (id) {
+      var p = loadCast().find(function (x) { return x.id === id; }); if (!p) return;
+      var pr = p.profile || {};
+      var body = PDF.header('Cast Profile · ' + p.name, getActiveProd().title) +
+        PDF.section('Roster line', '<div class="pdf-grid2">' +
+          PDF.field('Role', p.role || '') +
+          PDF.field('Dept', p.dept || '') +
+          PDF.field('Phone', p.phone || '') +
+          PDF.field('Email', p.email || '') +
+          PDF.field('Union', pr.union || '') +
+          PDF.field('Agency', pr.agency || '') +
+        '</div>') +
+        PDF.section('Wardrobe & wellbeing', '<div class="pdf-grid2">' +
+          PDF.field('Measurements', pr.measurements || '—') +
+          PDF.field('Dietary / allergies', pr.dietary || '—') +
+          PDF.field('Emergency', pr.emergency || '—') +
+          PDF.field('Special skills', pr.skills || '—') +
+        '</div>') +
+        (pr.notes ? PDF.section('Notes', '<div class="pdf-p">' + clean(pr.notes) + '</div>') : '') +
+        PDF.footer();
+      PDF.openDoc(body, 'Cast_Profile_' + slugify(p.name));
+      toast('Cast profile PDF generated');
     }
   };
   AH.hooks['cast-crew:mount'] = function () {
@@ -8806,7 +9430,41 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     },
     openDoc: function (innerHTML, filename) {
       var html = '<div class="page">' + innerHTML + '<div class="pdf-watermark">ALACRITY HUB · ' + (getActiveProd().title || '') + ' · ' + new Date().toISOString().slice(0, 10) + '</div></div>';
-      PDF.openPrint(html, filename || 'alacrity-doc');
+      if (AH.Storage.local.get('ah_pdf_inline', '1') === '1') PDF.openPreview(html, filename || 'alacrity-doc');
+      else PDF.openPrint(html, filename || 'alacrity-doc');
+    },
+    _previewWin: null,
+    openPreview: function (innerHTML, filename) {
+      var shell =
+        '<!doctype html><html><head><meta charset="utf-8"><title>' + clean(filename || 'Alacrity') + '</title>' +
+        '<meta name="viewport" content="width=device-width, initial-scale=1"/>' +
+        '<style>' + PDF.getStyles() + '</style></head><body>' + innerHTML + '</body></html>';
+      var frame = $('#pdf-preview-frame');
+      var panel = $('#pdf-preview');
+      var titleEl = $('#pdf-preview-title');
+      if (frame && panel) {
+        if (titleEl) titleEl.textContent = filename || 'Document preview';
+        frame.srcdoc = shell;
+        panel.classList.add('is-open');
+        panel.setAttribute('aria-hidden', 'false');
+        return;
+      }
+      PDF._previewWin = window.open('', '_blank');
+      if (!PDF._previewWin) { toast('Popup blocked — allow popups for inline PDF preview', 'warn'); PDF.openPrint(innerHTML, filename); return; }
+      PDF._previewWin.document.open();
+      PDF._previewWin.document.write(shell);
+      PDF._previewWin.document.close();
+    },
+    closePreview: function () {
+      var panel = $('#pdf-preview');
+      var frame = $('#pdf-preview-frame');
+      if (panel) { panel.classList.remove('is-open'); panel.setAttribute('aria-hidden', 'true'); }
+      if (frame) { try { frame.srcdoc = ''; } catch (_) {} }
+    },
+    printPreview: function () {
+      var frame = $('#pdf-preview-frame');
+      if (frame && frame.contentWindow) { try { frame.contentWindow.focus(); frame.contentWindow.print(); } catch (_) {} }
+      else if (PDF._previewWin) { try { PDF._previewWin.focus(); PDF._previewWin.print(); } catch (_) {} }
     },
     header: function (title, subtitle) {
       var prod = getActiveProd();
@@ -8829,6 +9487,122 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     },
     footer: function () {
       return '<div class="pdf-footer">Generated by Alacrity Hub · This document is a template and should be reviewed by qualified legal counsel before execution.</div>';
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════
+  //  PRODUCTION BRIEF · cross-module executive PDF (data-coherent)
+  // ═══════════════════════════════════════════════════════════════════════
+  AH.Brief = {
+    _gather: function () {
+      var prod = getActiveProd();
+      var pd = AH.Prod && AH.Prod._loadPD ? AH.Prod._loadPD(STATE.activeProdId) : {};
+      var lines = (AH.Editor && AH.Editor.state && AH.Editor.state.lines) || [];
+      var sceneLines = lines.filter(function (l) { return l.t === 'scene'; });
+      var words = lines.reduce(function (a, l) { return a + ((l.x || '').split(/\s+/).filter(Boolean).length); }, 0);
+      var cast = (typeof loadCast === 'function') ? loadCast() : [];
+      var locs = (typeof loadLocs === 'function') ? loadLocs() : [];
+      var scs = (typeof loadScenes === 'function') ? loadScenes() : [];
+      var risks = (typeof loadRisk === 'function') ? loadRisk() : [];
+      var shots = (typeof loadShots === 'function') ? loadShots() : [];
+      var bd = (typeof loadBreakdown === 'function') ? loadBreakdown() : [];
+      var gantt = (typeof loadGanttTasks === 'function') ? loadGanttTasks() : [];
+      var sm = null;
+      try { if (typeof StoryMap !== 'undefined' && StoryMap.load) { StoryMap.load(); sm = StoryMap.state; } } catch (_) { sm = null; }
+      var smNodes = (sm && sm.nodes) ? sm.nodes.length : 0;
+      var smLinks = (sm && sm.links) ? sm.links.length : 0;
+      var budgetLines = (typeof loadBudgetLines === 'function') ? loadBudgetLines() : [];
+      var totE = budgetLines.reduce(function (a, r) { return a + (+r.est || 0); }, 0);
+      var totA = budgetLines.reduce(function (a, r) { return a + (+r.act || 0); }, 0);
+      var hot = (typeof loadHotsheet === 'function') ? loadHotsheet().filter(function (h) { return h.when === 'TODAY'; }) : [];
+      return {
+        prod: prod, pd: pd, sceneCount: sceneLines.length, words: words,
+        cast: cast, locs: locs, scs: scs, risks: risks, shots: shots, bd: bd,
+        gantt: gantt, smNodes: smNodes, smLinks: smLinks,
+        budgetTotE: totE, budgetTotA: totA, hotToday: hot
+      };
+    },
+    buildHTML: function () {
+      var D = AH.Brief._gather();
+      var prod = D.prod;
+      var pd = D.pd || {};
+      var logline = (pd.description || prod.description || '').trim();
+      var highRisks = (D.risks || []).filter(function (r) { return (r.lvl || '').toUpperCase() === 'HIGH'; });
+      var stripRows = (D.scs || []).slice(0, 14).map(function (s) {
+        return '<tr><td class="num">' + clean(s.n) + '</td><td>' + clean(s.title) + '</td><td>' + (s.int ? 'INT' : 'EXT') + '</td><td>' + clean(s.loc) + '</td><td class="num">' + clean(s.pages) + '</td><td class="num">' + clean(s.day) + '</td></tr>';
+      }).join('');
+      var castRows = (D.cast || []).slice(0, 16).map(function (c) {
+        return '<tr><td>' + clean(c.name) + '</td><td>' + clean(c.role || '') + '</td><td>' + clean(c.dept || '') + '</td><td class="num">' + clean(c.phone || '—') + '</td></tr>';
+      }).join('');
+      var locRows = (D.locs || []).slice(0, 12).map(function (L) {
+        return '<tr><td>' + clean(L.n || L.name || '—') + '</td><td>' + clean(L.city || '') + '</td><td>' + clean(L.st || L.status || '') + '</td></tr>';
+      }).join('');
+      var riskRows = (D.risks || []).slice(0, 10).map(function (r) {
+        return '<tr><td class="num">' + clean(r.s) + '</td><td>' + clean(r.t) + '</td><td>' + clean(r.lvl) + '</td><td>' + clean(r.mit) + '</td></tr>';
+      }).join('');
+      var bdTop = (D.bd || []).slice(0, 8).map(function (r) {
+        var tags = [];
+        ['stunts', 'animals', 'vehicles', 'props', 'sfx'].forEach(function (k) {
+          if (r[k] && r[k].length) tags.push(k + ': ' + r[k].slice(0, 4).join(', '));
+        });
+        return '<tr><td class="num">' + clean(r.scn) + '</td><td style="font-size:9pt;">' + clean(tags.join(' · ') || '—') + '</td></tr>';
+      }).join('');
+      var ganttRows = (D.gantt || []).slice(0, 10).map(function (t) {
+        return '<tr><td>' + clean(t.name || t.title || 'Task') + '</td><td>' + clean(t.owner || '') + '</td><td class="num">' + clean(t.start || '') + '</td><td class="num">' + clean(t.end || '') + '</td></tr>';
+      }).join('');
+      var hotRows = (D.hotToday || []).map(function (h) {
+        return '<tr><td>' + clean(h.dept) + '</td><td>' + clean(h.txt) + '</td><td>' + clean(h.st || '') + '</td></tr>';
+      }).join('');
+      return (
+        PDF.header('Production Brief', prod.title || 'Untitled') +
+        PDF.section('Executive snapshot', '<div class="pdf-grid2">' +
+          PDF.field('Production', prod.title || '—') +
+          PDF.field('Type / status', (prod.type || pd.type || '—') + ' · ' + (prod.status || pd.status || '—')) +
+          PDF.field('Director', pd.director || prod.director || '—') +
+          PDF.field('Client / studio', pd.client || prod.client || '—') +
+          PDF.field('Shoot start', pd.shootStart || prod.shootStart || '—') +
+          PDF.field('Generated', new Date().toLocaleString()) +
+        '</div>' +
+        (logline ? '<div class="pdf-p" style="margin-top:10px;"><strong>Logline / scope</strong><br/>' + clean(logline) + '</div>' : '')
+        ) +
+        PDF.section('Script & narrative', '<div class="pdf-grid2">' +
+          PDF.field('Scenes (script headings)', String(D.sceneCount)) +
+          PDF.field('Approx. word count', String(D.words)) +
+          PDF.field('Story map nodes', String(D.smNodes)) +
+          PDF.field('Story map edges', String(D.smLinks)) +
+        '</div>') +
+        PDF.section('Stripboard (next scenes)', '<table class="pdf-table"><thead><tr><th>#</th><th>Slug</th><th>I/E</th><th>Location</th><th>Pages</th><th>Day</th></tr></thead><tbody>' +
+          (stripRows || '<tr><td colspan="6">No stripboard rows — import script or add scenes in Stripboard.</td></tr>') + '</tbody></table>') +
+        PDF.section('Cast & crew (roster excerpt)', '<table class="pdf-table"><thead><tr><th>Name</th><th>Role</th><th>Dept</th><th>Phone</th></tr></thead><tbody>' +
+          (castRows || '<tr><td colspan="4">No cast/crew records.</td></tr>') + '</tbody></table>') +
+        PDF.section('Locations (scout list excerpt)', '<table class="pdf-table"><thead><tr><th>Location</th><th>City / address</th><th>Status</th></tr></thead><tbody>' +
+          (locRows || '<tr><td colspan="3">No locations on file.</td></tr>') + '</tbody></table>') +
+        PDF.section('Risk matrix (top hazards)', '<table class="pdf-table"><thead><tr><th>Scn</th><th>Hazard</th><th>Level</th><th>Mitigation</th></tr></thead><tbody>' +
+          (riskRows || '<tr><td colspan="4">No risk rows.</td></tr>') + '</tbody></table>' +
+          (highRisks.length ? '<div class="pdf-p" style="color:#b91c1c;"><strong>High severity count:</strong> ' + highRisks.length + '</div>' : '')
+        ) +
+        PDF.section('Breakdown highlights (stunts / animals / props)', '<table class="pdf-table"><thead><tr><th>Scn</th><th>Highlights</th></tr></thead><tbody>' +
+          (bdTop || '<tr><td colspan="2">Run AI Breakdown from the Breakdown module.</td></tr>') + '</tbody></table>') +
+        PDF.section('Shot plan (first rows)', '<table class="pdf-table"><thead><tr><th>#</th><th>Type</th><th>Lens</th><th>Scene</th><th>Description</th></tr></thead><tbody>' +
+          ((D.shots || []).slice(0, 12).map(function (s) {
+            return '<tr><td class="num">' + clean(s.n) + '</td><td>' + clean(s.kind) + '</td><td class="num">' + clean(s.lens) + '</td><td class="num">' + clean(s.scn) + '</td><td>' + clean(s.desc) + '</td></tr>';
+          }).join('') || '<tr><td colspan="5">No shots in shot list.</td></tr>') +
+        '</tbody></table>') +
+        PDF.section('Timeline tasks (Gantt excerpt)', '<table class="pdf-table"><thead><tr><th>Task</th><th>Owner</th><th>Start</th><th>End</th></tr></thead><tbody>' +
+          (ganttRows || '<tr><td colspan="4">No Gantt tasks.</td></tr>') + '</tbody></table>') +
+        PDF.section('Budget snapshot (line items)', '<div class="pdf-grid2">' +
+          PDF.field('Estimated total', D.budgetTotE ? ('$' + D.budgetTotE.toLocaleString()) : '—') +
+          PDF.field('Actuals to date', D.budgetTotA ? ('$' + D.budgetTotA.toLocaleString()) : '—') +
+        '</div>') +
+        PDF.section('Hot sheet · today', '<table class="pdf-table"><thead><tr><th>Dept</th><th>Issue</th><th>State</th></tr></thead><tbody>' +
+          (hotRows || '<tr><td colspan="3">No hot items flagged for today.</td></tr>') + '</tbody></table>') +
+        PDF.footer()
+      );
+    },
+    openPDF: function () {
+      var html = AH.Brief.buildHTML();
+      PDF.openDoc(html, 'Production_Brief_' + slugify(prodTitle()));
+      AH.Notif.push('Production brief generated · ' + getActiveProd().title);
     }
   };
 
@@ -8986,6 +9760,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     '</div>' + (extra || '');
     AH.Modal.open(title, html, {
       size: 'lg',
+      modalId: 'modal-doc-generator',
       footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button>' +
               '<button class="btn btn--primary" id="doc-gen-btn">Generate PDF ↗</button>',
       onMount: function () {
@@ -9066,13 +9841,17 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     fieldModal('Call Sheet', [
       { id: 'cs-date',      label: 'Shoot date',     type: 'date' },
       { id: 'cs-day',       label: 'Day #',          def: '1' },
-      { id: 'cs-crewcall',  label: 'Crew call',      type: 'time', def: '07:00' },
+      { id: 'cs-crewcall',  label: 'General crew call', type: 'time', def: '07:00' },
       { id: 'cs-shoot',     label: 'Shooting call',  type: 'time', def: '08:00' },
+      { id: 'cs-split',     label: 'Split call (optional)', type: 'time', def: '' },
+      { id: 'cs-advance',   label: 'Advance schedule (tomorrow)', type: 'textarea', full: true, rows: 2, def: '' },
+      { id: 'cs-scenes',    label: 'Scene schedule (one per line)', type: 'textarea', full: true, rows: 4, def: '' },
       { id: 'cs-bl',        label: 'Breakfast location', full: true, def: 'Base camp · catering tent' },
       { id: 'cs-loc',       label: 'Primary location',   full: true, def: 'Set 1 · interior' },
-      { id: 'cs-loc-addr',  label: 'Location address',   full: true, def: '' },
+      { id: 'cs-loc-addr',  label: 'Location address / map pin', full: true, def: '' },
+      { id: 'cs-parking',   label: 'Parking / base camp', full: true, def: '' },
       { id: 'cs-weather',   label: 'Weather · sunrise/sunset', full: true, def: 'Clear · 62°F / 74°F · SR 06:42 · SS 20:11' },
-      { id: 'cs-nearest',   label: 'Nearest hospital',   full: true, def: '' },
+      { id: 'cs-nearest',   label: 'Nearest hospital / ER', full: true, def: '' },
       { id: 'cs-notes',     label: 'Safety + special notes', type: 'textarea', full: true, rows: 4 }
     ], function () {
       var prod = getActiveProd();
@@ -9080,21 +9859,29 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       var castRows = (cast.length ? cast : [{ n: '—', r: '—', cw: '—', t: '—' }]).map(function (c) {
         return '<tr><td>' + clean(c.r || c.role || '') + '</td><td>' + clean(c.n || c.name || '') + '</td><td>' + clean(c.cw || c.callTime || '') + '</td><td>' + clean(c.t || c.transport || '') + '</td></tr>';
       }).join('');
-      var crew = AH.Storage.local.get('ah_cast_' + STATE.activeProdId, []);
+      var crewRows = (cast.length ? cast : [{ n: '—', r: '—', cw: '—', t: '—' }]).map(function (c) {
+        return '<tr><td>' + clean(c.dept || 'DEPT') + '</td><td>' + clean(c.role || '') + '</td><td>' + clean(c.name || '') + '</td><td>' + clean(c.phone || '') + '</td></tr>';
+      }).join('');
+      var sceneBlock = (gv('cs-scenes') || '').trim().replace(/\n/g, '<br/>');
       var body = PDF.header('Call Sheet', 'Day ' + gv('cs-day') + ' · ' + prod.title) +
         PDF.section('Schedule', '<div class="pdf-grid2">' +
           PDF.field('Date', gv('cs-date')) +
-          PDF.field('Crew call', gv('cs-crewcall')) +
+          PDF.field('General crew call', gv('cs-crewcall')) +
           PDF.field('Shooting call', gv('cs-shoot')) +
+          PDF.field('Split call', gv('cs-split') || '—') +
           PDF.field('Breakfast', gv('cs-bl')) +
         '</div>') +
         PDF.section('Location', '<div class="pdf-grid2">' +
           PDF.field('Primary', gv('cs-loc')) +
-          PDF.field('Address', gv('cs-loc-addr')) +
+          PDF.field('Address / pin', gv('cs-loc-addr')) +
+          PDF.field('Parking / base', gv('cs-parking')) +
           PDF.field('Weather / daylight', gv('cs-weather')) +
           PDF.field('Nearest hospital', gv('cs-nearest')) +
         '</div>') +
+        (sceneBlock ? PDF.section('Scene schedule', '<div class="pdf-p">' + sceneBlock + '</div>') : '') +
+        (gv('cs-advance') ? PDF.section('Advance schedule', '<div class="pdf-p">' + clean(gv('cs-advance')) + '</div>') : '') +
         PDF.section('Cast', '<table class="pdf-table"><thead><tr><th>Role</th><th>Name</th><th>Call time</th><th>Transport</th></tr></thead><tbody>' + castRows + '</tbody></table>') +
+        PDF.section('Key crew', '<table class="pdf-table"><thead><tr><th>Dept</th><th>Role</th><th>Name</th><th>Phone</th></tr></thead><tbody>' + crewRows + '</tbody></table>') +
         PDF.section('Safety + notes', '<div class="pdf-p">' + clean(gv('cs-notes') || 'Maintain social distancing during rehearsals. Hydrate frequently.') + '</div>') +
         PDF.footer();
       PDF.openDoc(body, 'Call_Sheet_' + slugify(prodTitle()) + '_D' + gv('cs-day'));
@@ -9951,7 +10738,10 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     }
     return d;
   }
-  function saveRisk(d) { AH.Storage.local.set('ah_risk_' + STATE.activeProdId, d); }
+  function saveRisk(d) {
+    AH.Storage.local.set('ah_risk_' + STATE.activeProdId, d);
+    AH.Bus && AH.Bus.emit('risk:updated', { total: (d || []).length });
+  }
   AH.register('risk', function (m) {
     var risks = loadRisk();
     return (
@@ -10130,7 +10920,10 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     }
     return d;
   }
-  function saveLocs(d) { AH.Storage.local.set('ah_loc_' + STATE.activeProdId, d); }
+  function saveLocs(d) {
+    AH.Storage.local.set('ah_loc_' + STATE.activeProdId, d);
+    AH.Bus && AH.Bus.emit('location:updated', { total: (d || []).length });
+  }
   AH.register('locations', function (m) {
     var locs = loadLocs();
     return (
@@ -10138,6 +10931,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       '<div class="section"><div class="grid grid--3">' +
         locs.map(function (l) {
           return '<div class="card" style="position:relative;">' +
+            '<button class="btn btn--ghost" style="position:absolute;top:10px;right:44px;height:28px;padding:0 10px;font-size:11px;" onclick="AH.Loc.detailModal(\'' + l.id + '\')">EDIT</button>' +
             '<button class="btn btn--ghost" style="position:absolute;top:10px;right:10px;height:28px;padding:0 10px;" onclick="AH.Loc.del(\'' + l.id + '\')">×</button>' +
             '<div class="section__title" style="margin-bottom:6px;">' + clean(l.n) + '</div>' +
             '<div class="section__sub">' + clean(l.city) + '</div>' +
@@ -10165,6 +10959,47 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       });
     },
     del: function (id) { saveLocs(loadLocs().filter(function (l) { return l.id !== id; })); AH.Router.go('locations'); },
+    detailModal: function (locId) {
+      var locs = loadLocs();
+      var l = locId ? locs.find(function (x) { return x.id === locId; }) : locs[0];
+      if (!l) { toast('No locations yet', 'warn'); AH.Router.go('locations'); return; }
+      AH.Modal.open('Location · ' + clean(l.n),
+        '<div class="sh-modal__label">Scout sheet · permits · contacts</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+          '<div class="sh-field" style="grid-column:1/3;"><label>Name</label><input id="loc-n" value="' + clean(l.n) + '"/></div>' +
+          '<div class="sh-field" style="grid-column:1/3;"><label>City / region</label><input id="loc-city" value="' + clean(l.city) + '"/></div>' +
+          '<div class="sh-field"><label>Status</label><input id="loc-st" value="' + clean(l.st) + '"/></div>' +
+          '<div class="sh-field"><label>Permit</label><input id="loc-permit" value="' + clean(l.permit || '') + '"/></div>' +
+          '<div class="sh-field"><label>Contact</label><input id="loc-contact" value="' + clean(l.contact || '') + '"/></div>' +
+          '<div class="sh-field"><label>Chip class key</label><select id="loc-cls">' +
+            ['chip--mint','chip--aqua','chip--amber','chip--rose','chip--lime','chip--violet'].map(function (c) {
+              return '<option value="' + c + '"' + (l.cls === c ? ' selected' : '') + '>' + c.replace('chip--','') + '</option>';
+            }).join('') +
+          '</select></div>' +
+          '<div class="sh-field" style="grid-column:1/3;"><label>Notes</label><textarea id="loc-note" rows="3">' + clean(l.note || '') + '</textarea></div>' +
+        '</div>' +
+        '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">' +
+          '<button type="button" class="btn btn--ghost" onclick="AH.Docs.gen(\'locationAgreementFull\')">FULL AGREEMENT</button>' +
+          '<button type="button" class="btn btn--ghost" onclick="AH.Docs.gen(\'locationRelease\')">LOCATION RELEASE</button>' +
+        '</div>',
+        {
+          size: 'lg',
+          modalId: 'modal-location-full',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Close</button><button class="btn btn--primary" id="loc-save">SAVE</button>',
+          onMount: function () {
+            $('#loc-save').onclick = function () {
+              l.n = ($('#loc-n').value || l.n).trim();
+              l.city = ($('#loc-city').value || '').trim();
+              l.st = ($('#loc-st').value || l.st).trim();
+              l.permit = ($('#loc-permit').value || '').trim();
+              l.contact = ($('#loc-contact').value || '').trim();
+              l.cls = $('#loc-cls').value || l.cls;
+              l.note = ($('#loc-note').value || '').trim();
+              saveLocs(locs); AH.Bus && AH.Bus.emit('location:updated', {}); AH.Modal.close(); AH.Router.go('locations'); toast('Location saved');
+            };
+          }
+        });
+    },
     exportPDF: function () {
       var d = loadLocs();
       var rows = d.map(function (l) { return '<tr><td>' + clean(l.n) + '</td><td>' + clean(l.city) + '</td><td>' + clean(l.st) + '</td><td>' + clean(l.permit || '') + '</td><td>' + clean(l.contact || '') + '</td></tr>'; }).join('');
@@ -10200,8 +11035,20 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     var walkie = loadWalkie().slice(0, 8);
     var scs = loadScenes().slice(0, 6);
     var hot = loadHotsheet().filter(function (h) { return h.when === 'TODAY'; });
+    var sm = (function () {
+      try { StoryMap.load(); return StoryMap.state; } catch (_) { return { nodes: [], links: [] }; }
+    })();
+    var smNodes = (sm.nodes || []).slice(0, 14);
     return (
       AH.Views.renderHero(m, { primary: 'NEW TAKE', primaryFn: "AH.OnSet.newTake()", secondary: 'EXPORT LOG', secondaryFn: "AH.OnSet.exportPDF()" }) +
+      '<div class="section" style="margin-top:0;"><div class="card" style="padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
+        '<span style="font-family:var(--f-mono);font-size:10px;letter-spacing:0.2em;color:var(--fg-45);">ON-SET</span>' +
+        '<button type="button" class="btn btn--primary" id="onset-tab-ops" onclick="AH.OnSet.setTab(\'ops\')">OPS</button>' +
+        '<button type="button" class="btn btn--ghost" id="onset-tab-map" onclick="AH.OnSet.setTab(\'map\')">STORY MAP</button>' +
+        '<div style="flex:1;"></div>' +
+        '<button type="button" class="btn btn--ghost" onclick="AH.Router.go(\'storymap\')">OPEN FULL MAP</button>' +
+      '</div></div>' +
+      '<div id="onset-panel-ops">' +
       // Live hub grid
       '<div class="section" style="display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1fr);gap:12px;">' +
         '<div class="card" style="padding:0;overflow:hidden;">' +
@@ -10251,20 +11098,39 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
             (hot.length ? hot.map(function (h) { return '<div style="padding:6px 0;font-size:12px;border-bottom:1px solid var(--edge);"><span class="chip ' + h.cls + '" style="margin-right:8px;">' + clean(h.dept) + '</span>' + clean(h.txt) + '</div>'; }).join('') : '<div style="color:var(--mint);font-size:12px;">Day clear · no issues flagged.</div>') +
           '</div>' +
         '</div>' +
+      '</div>' +
+      '<div id="onset-panel-map" style="display:none;" class="section">' +
+        '<div class="card" style="margin-bottom:12px;">' +
+          '<div class="section__title" style="margin-bottom:8px;">Story structure · live read</div>' +
+          '<div style="font-size:13px;color:var(--fg-65);line-height:1.55;">' + (sm.nodes || []).length + ' nodes · ' + (sm.links || []).length + ' edges · start <code style="color:var(--mint);">' + clean(sm.startNodeId || '—') + '</code></div>' +
+          '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">' +
+            '<button class="btn btn--primary" onclick="AH.Router.go(\'storymap\')">EDIT GRAPH</button>' +
+            '<button class="btn btn--ghost" onclick="AH.StoryMap.syncFromScript && AH.StoryMap.syncFromScript();AH.Router.go(\'onset\');toast(\'Story Map synced from script\')">SYNC FROM SCRIPT</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="card" style="padding:0;max-height:420px;overflow:auto;">' +
+          '<table class="table"><thead><tr><th>Node</th><th>Type</th><th>Tension</th><th>Scene #</th></tr></thead><tbody>' +
+            (smNodes.length ? smNodes.map(function (n) {
+              return '<tr><td><strong>' + clean(n.label) + '</strong><div style="font-size:11px;color:var(--fg-50);">' + clean((n.note || '').slice(0, 80)) + (n.note && n.note.length > 80 ? '…' : '') + '</div></td>' +
+                '<td><span class="chip">' + clean(n.nodeType || 'scene') + '</span></td>' +
+                '<td class="num">' + (n.emotionTension != null ? n.emotionTension : '—') + '</td>' +
+                '<td class="num">' + (n.sceneSlug ? clean(n.sceneSlug) : (typeof n.sceneLineIdx === 'number' ? 'L' + n.sceneLineIdx : '—')) + '</td></tr>';
+            }).join('') : '<tr><td colspan="4" style="color:var(--fg-45);">No story map data yet. Open Story Map once to seed the graph.</td></tr>') +
+          '</tbody></table>' +
+        '</div>' +
       '</div>'
     );
   });
-  AH.hooks['onset:mount'] = function () {
-    var tick = function () {
-      var el = document.getElementById('onset-clock'); if (!el) { clearInterval(AH.OnSet._clock); return; }
-      var d = new Date();
-      el.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
-    };
-    if (AH.OnSet._clock) clearInterval(AH.OnSet._clock);
-    tick();
-    AH.OnSet._clock = setInterval(tick, 1000);
-  };
   AH.OnSet = {
+    _tab: 'ops',
+    setTab: function (t) {
+      AH.OnSet._tab = t || 'ops';
+      var o = $('#onset-panel-ops'), m = $('#onset-panel-map'), b1 = $('#onset-tab-ops'), b2 = $('#onset-tab-map');
+      if (o) o.style.display = AH.OnSet._tab === 'ops' ? '' : 'none';
+      if (m) m.style.display = AH.OnSet._tab === 'map' ? '' : 'none';
+      if (b1) { b1.className = 'btn ' + (AH.OnSet._tab === 'ops' ? 'btn--primary' : 'btn--ghost'); }
+      if (b2) { b2.className = 'btn ' + (AH.OnSet._tab === 'map' ? 'btn--primary' : 'btn--ghost'); }
+    },
     newTake: function () {
       AH.Modal.prompt('New take', 'Roll · Scn · Take · Status · TC', 'A001 · 03 · 1 · CIRCLED · 00:00:00:00', function (v) {
         if (!v) return;
@@ -10289,6 +11155,17 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       PDF.openDoc(body, 'Take_Log_' + slugify(prodTitle()));
       toast('Take log PDF generated');
     }
+  };
+  AH.hooks['onset:mount'] = function () {
+    AH.OnSet.setTab(AH.OnSet._tab || 'ops');
+    var tick = function () {
+      var el = document.getElementById('onset-clock'); if (!el) { clearInterval(AH.OnSet._clock); return; }
+      var d = new Date();
+      el.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+    };
+    if (AH.OnSet._clock) clearInterval(AH.OnSet._clock);
+    tick();
+    AH.OnSet._clock = setInterval(tick, 1000);
   };
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -10426,34 +11303,119 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   // ══════════════════════════════════════════════════════════════════════════
   //  TIMELINE (Gantt)
   // ══════════════════════════════════════════════════════════════════════════
+  function loadGanttTasks() {
+    var k = 'ah_gantt_' + STATE.activeProdId;
+    var d = AH.Storage.local.get(k, null);
+    if (!d) {
+      d = [
+        { id: uid('gt'), label: 'Script lock',         days: 14, status: 'COMPLETE',   pct: 100 },
+        { id: uid('gt'), label: 'Breakdown',           days: 24, status: 'COMPLETE',   pct: 100 },
+        { id: uid('gt'), label: 'Pre-prod',            days: 42, status: 'IN PROG · 82%', pct: 82 },
+        { id: uid('gt'), label: 'Principal photo',     days: 66, status: 'D04 · 20%',   pct: 20 },
+        { id: uid('gt'), label: 'Post · picture',      days: 12, status: 'QUEUED',      pct: 0 },
+        { id: uid('gt'), label: 'Post · audio',       days: 8,  status: 'QUEUED',      pct: 0 },
+        { id: uid('gt'), label: 'Color',               days: 5,  status: 'QUEUED',      pct: 0 },
+        { id: uid('gt'), label: 'Delivery',            days: 3,  status: 'QUEUED',      pct: 0 }
+      ];
+      AH.Storage.local.set(k, d);
+    }
+    return d;
+  }
+  function saveGanttTasks(d) {
+    AH.Storage.local.set('ah_gantt_' + STATE.activeProdId, d);
+    AH.syncProductionBlob && AH.syncProductionBlob({ ganttTasks: d, ganttUpdatedAt: Date.now() });
+  }
   AH.register('gantt', function (m) {
+    var tasks = loadGanttTasks();
     return (
-      AH.Views.renderHero(m, { primary: 'EXPORT PDF', primaryFn: "AH.Timeline.exportPDF()" }) +
+      AH.Views.renderHero(m, {
+        primary: 'ADD TASK',
+        primaryFn: 'AH.Timeline.addTaskModal()',
+        secondary: 'EXPORT PDF',
+        secondaryFn: 'AH.Timeline.exportPDF()'
+      }) +
       '<div class="section"><div class="card">' +
-        '<div class="section__title" style="margin-bottom:14px;">' + clean(getActiveProd().title) + ' · Critical path</div>' +
+        '<div class="section__title" style="margin-bottom:14px;">' + clean(getActiveProd().title) + ' · Critical path · ' + tasks.length + ' tasks</div>' +
         '<div class="gantt">' +
-          gantt('Script lock',         14, 'COMPLETE') +
-          gantt('Breakdown',           24, 'COMPLETE') +
-          gantt('Pre-prod',            42, 'IN PROG · 82%') +
-          gantt('Principal photo',     66, 'D04 · 20%') +
-          gantt('Post · picture',      12, 'QUEUED') +
-          gantt('Post · audio',         8, 'QUEUED') +
-          gantt('Color',                5, 'QUEUED') +
-          gantt('Delivery',             3, 'QUEUED') +
+          tasks.map(function (t) {
+            return '<div style="margin-bottom:12px;">' +
+              '<div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:6px;">' +
+                '<button type="button" class="btn btn--ghost" style="height:26px;padding:0 10px;font-size:10px;letter-spacing:0.08em;" onclick="AH.Timeline.editTask(\'' + t.id + '\')">EDIT</button>' +
+                '<button type="button" class="btn btn--ghost" style="height:26px;padding:0 10px;font-size:10px;color:var(--rose);" onclick="AH.Timeline.delTask(\'' + t.id + '\')">×</button>' +
+              '</div>' +
+              gantt(t.label, Math.max(4, Math.min(100, t.pct || 0)), clean(t.status || '')) +
+            '</div>';
+          }).join('') +
         '</div>' +
       '</div></div>'
     );
   });
   AH.Timeline = {
+    addTaskModal: function () {
+      AH.Modal.open('Add timeline task',
+        '<div class="sh-modal__label">Phase or work package on the critical path.</div>' +
+        '<div class="sh-field"><label>Label</label><input id="gt-label" placeholder="e.g. Picture lock"/></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+          '<div class="sh-field"><label>Duration (days)</label><input id="gt-days" type="number" min="1" value="5"/></div>' +
+          '<div class="sh-field"><label>Progress %</label><input id="gt-pct" type="number" min="0" max="100" value="0"/></div>' +
+        '</div>' +
+        '<div class="sh-field"><label>Status tag</label><input id="gt-st" placeholder="QUEUED · IN PROG · COMPLETE"/></div>',
+        {
+          size: 'sm',
+          modalId: 'modal-gantt-task',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="gt-add">ADD</button>',
+          onMount: function () {
+            $('#gt-add').onclick = function () {
+              var d = loadGanttTasks();
+              d.push({
+                id: uid('gt'),
+                label: ($('#gt-label').value || 'Task').trim(),
+                days: Math.max(1, parseInt($('#gt-days').value, 10) || 1),
+                status: ($('#gt-st').value || 'QUEUED').trim(),
+                pct: Math.max(0, Math.min(100, parseInt($('#gt-pct').value, 10) || 0))
+              });
+              saveGanttTasks(d); AH.Modal.close(); AH.Router.go('gantt'); toast('Task added');
+            };
+          }
+        });
+    },
+    editTask: function (id) {
+      var d = loadGanttTasks();
+      var t = d.find(function (x) { return x.id === id; });
+      if (!t) return;
+      AH.Modal.open('Edit task · ' + clean(t.label),
+        '<div class="sh-field"><label>Label</label><input id="gte-l" value="' + clean(t.label) + '"/></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+          '<div class="sh-field"><label>Days</label><input id="gte-d" type="number" min="1" value="' + (t.days || 1) + '"/></div>' +
+          '<div class="sh-field"><label>Progress %</label><input id="gte-p" type="number" min="0" max="100" value="' + (t.pct || 0) + '"/></div>' +
+        '</div>' +
+        '<div class="sh-field"><label>Status</label><input id="gte-s" value="' + clean(t.status) + '"/></div>',
+        {
+          size: 'sm',
+          modalId: 'modal-gantt-task',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="gte-save">SAVE</button>',
+          onMount: function () {
+            $('#gte-save').onclick = function () {
+              t.label = ($('#gte-l').value || t.label).trim();
+              t.days = Math.max(1, parseInt($('#gte-d').value, 10) || 1);
+              t.pct = Math.max(0, Math.min(100, parseInt($('#gte-p').value, 10) || 0));
+              t.status = ($('#gte-s').value || t.status).trim();
+              saveGanttTasks(d); AH.Modal.close(); AH.Router.go('gantt'); toast('Task updated');
+            };
+          }
+        });
+    },
+    delTask: function (id) {
+      var d = loadGanttTasks().filter(function (x) { return x.id !== id; });
+      saveGanttTasks(d); AH.Router.go('gantt'); toast('Task removed');
+    },
     exportPDF: function () {
-      var phases = [
-        ['Script lock',14,'COMPLETE'],['Breakdown',24,'COMPLETE'],['Pre-prod',42,'IN PROG · 82%'],
-        ['Principal photo',66,'D04 · 20%'],['Post · picture',12,'QUEUED'],['Post · audio',8,'QUEUED'],
-        ['Color',5,'QUEUED'],['Delivery',3,'QUEUED']
-      ];
-      var rows = phases.map(function (p) { return '<tr><td>' + clean(p[0]) + '</td><td>' + p[1] + ' days</td><td>' + clean(p[2]) + '</td></tr>'; }).join('');
+      var tasks = loadGanttTasks();
+      var rows = tasks.map(function (t) {
+        return '<tr><td>' + clean(t.label) + '</td><td>' + (t.days || 0) + '</td><td>' + (t.pct || 0) + '%</td><td>' + clean(t.status || '') + '</td></tr>';
+      }).join('');
       var body = PDF.header('Timeline · Critical Path', getActiveProd().title) +
-        PDF.section('Phases', '<table class="pdf-table"><thead><tr><th>Phase</th><th>Duration</th><th>Status</th></tr></thead><tbody>' + rows + '</tbody></table>') +
+        PDF.section('Tasks · ' + tasks.length, '<table class="pdf-table"><thead><tr><th>Phase</th><th>Duration (days)</th><th>Progress</th><th>Status</th></tr></thead><tbody>' + rows + '</tbody></table>') +
         PDF.footer();
       PDF.openDoc(body, 'Timeline_' + slugify(prodTitle()));
       toast('Timeline PDF generated');
@@ -10501,10 +11463,16 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   }
   AH.register('crm-prod', function (m) { return crmView('prod', m); });
   AH.register('crm-biz', function (m) { return crmView('biz', m); });
-  AH.hooks['crm-prod:mount'] = function () { wireKanban('prod'); };
-  AH.hooks['crm-biz:mount']  = function () { wireKanban('biz'); };
-  function wireKanban(kind) {
+  AH.hooks['crm-prod:mount'] = function () { wireKanban('prod', 'crm-prod'); };
+  AH.hooks['crm-biz:mount']  = function () { wireKanban('biz', 'crm-biz'); };
+  // V1-style short IDs (`prod` / `biz`) alias the same renderers + mount hooks.
+  RENDERERS['prod'] = RENDERERS['crm-prod'];
+  RENDERERS['biz'] = RENDERERS['crm-biz'];
+  AH.hooks['prod:mount'] = AH.hooks['crm-prod:mount'];
+  AH.hooks['biz:mount'] = AH.hooks['crm-biz:mount'];
+  function wireKanban(kind, routeId) {
     var dragId = null;
+    var go = function () { AH.Router.go(routeId || (kind === 'prod' ? 'crm-prod' : 'crm-biz')); };
     $$('.kanban__card').forEach(function (c) {
       on(c, 'dragstart', function () { dragId = c.getAttribute('data-id'); c.style.opacity = 0.4; });
       on(c, 'dragend', function () { c.style.opacity = 1; });
@@ -10515,7 +11483,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       on(col, 'drop', function (e) {
         e.preventDefault(); col.style.borderColor = 'var(--edge)';
         var d = loadCRM(kind); var it = d.find(function (x) { return x.id === dragId; });
-        if (it) { it.stage = col.getAttribute('data-stage'); it.last = 'now'; saveCRM(kind, d); AH.Router.go(kind === 'prod' ? 'crm-prod' : 'crm-biz'); toast('Moved · ' + it.stage); }
+        if (it) { it.stage = col.getAttribute('data-stage'); it.last = 'now'; saveCRM(kind, d); go(); toast('Moved · ' + it.stage); }
       });
     });
   }
@@ -10529,6 +11497,139 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       });
     }
   };
+  var CRM_DIAL_STATUSES = ['No contact', 'Left VM', 'Scheduled', 'Meeting set', 'Contract sent', 'Won', 'Lost'];
+  function loadDialQueue(kind) {
+    var k = 'ah_dialq_' + kind;
+    var d = AH.Storage.local.get(k, null);
+    if (!d) {
+      d = kind === 'prod'
+        ? [{ id: uid('dq'), org: 'SIDEQUEST · Talent', phone: '+1 555 0102', status: 'Scheduled', last: '2h', note: 'Callback after lunch' },
+           { id: uid('dq'), org: 'ONFN · Investors', phone: '+1 555 0199', status: 'Left VM', last: '1d', note: 'Fund II intro' }]
+        : [{ id: uid('dq'), org: 'AGBO', phone: '+1 555 0140', status: 'Meeting set', last: '6h', note: 'Zoom Thu 10a' },
+           { id: uid('dq'), org: 'Netflix · Docs', phone: '+1 555 0177', status: 'No contact', last: '3d', note: 'Cold outreach' }];
+      AH.Storage.local.set(k, d);
+    }
+    return d;
+  }
+  function saveDialQueue(kind, d) { AH.Storage.local.set('ah_dialq_' + kind, d); }
+  function loadIntel(kind) {
+    var k = 'ah_intel_' + kind;
+    var d = AH.Storage.local.get(k, null);
+    if (!d) {
+      d = kind === 'prod'
+        ? [{ id: uid('in'), title: 'Distributor appetite · Q3', body: 'Three buyers asked for sizzle + lookbook. Follow with watermark policy.', tags: 'dist,sizzle', ts: Date.now() - 86400000 }]
+        : [{ id: uid('in'), title: 'Brand RFP · Google', body: 'RFP closes 30 Apr. Need rate card + case studies.', tags: 'rfp,google', ts: Date.now() - 43200000 }];
+      AH.Storage.local.set(k, d);
+    }
+    return d;
+  }
+  function saveIntel(kind, d) { AH.Storage.local.set('ah_intel_' + kind, d); }
+  function crmDialView(kind, m) {
+    var rows = loadDialQueue(kind);
+    var lab = kind === 'prod' ? 'Production' : 'Business';
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'LOG CALL',
+        primaryFn: "AH.CRMDial.log('" + kind + "')",
+        secondary: 'OPEN DIAL PAD',
+        secondaryFn: "AH.Router.go('dialer')"
+      }) +
+      '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
+        '<table class="table"><thead><tr><th>Org</th><th>Phone</th><th>Call state</th><th>Last touch</th><th>Note</th><th></th></tr></thead><tbody>' +
+          rows.map(function (r) {
+            return '<tr><td><strong>' + clean(r.org) + '</strong></td><td class="num">' + clean(r.phone) + '</td><td><span class="chip chip--aqua">' + clean(r.status) + '</span></td><td class="num">' + clean(r.last) + '</td><td style="font-size:12px;color:var(--fg-65);">' + clean(r.note) + '</td>' +
+              '<td style="text-align:right;"><button class="btn btn--ghost" onclick="AH.CRMDial.setStatus(\'' + kind + '\',\'' + r.id + '\')">STATE</button> <button class="btn btn--ghost" onclick="AH.CRMDial.call(\'' + clean(r.phone) + '\')">CALL</button></td></tr>';
+          }).join('') +
+        '</tbody></table></div>' +
+      '<div class="section"><div class="card" style="font-size:13px;color:var(--fg-70);line-height:1.6;">' + lab + ' dial queue is separate from the kanban pipeline: use it for outbound cadence, voicemail trails, and meeting scheduling. Status values mirror a typical sales motion.</div></div>'
+    );
+  }
+  function crmIntelView(kind, m) {
+    var notes = loadIntel(kind);
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'NEW INTEL NOTE',
+        primaryFn: "AH.CRMIntel.add('" + kind + "')",
+        secondary: 'EXPORT TXT',
+        secondaryFn: "AH.CRMIntel.export('" + kind + "')"
+      }) +
+      '<div class="section">' + notes.map(function (n) {
+        return '<div class="card" style="margin-bottom:10px;">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">' +
+            '<div><div class="section__title" style="margin-bottom:6px;">' + clean(n.title) + '</div>' +
+            '<div style="font-size:12px;color:var(--fg-55);">' + new Date(n.ts).toLocaleString() + (n.tags ? ' · ' + clean(n.tags) : '') + '</div>' +
+            '<div style="margin-top:10px;font-size:13px;color:var(--fg-80);line-height:1.55;">' + clean(n.body) + '</div></div>' +
+            '<button class="btn btn--ghost" onclick="AH.CRMIntel.del(\'' + kind + '\',\'' + n.id + '\')">×</button>' +
+          '</div></div>';
+      }).join('') + '</div>'
+    );
+  }
+  AH.CRMDial = {
+    call: function (phone) { AH.Router.go('dialer'); setTimeout(function () { var i = $('#dial-number'); if (i) i.value = phone; }, 120); },
+    setStatus: function (kind, id) {
+      var row = loadDialQueue(kind).find(function (x) { return x.id === id; }); if (!row) return;
+      AH.Modal.open('Call state · ' + clean(row.org),
+        '<div class="sh-field"><label>Status</label><select id="dq-st">' + CRM_DIAL_STATUSES.map(function (s) { return '<option' + (row.status === s ? ' selected' : '') + '>' + clean(s) + '</option>'; }).join('') + '</select></div>' +
+        '<div class="sh-field"><label>Note</label><textarea id="dq-note" rows="2">' + clean(row.note || '') + '</textarea></div>',
+        {
+          size: 'sm',
+          modalId: 'modal-dial-state',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="dq-save">SAVE</button>',
+          onMount: function () {
+            $('#dq-save').onclick = function () {
+              var d = loadDialQueue(kind);
+              var r = d.find(function (x) { return x.id === id; }); if (!r) return;
+              r.status = $('#dq-st').value; r.note = ($('#dq-note').value || '').trim(); r.last = 'now';
+              saveDialQueue(kind, d); AH.Modal.close(); AH.Router.go(kind === 'prod' ? 'prod-dialer' : 'biz-dialer'); toast('Call state updated');
+            };
+          }
+        });
+    },
+    log: function (kind) {
+      AH.Modal.prompt('Log call', 'Org · phone · status · note', 'New org · +1 555 … · Left VM · Spoke with EA', function (v) {
+        if (!v) return;
+        var p = v.split(/\s*·\s*/);
+        var d = loadDialQueue(kind);
+        d.unshift({ id: uid('dq'), org: p[0] || 'Org', phone: p[1] || '', status: p[2] || 'No contact', last: 'now', note: p[3] || '' });
+        saveDialQueue(kind, d); AH.Router.go(kind === 'prod' ? 'prod-dialer' : 'biz-dialer'); toast('Call logged');
+      });
+    }
+  };
+  AH.CRMIntel = {
+    add: function (kind) {
+      AH.Modal.open('New intel note',
+        '<div class="sh-field"><label>Title</label><input id="in-t" placeholder="Headline"/></div>' +
+        '<div class="sh-field"><label>Tags (comma separated)</label><input id="in-g" placeholder="netflix, hbo, rfp"/></div>' +
+        '<div class="sh-field"><label>Body</label><textarea id="in-b" rows="5" placeholder="Research notes, links, competitive signals…"></textarea></div>',
+        {
+          size: 'md',
+          modalId: 'modal-intel-note',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="in-sv">SAVE</button>',
+          onMount: function () {
+            $('#in-sv').onclick = function () {
+              var title = ($('#in-t').value || '').trim(); if (!title) { toast('Title required', 'warn'); return; }
+              var d = loadIntel(kind);
+              d.unshift({ id: uid('in'), title: title, body: ($('#in-b').value || '').trim(), tags: ($('#in-g').value || '').trim(), ts: Date.now() });
+              saveIntel(kind, d); AH.Modal.close(); AH.Router.go(kind === 'prod' ? 'prod-intel' : 'biz-intel'); toast('Intel saved');
+            };
+          }
+        });
+    },
+    del: function (kind, id) { saveIntel(kind, loadIntel(kind).filter(function (x) { return x.id !== id; })); AH.Router.go(kind === 'prod' ? 'prod-intel' : 'biz-intel'); },
+    export: function (kind) {
+      var txt = loadIntel(kind).map(function (n) { return '---\n' + n.title + '\n' + new Date(n.ts).toISOString() + '\n' + (n.tags || '') + '\n\n' + n.body + '\n'; }).join('\n');
+      Editor._download('intel_' + kind + '_' + slugify(prodTitle()) + '.txt', txt);
+      toast('Intel exported');
+    }
+  };
+  AH.register('prod-pipeline', function (m) { return crmView('prod', m); });
+  AH.register('biz-pipeline', function (m) { return crmView('biz', m); });
+  AH.hooks['prod-pipeline:mount'] = function () { wireKanban('prod', 'prod-pipeline'); };
+  AH.hooks['biz-pipeline:mount']  = function () { wireKanban('biz', 'biz-pipeline'); };
+  AH.register('prod-dialer', function (m) { return crmDialView('prod', m); });
+  AH.register('biz-dialer', function (m) { return crmDialView('biz', m); });
+  AH.register('prod-intel', function (m) { return crmIntelView('prod', m); });
+  AH.register('biz-intel', function (m) { return crmIntelView('biz', m); });
 
   // ══════════════════════════════════════════════════════════════════════════
   //  DIALER
@@ -10628,6 +11729,473 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       });
     }
   };
+
+  // ══════════════════════════════════════════════════════════════════════════
+  //  ONBOARDING · SHORTCUTS · SCRIPT IMPORT · BREAKDOWNS · BUDGET · AUTOMATION · PREFLIGHT
+  // ══════════════════════════════════════════════════════════════════════════
+  AH.register('getting-started', function (m) {
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'IMPORT A SCRIPT',
+        primaryFn: 'AH.ScriptImport.open()',
+        secondary: 'OPEN PRODUCTIONS',
+        secondaryFn: "AH.Router.go('production-library')"
+      }) +
+      '<div class="section">' +
+        '<div class="card" style="margin-bottom:12px;">' +
+          '<div class="section__title" style="margin-bottom:10px;">First 10 minutes</div>' +
+          '<ol style="margin:0 0 0 18px;line-height:1.85;font-size:14px;color:var(--fg-78);">' +
+            '<li>Pick <strong>Demo</strong> or <strong>Cloud</strong> on the splash — cloud syncs Firebase under your account.</li>' +
+            '<li>Create or select a production in <strong>Productions</strong>, then import a script via <strong>Script Import</strong> or Script Studio.</li>' +
+            '<li>Run <strong>Stripboard</strong> + <strong>Breakdown</strong> — the AI breakdown reads your Fountain/FDX scenes.</li>' +
+            '<li>Build the <strong>Story Map</strong> (DAG) and link nodes to script lines in the inspector.</li>' +
+            '<li>Generate paperwork from <strong>Documents</strong> or the <strong>Forms &amp; generators</strong> palette on the dashboard.</li>' +
+          '</ol></div>' +
+        '<div class="grid grid--2 section">' +
+          '<div class="card"><div class="section__title" style="margin-bottom:8px;">Keyboard</div><p style="font-size:13px;color:var(--fg-65);line-height:1.6;">Press <kbd style="padding:2px 6px;border-radius:4px;background:var(--ink-2);">⌘K</kbd> anywhere. In Script Studio: <kbd>⌘S</kbd> save, <kbd>⌘F</kbd> find, <kbd>G</kbd> story map.</p>' +
+            '<button class="btn btn--ghost" onclick="AH.Router.go(\'shortcuts\')">FULL SHORTCUT LIST</button></div>' +
+          '<div class="card"><div class="section__title" style="margin-bottom:8px;">Data</div><p style="font-size:13px;color:var(--fg-65);line-height:1.6;">Everything lives in <code>ah_*</code> keys per production. Use <strong>Export &amp; Backup</strong> for JSON archives.</p>' +
+            '<button class="btn btn--ghost" onclick="AH.Router.go(\'export\')">EXPORT CENTER</button></div>' +
+        '</div></div>'
+    );
+  });
+  AH.register('shortcuts', function (m) {
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'SCRIPT STUDIO KEYS',
+        primaryFn: 'AH.Router.go(\'script-editor\');setTimeout(function(){if(AH.Editor&&AH.Editor.openKeys)AH.Editor.openKeys();},300);',
+        secondary: 'COMMAND PALETTE',
+        secondaryFn: 'AH.CmdK.open()'
+      }) +
+      '<div class="section"><div class="card">' +
+        '<div class="section__title" style="margin-bottom:12px;">Global</div>' +
+        '<div class="sh-keys-grid">' +
+          '<div class="sh-keys-col"><h4>Navigation</h4>' +
+            '<div class="sh-keys-row"><span>Command palette</span><kbd>⌘K</kbd></div>' +
+            '<div class="sh-keys-row"><span>Close palette / modal</span><kbd>Esc</kbd></div>' +
+          '</div>' +
+          '<div class="sh-keys-col"><h4>Script Studio</h4>' +
+            '<div class="sh-keys-row"><span>Save</span><kbd>⌘S</kbd></div>' +
+            '<div class="sh-keys-row"><span>Find</span><kbd>⌘F</kbd></div>' +
+            '<div class="sh-keys-row"><span>Scene navigator</span><kbd>⌘P</kbd></div>' +
+            '<div class="sh-keys-row"><span>Story Map</span><kbd>G</kbd></div>' +
+          '</div></div>' +
+        '<div class="section__title" style="margin:22px 0 12px;">Story Map (when focused)</div>' +
+        '<div class="sh-keys-grid">' +
+          '<div class="sh-keys-col">' +
+            '<div class="sh-keys-row"><span>Undo / Redo</span><kbd>⌘Z</kbd> / <kbd>⌘⇧Z</kbd></div>' +
+            '<div class="sh-keys-row"><span>New node / fork / merge</span><kbd>N</kbd> · <kbd>F</kbd> · <kbd>M</kbd></div>' +
+          '</div></div>' +
+      '</div></div>'
+    );
+  });
+  AH.register('preflight', function (m) {
+    var scs = loadScenes();
+    var cast = loadCast();
+    var locs = loadLocs();
+    var risks = loadRisk();
+    var issues = [];
+    if (!scs.length) issues.push('Stripboard has no scenes — add strips or import script.');
+    if (!cast.length) issues.push('Cast &amp; crew roster is empty.');
+    if (!locs.length) issues.push('No locations on file.');
+    if (risks.some(function (r) { return (r.lvl || '').toUpperCase() === 'HIGH'; })) issues.push('High-severity risks logged — review Risk Matrix.');
+    var html = issues.length
+      ? '<ul style="margin-left:18px;line-height:1.8;font-size:14px;color:var(--amber);">' + issues.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>'
+      : '<div style="color:var(--mint);font-weight:700;">✓ PREFLIGHT CLEAR</div><p style="margin-top:10px;font-size:14px;color:var(--fg-70);">Stripboard, people, locations, and risk posture look ready for a shoot day.</p>';
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'RE-RUN CHECKS',
+        primaryFn: "AH.Router.go('preflight')",
+        secondary: 'RISK MATRIX',
+        secondaryFn: "AH.Router.go('risk')"
+      }) +
+      '<div class="section"><div class="card">' + html + '</div>' +
+      '<div class="card" style="margin-top:12px;"><div class="section__title" style="margin-bottom:8px;">Counts</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;font-family:var(--f-mono);font-size:12px;">' +
+          '<div>Scenes<br/><strong style="font-size:18px;color:var(--mint);">' + scs.length + '</strong></div>' +
+          '<div>People<br/><strong style="font-size:18px;color:var(--mint);">' + cast.length + '</strong></div>' +
+          '<div>Locations<br/><strong style="font-size:18px;color:var(--mint);">' + locs.length + '</strong></div>' +
+          '<div>Risks<br/><strong style="font-size:18px;color:var(--mint);">' + risks.length + '</strong></div>' +
+        '</div></div></div>'
+    );
+  });
+
+  AH.register('script-import', function (m) {
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'OPEN IMPORT MODAL',
+        primaryFn: 'AH.ScriptImport.open()',
+        secondary: 'OPEN SCRIPT STUDIO',
+        secondaryFn: "AH.Router.go('script-editor')"
+      }) +
+      '<div class="section">' +
+        '<div class="card">' +
+          '<div class="section__title" style="margin-bottom:10px;">Pipeline</div>' +
+          '<p style="font-size:14px;color:var(--fg-70);line-height:1.6;margin-bottom:16px;">Import a screenplay before you open Script Studio. The same importer runs inside the editor — this route is the dedicated entry from the rail.</p>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:10px;">' +
+            '<button class="btn btn--primary" onclick="AH.ScriptImport.open()">IMPORT SCRIPT…</button>' +
+            '<button class="btn btn--ghost" onclick="AH.Router.go(\'script-editor\')">OPEN SCRIPT STUDIO</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  });
+  AH.ScriptImport = {
+    open: function () {
+      if (AH.Editor && AH.Editor.openImportModal) AH.Editor.openImportModal();
+      else toast('Script importer not ready', 'warn');
+    }
+  };
+
+  function loadBudgetLines() {
+    var k = 'ah_budget_lines_' + STATE.activeProdId;
+    var d = AH.Storage.local.get(k, null);
+    if (!d) {
+      d = [
+        { id: uid('bl'), cat: 'ATL', name: 'Writer / story rights', est: 85000, act: 42000, own: 'Legal' },
+        { id: uid('bl'), cat: 'Production', name: 'Camera package', est: 120000, act: 118500, own: 'Camera' },
+        { id: uid('bl'), cat: 'Post', name: 'Offline + online', est: 95000, act: 22000, own: 'Post' }
+      ];
+      AH.Storage.local.set(k, d);
+    }
+    return d;
+  }
+  function saveBudgetLines(d) {
+    AH.Storage.local.set('ah_budget_lines_' + STATE.activeProdId, d);
+    AH.syncProductionBlob && AH.syncProductionBlob({ budgetLines: d, budgetLinesUpdatedAt: Date.now() });
+  }
+  AH.register('budget', function (m) {
+    var lines = loadBudgetLines();
+    var totE = lines.reduce(function (a, r) { return a + (+r.est || 0); }, 0);
+    var totA = lines.reduce(function (a, r) { return a + (+r.act || 0); }, 0);
+    var finFn = RENDERERS.financials;
+    var finBody = (typeof finFn === 'function' ? finFn(m) : '') || '';
+    var idx = finBody.indexOf('<div class="section"');
+    if (idx > 0) finBody = finBody.slice(idx);
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'ADD LINE ITEM',
+        primaryFn: 'AH.BudgetLines.add()',
+        secondary: 'OPEN LEDGER',
+        secondaryFn: 'AH.Fin.openLedger()'
+      }) +
+      '<div class="section" style="margin-top:0;"><div class="card" style="padding:14px 18px;">' +
+        '<div style="display:flex;flex-wrap:wrap;gap:16px;font-family:var(--f-mono);font-size:12px;color:var(--fg-70);">' +
+          '<div>ESTIMATED TOTAL<br/><strong style="font-size:20px;color:var(--mint);">$' + totE.toLocaleString() + '</strong></div>' +
+          '<div>ACTUALS TO DATE<br/><strong style="font-size:20px;color:var(--aqua);">$' + totA.toLocaleString() + '</strong></div>' +
+          '<div>VARIANCE<br/><strong style="font-size:20px;color:' + (totA <= totE ? 'var(--mint)' : 'var(--rose)') + ';">' + (totE ? Math.round((1 - totA / totE) * 100) : 0) + '% under/over</strong></div>' +
+        '</div></div></div>' +
+      '<div class="section"><div class="card" style="padding:0;overflow:hidden;">' +
+        '<table class="table"><thead><tr><th>Category</th><th>Line</th><th>Est.</th><th>Actual</th><th>Owner</th><th></th></tr></thead><tbody>' +
+          lines.map(function (r) {
+            return '<tr><td><span class="chip">' + clean(r.cat) + '</span></td><td>' + clean(r.name) + '</td><td class="num">$' + (+r.est || 0).toLocaleString() + '</td><td class="num">$' + (+r.act || 0).toLocaleString() + '</td><td>' + clean(r.own || '') + '</td>' +
+              '<td style="text-align:right;"><button class="btn btn--ghost" onclick="AH.BudgetLines.edit(\'' + r.id + '\')">EDIT</button> <button class="btn btn--ghost" onclick="AH.BudgetLines.del(\'' + r.id + '\')">×</button></td></tr>';
+          }).join('') +
+        '</tbody></table></div></div>' +
+      '<div class="section">' + finBody + '</div>'
+    );
+  });
+  AH.BudgetLines = {
+    add: function () {
+      AH.Modal.prompt('Budget line', 'Category · Name · Est · Actual · Owner', 'Production · Lighting truck · 45000 · 12000 · Gaffer', function (v) {
+        if (!v) return;
+        var p = v.split(/\s*·\s*/);
+        var d = loadBudgetLines();
+        d.push({ id: uid('bl'), cat: p[0] || 'General', name: p[1] || 'Line', est: parseFloat((p[2] || '0').replace(/[^0-9.]/g, '')) || 0, act: parseFloat((p[3] || '0').replace(/[^0-9.]/g, '')) || 0, own: p[4] || '' });
+        saveBudgetLines(d); AH.Router.go('budget'); toast('Line added');
+      });
+    },
+    edit: function (id) {
+      var r = loadBudgetLines().find(function (x) { return x.id === id; }); if (!r) return;
+      AH.Modal.open('Edit budget line',
+        '<div class="sh-field"><label>Category</label><input id="bl-c" value="' + clean(r.cat) + '"/></div>' +
+        '<div class="sh-field"><label>Name</label><input id="bl-n" value="' + clean(r.name) + '"/></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+          '<div class="sh-field"><label>Estimated</label><input id="bl-e" type="number" value="' + (+r.est || 0) + '"/></div>' +
+          '<div class="sh-field"><label>Actual</label><input id="bl-a" type="number" value="' + (+r.act || 0) + '"/></div></div>' +
+        '<div class="sh-field"><label>Owner</label><input id="bl-o" value="' + clean(r.own || '') + '"/></div>',
+        {
+          size: 'md',
+          modalId: 'modal-budget-line',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="bl-sv">SAVE</button>',
+          onMount: function () {
+            $('#bl-sv').onclick = function () {
+              r.cat = $('#bl-c').value.trim(); r.name = $('#bl-n').value.trim();
+              r.est = parseFloat($('#bl-e').value) || 0; r.act = parseFloat($('#bl-a').value) || 0; r.own = $('#bl-o').value.trim();
+              saveBudgetLines(loadBudgetLines()); AH.Modal.close(); AH.Router.go('budget'); toast('Line saved');
+            };
+          }
+        });
+    },
+    del: function (id) { saveBudgetLines(loadBudgetLines().filter(function (x) { return x.id !== id; })); AH.Router.go('budget'); }
+  };
+
+  AH.register('breakdowns', function (m) {
+    var bd = loadBreakdown();
+    var head = '<tr><th class="num">Scn</th>' + BREAKDOWN_CATEGORIES.map(function (c) { return '<th>' + c.icon + ' ' + c.name + '</th>'; }).join('') + '</tr>';
+    var rows = bd.map(function (r) {
+      return '<tr data-scn="' + clean(r.scn) + '">' +
+        '<td class="num"><strong>' + clean(r.scn) + '</strong></td>' +
+        BREAKDOWN_CATEGORIES.map(function (c) {
+          var arr = r[c.id] || [];
+          return '<td>' + (arr.length ? '<div class="tag-list">' + arr.map(function (t) { return '<span class="chip ' + c.color + '">' + clean(t) + '</span>'; }).join('') + '</div>' : '<span style="color:var(--fg-45)">—</span>') + '</td>';
+        }).join('') +
+      '</tr>';
+    }).join('');
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'RE-RUN AI BREAKDOWN',
+        primaryFn: 'AH.Break.runAI()',
+        secondary: 'ELEMENTS PDF',
+        secondaryFn: 'AH.Break.exportPDF()'
+      }) +
+      '<div class="section"><div class="card" style="padding:0;overflow:auto;">' +
+        '<table class="table" style="min-width:880px;"><thead>' + head + '</thead><tbody>' + rows + '</tbody></table>' +
+      '</div></div>'
+    );
+  });
+
+  function loadAutoRules() {
+    var k = 'ah_auto_' + STATE.activeProdId;
+    var d = AH.Storage.local.get(k, null);
+    if (!d) {
+      d = [
+        { id: uid('ar'), name: 'After script save · log stripboard snapshot', on: true, trigKey: 'script:saved', trig: 'On script save', actKey: 'log_stripboard', act: 'Append stripboard row count to automation log' },
+        { id: uid('ar'), name: 'After script save · queue beat board refresh', on: true, trigKey: 'script:saved', trig: 'On script save', actKey: 'router_refresh', act: 'Refresh Beat Board if it is open', params: { route: 'beatboard' } },
+        { id: uid('ar'), name: 'Stripboard change · sync breakdown view', on: true, trigKey: 'schedule:updated', trig: 'On stripboard update', actKey: 'router_refresh', act: 'Refresh Breakdown module if open', params: { route: 'breakdown' } },
+        { id: uid('ar'), name: 'High-risk logged · push hot notification', on: true, trigKey: 'risk:updated', trig: 'On risk matrix change', actKey: 'notify_hot', act: 'Notify if any HIGH severity row exists', params: {} }
+      ];
+      AH.Storage.local.set(k, d);
+    } else {
+      var mig = false;
+      d.forEach(function (r) {
+        var tg = (r.trig || '') + ' ' + (r.name || '');
+        if (!r.trigKey) {
+          if (/strip|stripboard|schedule|day\b/i.test(tg)) r.trigKey = 'schedule:updated';
+          else if (/risk|hot\s*sheet|hazard/i.test(tg)) r.trigKey = 'risk:updated';
+          else if (/story\s*map|beat|graph/i.test(tg)) r.trigKey = 'storyMap:changed';
+          else if (/cast|crew|roster/i.test(tg)) r.trigKey = 'cast:updated';
+          else if (/location|scout|permit/i.test(tg)) r.trigKey = 'location:updated';
+          else if (/production|switched|slate/i.test(tg)) r.trigKey = 'production:switched';
+          else r.trigKey = 'script:saved';
+          var _tl = { 'script:saved': 'On script save', 'schedule:updated': 'On stripboard update', 'storyMap:changed': 'On story map change', 'cast:updated': 'On cast/crew update', 'location:updated': 'On locations update', 'risk:updated': 'On risk matrix change', 'production:switched': 'On production switch' };
+          r.trig = r.trig || _tl[r.trigKey] || r.trigKey;
+          mig = true;
+        }
+        if (!r.actKey) {
+          var ac = (r.act || '') + ' ' + (r.name || '');
+          if (/refresh|reload|open\s|go\s*to/i.test(ac)) { r.actKey = 'router_refresh'; r.params = r.params || { route: /beat/i.test(ac) ? 'beatboard' : /break|element/i.test(ac) ? 'breakdown' : /shot/i.test(ac) ? 'shotlist' : 'dashboard' }; }
+          else if (/strip|row|count/i.test(ac)) r.actKey = 'log_stripboard';
+          else if (/notify|push|notif|hot/i.test(ac)) r.actKey = 'notify_hot';
+          else if (/brief|pdf|export/i.test(ac)) r.actKey = 'export_brief';
+          else r.actKey = 'log_message';
+          if (r.actKey === 'log_message' && !r.params) r.params = { text: r.act || ('Rule · ' + (r.name || '')) };
+          mig = true;
+        }
+      });
+      if (mig) saveAutoRules(d);
+    }
+    return d;
+  }
+  function saveAutoRules(d) {
+    AH.Storage.local.set('ah_auto_' + STATE.activeProdId, d);
+    AH.syncProductionBlob && AH.syncProductionBlob({ productionAutomation: d, automationUpdatedAt: Date.now() });
+  }
+  AH.Auto = {
+    TRIGGERS: {
+      'script:saved':       { label: 'Script saved' },
+      'schedule:updated':   { label: 'Stripboard updated' },
+      'storyMap:changed':   { label: 'Story map changed' },
+      'cast:updated':       { label: 'Cast / crew updated' },
+      'location:updated':   { label: 'Locations updated' },
+      'risk:updated':       { label: 'Risk matrix updated' },
+      'production:switched':{ label: 'Production switched' }
+    },
+    ACTIONS: {
+      'router_refresh': { label: 'Refresh module (if open)' },
+      'router_go':      { label: 'Navigate to module' },
+      'log_stripboard': { label: 'Log stripboard row count' },
+      'log_message':    { label: 'Append log message' },
+      'notify_hot':     { label: 'Notify if HIGH risk exists' },
+      'export_brief':   { label: 'Queue production brief PDF' }
+    },
+    _subs: [],
+    init: function () {
+      AH.Auto.dispose();
+      Object.keys(AH.Auto.TRIGGERS).forEach(function (ev) {
+        AH.Auto._subs.push(AH.Bus.on(ev, function (payload) { AH.Auto.onEvent(ev, payload); }));
+      });
+    },
+    dispose: function () {
+      AH.Auto._subs.forEach(function (off) { try { off(); } catch (_) {} });
+      AH.Auto._subs = [];
+    },
+    appendLog: function (msg) {
+      var L = loadAutoLog();
+      L.push({ t: new Date().toLocaleTimeString(), msg: msg });
+      if (L.length > 200) L = L.slice(-200);
+      saveAutoLog(L);
+    },
+    onEvent: function (ev, payload) {
+      loadAutoRules().filter(function (r) { return r.on && r.trigKey === ev; }).forEach(function (r) {
+        try { AH.Auto.execute(r, ev, payload); } catch (e) { AH.Auto.appendLog('ERR · ' + (r.name || r.id) + ' · ' + (e && e.message)); }
+      });
+    },
+    execute: function (r, ev, payload, force) {
+      var act = r.actKey || 'log_message';
+      var par = r.params || {};
+      if (act === 'router_refresh') {
+        var rt = par.route || 'dashboard';
+        if (AH.Router.current === rt) { AH.Router.go(rt); AH.Auto.appendLog((force ? 'Manual · ' : '') + '↻ ' + rt + ' · ' + ev); }
+        return;
+      }
+      if (act === 'router_go') {
+        var g = par.route || 'dashboard';
+        AH.Router.go(g);
+        AH.Auto.appendLog((force ? 'Manual · ' : '') + '→ ' + g + ' · ' + ev);
+        return;
+      }
+      if (act === 'log_stripboard') {
+        var n = (typeof loadScenes === 'function') ? loadScenes().length : 0;
+        AH.Auto.appendLog((force ? 'Manual · ' : '') + 'Stripboard rows · ' + n + ' · ' + ev);
+        return;
+      }
+      if (act === 'log_message') {
+        AH.Auto.appendLog((force ? 'Manual · ' : '') + (par.text || r.act || r.name || 'Rule') + ' · ' + ev);
+        return;
+      }
+      if (act === 'notify_hot') {
+        var hi = (typeof loadRisk === 'function') && loadRisk().some(function (x) { return (x.lvl || '').toUpperCase() === 'HIGH'; });
+        if (hi) { AH.Notif.push('Automation · HIGH risk on slate · review Risk Matrix'); AH.Auto.appendLog('⚠ HIGH risk rows · ' + ev); }
+        return;
+      }
+      if (act === 'export_brief') {
+        if (force) { AH.Brief.openPDF(); AH.Auto.appendLog('Production brief PDF · ' + ev); }
+        else { AH.Auto.appendLog('Brief · data changed · open Production brief from hero or run TEST · ' + ev); }
+        return;
+      }
+      AH.Auto.appendLog('Unknown action · ' + act);
+    },
+    testRule: function (id) {
+      var r = loadAutoRules().find(function (x) { return x.id === id; });
+      if (!r) return;
+      AH.Auto.execute(r, 'manual:test', {}, true);
+      toast('Test fired · ' + (r.name || 'rule'));
+    },
+    openBuilder: function () {
+      var el = $('#auto-builder'); if (el) el.style.display = 'block';
+      el && el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    },
+    addFromBuilder: function () {
+      var name = ($('#ab-name').value || '').trim();
+      if (!name) { toast('Name the rule', 'warn'); return; }
+      var trigKey = $('#ab-trig').value;
+      var actKey = $('#ab-act').value;
+      var route = $('#ab-route').value;
+      var msg = ($('#ab-msg').value || '').trim();
+      var tk = AH.Auto.TRIGGERS[trigKey] || { label: trigKey };
+      var ak = AH.Auto.ACTIONS[actKey] || { label: actKey };
+      var d = loadAutoRules();
+      d.unshift({
+        id: uid('ar'), name: name, on: true,
+        trigKey: trigKey, trig: tk.label,
+        actKey: actKey, act: ak.label,
+        params: { route: route, text: msg }
+      });
+      saveAutoRules(d);
+      var b = $('#auto-builder'); if (b) b.style.display = 'none';
+      AH.Router.go('production-automation');
+      toast('Rule saved');
+    },
+    add: function () { AH.Auto.openBuilder(); },
+    toggle: function (id) {
+      var d = loadAutoRules().map(function (r) { return r.id === id ? Object.assign({}, r, { on: !r.on }) : r; });
+      saveAutoRules(d); AH.Router.go('production-automation');
+    },
+    del: function (id) { saveAutoRules(loadAutoRules().filter(function (r) { return r.id !== id; })); AH.Router.go('production-automation'); },
+    runAll: function () {
+      var rules = loadAutoRules().filter(function (r) { return r.on; });
+      rules.forEach(function (r) { AH.Auto.execute(r, 'manual:run-all', {}, true); });
+      AH.Notif.push('Automation · ran ' + rules.length + ' rules');
+      toast('Ran ' + rules.length + ' enabled rules');
+      AH.Router.go('production-automation');
+    }
+  };
+
+  function loadAutoLog() {
+    var k = 'ah_autolog_' + STATE.activeProdId;
+    var d = AH.Storage.local.get(k, null);
+    if (!d) { d = []; AH.Storage.local.set(k, d); }
+    return d;
+  }
+  function saveAutoLog(rows) { AH.Storage.local.set('ah_autolog_' + STATE.activeProdId, rows); }
+  AH.register('production-automation', function (m) {
+    var rules = loadAutoRules();
+    var log = loadAutoLog().slice(-18).reverse();
+    var trigOpts = Object.keys(AH.Auto.TRIGGERS).map(function (k) { return '<option value="' + k + '">' + clean(AH.Auto.TRIGGERS[k].label) + '</option>'; }).join('');
+    var actOpts = Object.keys(AH.Auto.ACTIONS).map(function (k) { return '<option value="' + k + '">' + clean(AH.Auto.ACTIONS[k].label) + '</option>'; }).join('');
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'NEW RULE',
+        primaryFn: 'AH.Auto.openBuilder()',
+        secondary: 'RUN ENABLED NOW',
+        secondaryFn: 'AH.Auto.runAll()'
+      }) +
+      '<div class="section" style="display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,1fr);gap:14px;">' +
+        '<div class="card" style="padding:0;overflow:hidden;">' +
+          '<div style="padding:14px 16px;border-bottom:1px solid var(--edge);display:flex;justify-content:space-between;align-items:center;">' +
+            '<div class="section__title" style="margin:0;">Rules · ' + rules.length + '</div>' +
+            '<span class="chip chip--aqua">BUS · COHERENCY</span>' +
+          '</div>' +
+          '<table class="table"><thead><tr><th>Rule</th><th>When</th><th>Then</th><th></th><th></th></tr></thead><tbody>' +
+            rules.map(function (r) {
+              var tk = AH.Auto.TRIGGERS[r.trigKey] || { label: r.trig };
+              var ak = AH.Auto.ACTIONS[r.actKey] || { label: r.act };
+              return '<tr><td><strong>' + clean(r.name) + '</strong></td><td style="font-size:12px;color:var(--fg-65);">' + clean(tk.label) + '</td><td style="font-size:12px;color:var(--fg-72);">' + clean(ak.label) + '</td>' +
+                '<td><span class="chip ' + (r.on ? 'chip--mint' : 'chip--amber') + '">' + (r.on ? 'ON' : 'OFF') + '</span></td>' +
+                '<td style="text-align:right;white-space:nowrap;">' +
+                  '<button class="btn btn--ghost" onclick="AH.Auto.testRule(\'' + r.id + '\')">TEST</button> ' +
+                  '<button class="btn btn--ghost" onclick="AH.Auto.toggle(\'' + r.id + '\')">TOGGLE</button> ' +
+                  '<button class="btn btn--ghost" onclick="AH.Auto.del(\'' + r.id + '\')">×</button>' +
+                '</td></tr>';
+            }).join('') +
+          '</tbody></table>' +
+        '</div>' +
+        '<div class="card" style="padding:0;overflow:hidden;max-height:520px;display:flex;flex-direction:column;">' +
+          '<div style="padding:14px 16px;border-bottom:1px solid var(--edge);"><div class="section__title" style="margin:0;">Run log</div><div class="section__sub" style="margin-top:4px;">LAST ' + log.length + ' EVENTS</div></div>' +
+          '<div style="overflow:auto;padding:10px 14px;font-family:var(--f-mono);font-size:11px;line-height:1.55;color:var(--fg-75);">' +
+            (log.length ? log.map(function (e) {
+              return '<div style="padding:8px 0;border-bottom:1px solid var(--edge);"><span style="color:var(--mint);">' + clean(e.t) + '</span> · ' + clean(e.msg) + '</div>';
+            }).join('') : '<div style="color:var(--fg-45);padding:12px 0;">No runs yet. Save a script or toggle a rule to see coherency events.</div>') +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="section" style="display:none;" id="auto-builder">' +
+        '<div class="card">' +
+          '<div class="section__title" style="margin-bottom:10px;">Quick add</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+            '<div class="sh-field"><label>Rule name</label><input id="ab-name" placeholder="e.g. Refresh shot list after stripboard edit"/></div>' +
+            '<div class="sh-field"><label>Trigger</label><select id="ab-trig">' + trigOpts + '</select></div>' +
+            '<div class="sh-field"><label>Action</label><select id="ab-act">' + actOpts + '</select></div>' +
+            '<div class="sh-field"><label>Target route (for refresh / go)</label><select id="ab-route">' +
+              ['dashboard','script-editor','schedule','breakdown','breakdowns','shotlist','storymap','beatboard','documents','financials','budget','gantt','locations','cast-crew','risk','production-automation'].map(function (rid) {
+                return '<option value="' + rid + '">' + clean(rid) + '</option>';
+              }).join('') +
+            '</select></div>' +
+          '</div>' +
+          '<div class="sh-field" style="margin-top:12px;"><label>Message (for log / notify)</label><input id="ab-msg" placeholder="Optional · appended to log lines"/></div>' +
+          '<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">' +
+            '<button type="button" class="btn btn--primary" onclick="AH.Auto.addFromBuilder()">SAVE RULE</button>' +
+            '<button type="button" class="btn btn--ghost" onclick="document.getElementById(\'auto-builder\').style.display=\'none\'">Cancel</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="section"><div class="card" style="font-size:13px;color:var(--fg-68);line-height:1.65;">' +
+        'Rules subscribe to the <strong>data coherency bus</strong> (<code>AH.Bus</code>). When a trigger fires, enabled actions run immediately — ' +
+        'refreshing open modules, appending to this log, or surfacing notifications. Data is stored per production under <code>ah_auto_*</code> and syncs to Firebase when cloud mode is on.' +
+      '</div></div>'
+    );
+  });
 
   // ══════════════════════════════════════════════════════════════════════════
   //  INTEGRATION HUB
@@ -10784,7 +12352,11 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     }
     return d;
   }
-  function saveBeats(d) { AH.Storage.local.set('ah_beats_' + STATE.activeProdId, d); AH.emit && AH.emit('beats:updated'); }
+  function saveBeats(d) {
+    AH.Storage.local.set('ah_beats_' + STATE.activeProdId, d);
+    AH.syncProductionBlob && AH.syncProductionBlob({ beatboard: d, beatboardUpdatedAt: Date.now() });
+    AH.emit && AH.emit('beats:updated');
+  }
   AH.register('beatboard', function (m) {
     var beats = loadBeats();
     var actFilter = AH.Storage.local.get('ah_beat_filter', 'ALL');
@@ -11261,12 +12833,14 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         var d = loadMusic();
         d.push({ id: uid('mu'), n: (p[0] || 'M-???') + ' · ' + (p[1] || ''), pl: 'Scene ' + (p[2] || '??'), st: p[3] || 'DEMO', cls: 'chip--aqua', rights: 'TBD' });
         AH.Storage.local.set('ah_music_' + STATE.activeProdId, d);
+        AH.syncProductionBlob && AH.syncProductionBlob({ musicCues: d, musicUpdatedAt: Date.now() });
         AH.Router.go('music'); toast('Cue added');
       });
     },
     del: function (id) {
       var d = loadMusic().filter(function (c) { return c.id !== id; });
       AH.Storage.local.set('ah_music_' + STATE.activeProdId, d);
+      AH.syncProductionBlob && AH.syncProductionBlob({ musicCues: d, musicUpdatedAt: Date.now() });
       AH.Router.go('music'); toast('Cue removed');
     },
     exportCueSheet: function () {
@@ -11413,7 +12987,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           { id: 'l8', source: 'n7', target: 'n8', type: 'standard' }
         ],
         nodeCounter: 8, linkCounter: 8, trackCounter: 3, phaseCounter: 3,
-        startNodeId: 'n1'
+        startNodeId: 'n1',
+        checkpoints: []
       };
     },
     load: function () {
@@ -11425,6 +13000,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       d.phases = d.phases || [];
       d.nodes  = d.nodes || [];
       d.links  = d.links || [];
+      d.checkpoints = d.checkpoints || [];
       StoryMap.state = d;
       return d;
     },
@@ -11692,6 +13268,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           '<div><label>Track</label><select id="ins-track">' + trackOpts + '</select></div>' +
           '<div><label>Phase · Act</label><select id="ins-phase">' + phaseOpts + '</select></div>' +
           '<div><label>Note · beat</label><textarea id="ins-note">' + clean(n.note || '') + '</textarea></div>' +
+          '<div><label>Emotional tension (0–10)</label><input id="ins-emotion" type="number" min="0" max="10" step="0.5" value="' + (n.emotionTension != null && n.emotionTension !== '' ? clean(String(n.emotionTension)) : '') + '" placeholder="e.g. 7.5"/></div>' +
+          '<div><label>Scene slug (links to stripboard)</label><input id="ins-slug" value="' + clean(n.sceneSlug || '') + '" placeholder="01 / 12A"/></div>' +
           '<div><label>Scene line reference</label><input id="ins-line" type="number" value="' + (typeof n.sceneLineIdx === 'number' ? n.sceneLineIdx : '') + '" placeholder="Line index in script"/></div>' +
           '<div><label>Video URL · Alacrity Player</label><input id="ins-video" value="' + clean(n.videoUrl || '') + '" placeholder="StreamingAssets/Films/&lt;film&gt;/scene_01.mp4"/></div>' +
           '<div><label>Audio URL (ambient)</label><input id="ins-audio" value="' + clean(n.audioUrl || '') + '" placeholder="StreamingAssets/Audio/ambient_01.wav"/></div>' +
@@ -11721,6 +13299,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           '</select></div>' +
           '<div><label>Label</label><input id="ins-llabel" value="' + clean(l.label || '') + '"/></div>' +
           '<div><label>Choice text (Alacrity Player)</label><input id="ins-choice" value="' + clean(l.choiceText || '') + '"/></div>' +
+          '<div><label>Traversal weight (simulator bias)</label><input id="ins-lweight" type="number" min="0" step="0.1" value="' + (l.weight != null ? clean(String(l.weight)) : '1') + '" placeholder="1"/></div>' +
           '<div style="display:flex;gap:6px;margin-top:6px;">' +
             '<button class="btn btn--primary" style="flex:1;" onclick="AH.StoryMap.saveLink()">SAVE</button>' +
             '<button class="btn btn--ghost" onclick="AH.StoryMap.deleteLink()">DELETE</button>' +
@@ -11813,6 +13392,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       n.phaseId = v('ins-phase') || n.phaseId;
       n.note = v('ins-note') || '';
       var li = v('ins-line'); n.sceneLineIdx = li === '' ? null : Number(li);
+      var em = v('ins-emotion'); n.emotionTension = em === '' ? null : Number(em);
+      n.sceneSlug = (v('ins-slug') || '').trim() || null;
       n.videoUrl = v('ins-video') || '';
       n.audioUrl = v('ins-audio') || '';
       n.thumb    = v('ins-thumb') || '';
@@ -11836,6 +13417,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       l.type = v('ins-ltype') || 'standard';
       l.label = v('ins-llabel') || '';
       l.choiceText = v('ins-choice') || '';
+      var w = v('ins-lweight'); l.weight = w === '' ? 1 : Math.max(0, Number(w) || 0);
       StoryMap.dirty(); toast('Edge saved');
     },
     deleteLink: function () {
@@ -11858,6 +13440,41 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       setTimeout(function () {
         if (AH.Editor && AH.Editor.scrollToLine) AH.Editor.scrollToLine(n.sceneLineIdx);
       }, 200);
+    },
+    saveCheckpoint: function () {
+      StoryMap._beforeMutate();
+      var s = StoryMap.state;
+      s.checkpoints = s.checkpoints || [];
+      var snap = JSON.parse(JSON.stringify({ nodes: s.nodes, links: s.links, tracks: s.tracks, phases: s.phases, startNodeId: s.startNodeId, nodeCounter: s.nodeCounter, linkCounter: s.linkCounter }));
+      s.checkpoints.push({ id: 'cp_' + Date.now(), at: Date.now(), label: 'Checkpoint · ' + new Date().toLocaleString(), data: snap });
+      if (s.checkpoints.length > 12) s.checkpoints = s.checkpoints.slice(-12);
+      StoryMap.dirty(); toast('Checkpoint saved · ' + s.checkpoints.length + ' in history');
+    },
+    loadCheckpoint: function () {
+      var s = StoryMap.state;
+      var cps = s.checkpoints || [];
+      if (!cps.length) { toast('No checkpoints yet', 'warn'); return; }
+      var opts = cps.slice().reverse().map(function (c) { return '<option value="' + c.id + '">' + clean(c.label) + '</option>'; }).join('');
+      AH.Modal.open('Restore checkpoint',
+        '<div class="sh-modal__label">Pick a saved graph snapshot. Current canvas is snapshotted to undo before restore.</div>' +
+        '<div class="sh-field"><label>Checkpoint</label><select id="sm-cp">' + opts + '</select></div>',
+        {
+          size: 'sm',
+          modalId: 'modal-storymap-checkpoint',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="sm-cp-go">RESTORE</button>',
+          onMount: function () {
+            $('#sm-cp-go').onclick = function () {
+              var id = $('#sm-cp').value;
+              var cp = cps.find(function (x) { return x.id === id; }); if (!cp || !cp.data) return;
+              StoryMapX.snapshot();
+              var d = cp.data;
+              s.nodes = d.nodes || []; s.links = d.links || []; s.tracks = d.tracks || s.tracks; s.phases = d.phases || s.phases;
+              s.startNodeId = d.startNodeId || s.startNodeId; s.nodeCounter = d.nodeCounter || s.nodeCounter; s.linkCounter = d.linkCounter || s.linkCounter;
+              StoryMap.sel = { nodeId: null, linkId: null };
+              AH.Modal.close(); StoryMap.dirty(); toast('Checkpoint restored');
+            };
+          }
+        });
     },
 
     addTrack: function () {
@@ -12045,7 +13662,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           _version: 1, _app: 'DC ALACRITY Story Map', _exported: new Date().toISOString(),
           nodes: s.nodes, links: s.links, tracks: s.tracks, phases: s.phases,
           nodeCounter: s.nodeCounter, linkCounter: s.linkCounter,
-          trackCounter: s.trackCounter, phaseCounter: s.phaseCounter
+          trackCounter: s.trackCounter, phaseCounter: s.phaseCounter,
+          checkpoints: s.checkpoints || []
         }
       };
       var videoEntries = s.nodes.filter(function (n) { return (n.nodeType || 'scene') === 'scene' || n.nodeType === 'start' || n.nodeType === 'end'; })
@@ -12468,6 +14086,11 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       visited = visited.concat([curId]);
       var outs = s.links.filter(function (l) { return l.source === curId; });
       var open = outs.filter(function (l) { return StoryMapX._evalCond(l.conditions || [], flags, inv); });
+      open = open.slice().sort(function (a, b) {
+        var wa = (a.weight != null ? +a.weight : 1) || 0;
+        var wb = (b.weight != null ? +b.weight : 1) || 0;
+        return wb - wa;
+      });
       var closed = outs.filter(function (l) { return !StoryMapX._evalCond(l.conditions || [], flags, inv); });
       var nodeTypeCls = (node.nodeType || 'scene');
       var isEnd = !outs.length || node.nodeType === 'end';
@@ -12477,6 +14100,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
             '<div style="font-family:var(--f-mono);font-size:10px;letter-spacing:0.22em;color:var(--fg-45);text-transform:uppercase;">NODE · ' + clean(curId) + ' · ' + nodeTypeCls.toUpperCase() + '</div>' +
             '<div style="font-family:var(--f-display);font-size:22px;font-weight:800;margin:4px 0 10px;">' + clean(node.label || '—') + '</div>' +
             (node.note ? '<div style="font-size:13px;line-height:1.6;color:var(--fg-80);margin-bottom:12px;">' + clean(node.note) + '</div>' : '') +
+            ((node.emotionTension != null && node.emotionTension !== '') ? '<div class="sh-modal__label">Emotional tension · <strong>' + clean(String(node.emotionTension)) + '</strong> / 10</div>' : '') +
             (node.videoUrl ? '<div class="sh-modal__label">Video · <code>' + clean(node.videoUrl) + '</code></div>' : '') +
             (isEnd
               ? '<div style="padding:16px;border-radius:12px;background:linear-gradient(135deg,rgba(23,255,197,0.18),rgba(20,175,223,0.12));border:1px solid var(--edge-mint);margin-top:12px;"><strong>END REACHED.</strong><br/>Visited ' + visited.length + ' nodes · ' + inv.length + ' inventory items · ' + Object.keys(flags).filter(function (k) { return flags[k]; }).length + ' flags set.</div>'
@@ -12484,9 +14108,10 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
                 '<div style="display:flex;flex-direction:column;gap:8px;">' +
                 open.map(function (l) {
                   var tgt = StoryMap.nodeById(l.target) || {};
-                  return '<button class="btn btn--primary" onclick="AH.StoryMapX._step(\'' + l.id + '\', ' + JSON.stringify(visited).replace(/"/g, '&quot;') + ')" style="justify-content:flex-start;">' +
+                  var w = (l.weight != null ? +l.weight : 1) || 0;
+                  return '<button class="btn btn--primary" onclick="AH.StoryMapX._step(\'' + l.id + '\')" style="justify-content:flex-start;">' +
                     '<span style="flex:1;text-align:left;">' + clean(l.choiceText || l.label || (tgt.label || l.target)) + '</span>' +
-                    '<span style="font-family:var(--f-mono);font-size:10px;letter-spacing:0.14em;color:var(--fg-60);">→ ' + clean(l.target) + '</span>' +
+                    '<span style="font-family:var(--f-mono);font-size:10px;letter-spacing:0.14em;color:var(--fg-60);">w=' + w + ' · → ' + clean(l.target) + '</span>' +
                   '</button>';
                 }).join('') +
                 closed.map(function (l) {
@@ -12954,6 +14579,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
             '<button class="dag-tbtn" onclick="AH.StoryMapX.analytics()">ANALYTICS</button>' +
             '<button class="dag-tbtn" onclick="AH.StoryMap.syncFromScript()">SYNC ⇄ SCRIPT</button>' +
             '<button class="dag-tbtn" onclick="AH.StoryMapX.editFlags()">FLAGS</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.saveCheckpoint()">CHECKPOINT</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.loadCheckpoint()">RESTORE</button>' +
           '</div>' +
           '<div class="dag-toolbar__group">' +
             '<button class="dag-tbtn" onclick="AH.StoryMap.exportJSON()">JSON</button>' +
@@ -13024,6 +14651,106 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     }
   };
 
+  AH.V2Forms = {
+    open: function (id) {
+      var fn = AH.V2Forms._routes[id];
+      if (!fn) { toast('Form not found · ' + id, 'warn'); return; }
+      fn();
+    },
+    _routes: {
+      'modal-new-production': function () { AH.Prod.newProduction(); },
+      'modal-rename-production': function () { AH.Prod.editProduction(STATE.activeProdId); },
+      'modal-scene': function () { AH.Schedule.editSceneModal(); },
+      'modal-daybreak': function () { AH.Schedule.dayBreakModal(); },
+      'modal-callsheet': function () { AH.Docs.gen('callSheet'); },
+      'modal-location-full': function () { AH.Loc.detailModal(); },
+      'modal-location-release': function () { AH.Docs.gen('locationRelease'); },
+      'modal-gantt-task': function () { AH.Timeline.addTaskModal(); },
+      'modal-daily-report': function () { AH.Docs.gen('dailyReport'); },
+      'modal-crew-deal': function () { AH.Docs.gen('crewDealMemo'); },
+      'modal-sag-deal': function () { AH.Docs.gen('sagDayPlayerDeal'); },
+      'modal-dga-deal': function () { AH.Docs.gen('dgaDealMemo'); },
+      'modal-minor-release': function () { AH.Docs.gen('minorTalentRelease'); },
+      'modal-nudity': function () { AH.Docs.gen('nudityRider'); },
+      'modal-stunt': function () { AH.Docs.gen('stuntPerformer'); },
+      'modal-nda': function () { AH.Docs.gen('ndaAgreement'); },
+      'modal-safety': function () { AH.Docs.gen('safetyReport'); },
+      'modal-wfh': function () { AH.Docs.gen('workForHire'); },
+      'modal-bond': function () { AH.Docs.gen('completionBond'); },
+      'modal-eo': function () { AH.Docs.gen('eoInsurance'); },
+      'modal-vendor': function () { AH.Docs.gen('vendorAgreement'); },
+      'modal-hsplan': function () { AH.Docs.gen('covidPlan'); },
+      'modal-prod-lead': function () { AH.CRM.add('prod'); },
+      'modal-biz-lead': function () { AH.CRM.add('biz'); },
+      'modal-prod-income': function () { AH.Router.go('financials'); setTimeout(function () { AH.Fin.openLedger(); }, 200); },
+      'modal-biz-income': function () { AH.Router.go('financials'); setTimeout(function () { AH.Fin.openLedger(); }, 200); },
+      'modal-banner': function () { AH.Modal.prompt('Banner / hero line', 'Text for dashboard hero', getActiveProd().title + ' · wrap incoming', function (v) { if (!v) return; STATE.bannerLine = v; saveState(); AH.Router.go('dashboard'); toast('Banner updated'); }); },
+      'modal-cast-info': function () { AH.Cast.profileSheet(); }
+    },
+    paletteHTML: function () {
+      var groups = [
+        { t: 'Production & schedule', items: [
+          ['modal-new-production', 'New production'],
+          ['modal-rename-production', 'Rename / edit production'],
+          ['modal-scene', 'Scene add / edit'],
+          ['modal-daybreak', 'Insert day break'],
+          ['modal-callsheet', 'Call sheet generator'],
+          ['modal-daily-report', 'Daily production report']
+        ]},
+        { t: 'Locations', items: [
+          ['modal-location-full', 'Location detail'],
+          ['modal-location-release', 'Location release']
+        ]},
+        { t: 'Timeline & deals', items: [
+          ['modal-gantt-task', 'Gantt · add task'],
+          ['modal-crew-deal', 'Crew deal memo'],
+          ['modal-sag-deal', 'SAG deal memo'],
+          ['modal-dga-deal', 'DGA deal memo']
+        ]},
+        { t: 'Legal suite', items: [
+          ['modal-minor-release', 'Minor release'],
+          ['modal-nudity', 'Nudity rider'],
+          ['modal-stunt', 'Stunt agreement'],
+          ['modal-nda', 'NDA'],
+          ['modal-safety', 'Safety report'],
+          ['modal-wfh', 'Work for hire'],
+          ['modal-bond', 'Completion bond'],
+          ['modal-eo', 'E&O summary'],
+          ['modal-vendor', 'Vendor agreement'],
+          ['modal-hsplan', 'Health & safety plan']
+        ]},
+        { t: 'CRM', items: [
+          ['modal-prod-lead', 'Production CRM · new lead'],
+          ['modal-biz-lead', 'Business CRM · new lead'],
+          ['modal-prod-income', 'Open ledger (prod view)'],
+          ['modal-biz-income', 'Open ledger (biz view)'],
+          ['modal-banner', 'Dashboard banner line'],
+          ['modal-cast-info', 'Cast profile sheet']
+        ]}
+      ];
+      return groups.map(function (g) {
+        return '<div style="margin-bottom:18px;"><div class="sh-modal__label">' + clean(g.t) + '</div>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:8px;">' +
+            g.items.map(function (it) {
+              return '<button type="button" class="btn btn--ghost" style="font-size:11.5px;letter-spacing:0.06em;" data-v2form="' + it[0] + '">' + clean(it[1]) + '</button>';
+            }).join('') +
+          '</div></div>';
+      }).join('');
+    },
+    openPalette: function () {
+      AH.Modal.open('Forms & generators', AH.V2Forms.paletteHTML(), {
+        size: 'lg',
+        modalId: 'modal-forms-palette',
+        footer: '<button class="btn btn--primary" onclick="AH.Modal.close()">Close</button>',
+        onMount: function (body) {
+          $$('[data-v2form]', body).forEach(function (b) {
+            b.onclick = function () { var id = b.getAttribute('data-v2form'); AH.Modal.close(); AH.V2Forms.open(id); };
+          });
+        }
+      });
+    }
+  };
+
   // ══════════════════════════════════════════════════════════════════════════
   //  COMMAND PALETTE
   // ══════════════════════════════════════════════════════════════════════════
@@ -13036,6 +14763,13 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       var prods = STATE.productions.filter(function (p) { return ql && p.title.toLowerCase().indexOf(ql) !== -1; });
       var actions = [
         { id: 'act:new-prod', label: 'New production', group: 'Actions', icon: 'plus', fn: function () { AH.Prod.newProduction(); } },
+        { id: 'act:forms', label: 'Forms & document generators', group: 'Actions', icon: 'doc', fn: function () { AH.V2Forms.openPalette(); } },
+        { id: 'act:brief', label: 'Production brief (PDF)', group: 'Actions', icon: 'doc', fn: function () { AH.Brief.openPDF(); } },
+        { id: 'act:import', label: 'Import script (file / paste)', group: 'Actions', icon: 'upload', fn: function () { AH.ScriptImport.open(); } },
+        { id: 'act:onboard', label: 'Open Getting Started', group: 'Actions', icon: 'check', fn: function () { AH.Router.go('getting-started'); } },
+        { id: 'act:shortcuts', label: 'Open Shortcuts reference', group: 'Actions', icon: 'gear', fn: function () { AH.Router.go('shortcuts'); } },
+        { id: 'act:preflight', label: 'Run Preflight checks', group: 'Actions', icon: 'check', fn: function () { AH.Router.go('preflight'); } },
+        { id: 'act:cast-info', label: 'Cast profile sheet…', group: 'Actions', icon: 'users', fn: function () { AH.V2Forms.open('modal-cast-info'); } },
         { id: 'act:toggle-theme', label: 'Toggle theme', group: 'Actions', icon: 'globe', fn: function () { AH.Theme.toggle(); } },
         { id: 'act:sign-in', label: 'Sign in with Google', group: 'Actions', icon: 'shield', fn: function () { AH.Auth.openLogin(); } },
         { id: 'act:sign-out', label: 'Sign out', group: 'Actions', icon: 'shield', fn: function () { AH.Auth.signOut(); } },
@@ -13266,6 +15000,56 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         var prod = getActiveProd();
         mbb.textContent = (prod && prod.budget) || '—';
       }
+      AH.Auth.updateUserChip();
+    },
+    updateUserChip: function () {
+      var chip = $('#user-chip');
+      var av = $('#user-chip-av');
+      var nm = $('#user-chip-name');
+      var sub = $('#user-chip-sub');
+      if (!chip || !av || !nm || !sub) return;
+      var u = AH.Auth.user;
+      var fb = AH.Firebase && AH.Firebase.user;
+      var display = (fb && (fb.displayName || fb.email)) || (u && (u.displayName || u.email)) || '';
+      var initials = '?';
+      if (display) {
+        var parts = display.replace(/[<>]/g, '').split(/\s+/).filter(Boolean);
+        initials = ((parts[0] && parts[0][0]) || '?').toUpperCase() + ((parts[1] && parts[1][0]) ? parts[1][0].toUpperCase() : '');
+      }
+      av.textContent = initials;
+      if (AH.Auth.isDemoMode) {
+        nm.textContent = 'Demo session';
+        sub.textContent = 'Local-only · invite collaborators after cloud sign-in';
+      } else if (fb || (u && u.email && u.email !== 'demo@local')) {
+        nm.textContent = display || 'Signed in';
+        sub.textContent = 'Cloud sync · collaboration ready';
+      } else {
+        nm.textContent = 'Not signed in';
+        sub.textContent = 'Local session';
+      }
+    },
+
+    openAccountModal: function () {
+      var fb = AH.Firebase && AH.Firebase.user;
+      var u = AH.Auth.user;
+      var name = (fb && (fb.displayName || fb.email)) || (u && (u.displayName || u.email)) || 'Guest';
+      var id = (fb && fb.uid) || (u && u.uid) || '—';
+      var mode = AH.Auth.isDemoMode ? 'Demo mode · data stays on this device' : (fb ? 'Cloud sync active' : 'Local session');
+      AH.Modal.open('Account · Collaboration',
+        '<div class="sh-modal__label">' + clean(mode) + '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px;">' +
+          '<div class="sh-field"><label>Identity</label><div style="font-size:14px;font-weight:600;">' + clean(name) + '</div></div>' +
+          '<div class="sh-field"><label>User ID</label><div style="font-family:var(--f-mono);font-size:11px;color:var(--fg-60);word-break:break-all;">' + clean(id) + '</div></div>' +
+        '</div>' +
+        '<div style="margin-top:18px;font-size:13px;color:var(--fg-72);line-height:1.65;">Per-production keys (<code>ah_*</code>) isolate slate data. With cloud sync, Story Map, music cues, Gantt tasks, beat board, and automation rules merge into your Firebase production document for backup and multi-device continuity.</div>',
+        {
+          size: 'md',
+          modalId: 'modal-account',
+          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Close</button>' +
+            (fb && !AH.Auth.isDemoMode
+              ? '<button class="btn btn--primary" onclick="AH.Modal.close();AH.Auth.signOut();">Sign out</button>'
+              : '<button class="btn btn--primary" onclick="AH.Modal.close();AH.Auth._revealSplash();">Cloud sign-in…</button>')
+        });
     },
 
     async signOut() {
@@ -13292,6 +15076,11 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   AH.canCloudSync = function () {
     return !!(AH.Firebase && AH.Firebase.ready && AH.Firebase.user && AH.Auth && AH.Auth.user && !AH.Auth.isDemoMode);
   };
+  /** Partial merge into Firebase production doc (story map already uses this). */
+  AH.syncProductionBlob = function (partial) {
+    if (!partial || typeof AH.canCloudSync !== 'function' || !AH.canCloudSync()) return;
+    try { AH.Firebase.pushProductionData(STATE.activeProdId, partial); } catch (_) {}
+  };
 
   // ══════════════════════════════════════════════════════════════════════════
   //  BOOT
@@ -13303,6 +15092,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     // Data coherency wiring — must happen before router goes live so every
     // module that emits during its first render already has a listener.
     AH.Coherency.init();
+    AH.Auto.init();
 
     // Rail open default
     try {
@@ -13331,6 +15121,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     on($('#btn-mobile-search'), 'click', CmdK.open);
     on($('#cmdk-input'), 'input', function (e) { CmdK.render(e.target.value); });
     on($('#cmdk-backdrop'), 'click', function (e) { if (e.target.id === 'cmdk-backdrop') CmdK.close(); });
+    on($('#pdf-preview-close'), 'click', function () { PDF.closePreview(); });
+    on($('#pdf-preview-print'), 'click', function () { PDF.printPreview(); });
 
     // Login
     // Legacy overlay — route through the same Auth flow as the splash so
@@ -13342,6 +15134,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     document.addEventListener('keydown', function (e) {
       if ((e.key === 'k' || e.key === 'K') && (e.metaKey || e.ctrlKey)) { e.preventDefault(); CmdK.open(); return; }
       if (e.key === 'Escape') {
+        if ($('#pdf-preview') && $('#pdf-preview').classList.contains('is-open')) { PDF.closePreview(); return; }
         if ($('#cmdk-backdrop').classList.contains('is-open')) CmdK.close();
         if ($('#sh-modal-back').classList.contains('is-open')) AH.Modal.close();
         if ($('#se-el-popup').classList.contains('is-open')) Editor.closeElPopup();
@@ -13377,6 +15170,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     // Mode banner actions
     on($('#mode-banner-upgrade'), 'click', function () { AH.Auth._revealSplash(); });
     on($('#mode-banner-signout'), 'click', function () { AH.Auth.signOut(); });
+    on($('#user-chip'), 'click', function () { AH.Auth.openAccountModal(); });
     // TC + edge jitter
     var tcFrame = 0;
     function tickTC() {
@@ -13429,6 +15223,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         var nameEl = $('.rail__user__name'); if (nameEl) nameEl.textContent = u.displayName || u.email || 'Signed in';
         AH.Auth.updateModeBanner();
         toast('Signed in · ' + (u.displayName || u.email || 'user'));
+      } else {
+        AH.Auth.updateUserChip();
       }
     });
 
