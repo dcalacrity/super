@@ -2053,6 +2053,54 @@ html[data-theme="light"] .doc-tile { background: #fff; }
 .doc-tile__sub { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-45); margin-top: 2px; }
 .doc-tile__arrow { width: 30px; height: 30px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: var(--fg-60); border: 1px solid var(--edge); }
 .doc-tile:hover .doc-tile__arrow { background: linear-gradient(135deg, var(--mint), var(--aqua)); color: var(--ink-0); border-color: transparent; }
+.doc-tile.is-muted { opacity: 0.48; cursor: default; pointer-events: none; }
+.docs-hub-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.docs-hub-toolbar input[type="search"],
+.docs-hub-toolbar select {
+  height: 38px; border-radius: 10px; border: 1px solid var(--edge);
+  background: var(--glass-2); color: var(--fg); font-family: var(--f-body); font-size: 13px; padding: 0 12px;
+}
+.docs-hub-toolbar input[type="search"] { flex: 1 1 220px; max-width: 400px; }
+.docs-chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.docs-chip {
+  padding: 6px 12px; border-radius: 999px; border: 1px solid var(--edge); font-size: 11px;
+  font-family: var(--f-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--fg-60); cursor: pointer; background: var(--glass-1);
+}
+.docs-chip.is-active { border-color: var(--mint); color: var(--mint); background: rgba(23,255,197,0.08); }
+.sb-root { margin-top: 4px; }
+.sb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.sb-frame-card {
+  border-radius: 14px; border: 1px solid var(--edge); overflow: hidden; background: var(--glass-1);
+  transition: transform 0.22s var(--ease), border-color 0.22s var(--ease), box-shadow 0.22s var(--ease);
+}
+.sb-frame-card:hover { transform: translateY(-3px); border-color: rgba(251,191,36,0.45); box-shadow: var(--sh-2); }
+.sb-frame-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: var(--ink-2); cursor: pointer; }
+.sb-frame-placeholder {
+  width: 100%; aspect-ratio: 16/9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  background: linear-gradient(145deg, rgba(15,20,32,0.9), rgba(8,12,20,0.95)); cursor: pointer; border-bottom: 1px solid var(--edge);
+}
+.sb-frame-body { padding: 12px 14px 14px; }
+.sb-frame-num { font-family: var(--f-display); font-size: 15px; font-weight: 700; letter-spacing: 0.06em; color: #fbbf24; margin-bottom: 6px; }
+.sb-frame-desc { font-size: 12px; color: var(--fg-70); line-height: 1.45; min-height: 36px; margin-bottom: 8px; }
+.sb-shot-link {
+  display: inline-flex; align-items: center; gap: 6px; font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.08em;
+  padding: 4px 10px; border-radius: 8px; border: 1px solid var(--edge); color: var(--aqua); cursor: pointer; margin-bottom: 8px; background: rgba(20,175,223,0.08);
+}
+.sb-shot-link.unlinked { color: var(--fg-45); border-color: var(--edge); background: transparent; }
+.sb-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.sb-btn {
+  font-family: var(--f-mono); font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 6px 10px; border-radius: 8px; border: 1px solid var(--edge); background: var(--glass-2); color: var(--fg-70); cursor: pointer;
+}
+.sb-btn:hover { border-color: var(--mint); color: var(--mint); }
+.sb-btn.del:hover { border-color: var(--rose); color: var(--rose); }
+.sb-add-card {
+  border: 1px dashed rgba(251,191,36,0.35); border-radius: 14px; min-height: 200px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 8px; cursor: pointer; color: #fbbf24; background: rgba(251,191,36,0.04);
+}
+.sb-add-card:hover { background: rgba(251,191,36,0.1); border-color: rgba(251,191,36,0.55); }
+.sb-badge { position: absolute; top: 8px; left: 8px; font-family: var(--f-mono); font-size: 9px; letter-spacing: 0.14em; padding: 2px 8px; border-radius: 6px; background: rgba(0,0,0,0.65); border: 1px solid var(--edge); color: #fbbf24; }
+.sb-badge--shot { left: auto; right: 8px; color: var(--aqua); border-color: rgba(20,175,223,0.35); }
 
 /* Pipeline diagram */
 .pipeline {
@@ -3551,8 +3599,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
 .dag-node__label { font-family: var(--f-display); font-weight: 700; font-size: 13px; letter-spacing: 0.02em; line-height: 1.15; }
 .dag-node__meta  { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-60); }
 .dag-node__track { width: 6px; height: 6px; border-radius: 50%; background: #ccc; flex-shrink: 0; }
-.dag-node__port  { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: var(--mint); border: 2px solid var(--ink-0); cursor: crosshair; opacity: 0; transition: opacity 0.18s; }
-.dag-node:hover .dag-node__port { opacity: 1; }
+.dag-node__port  { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--mint); border: 2px solid var(--ink-0); cursor: crosshair; opacity: 0.55; transition: opacity 0.18s, transform 0.18s; z-index: 3; }
+.dag-node:hover .dag-node__port { opacity: 1; transform: scale(1.08); }
 .dag-node__port--in  { left: -8px; top: 50%; transform: translateY(-50%); background: var(--aqua); }
 .dag-node__port--out { right: -8px; top: 50%; transform: translateY(-50%); }
 
@@ -3947,7 +3995,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   <div class="cmdk">
     <div class="cmdk__header">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-      <input class="cmdk__input" id="cmdk-input" type="text" placeholder="Jump to a module, person, or action…" />
+      <input class="cmdk__input" id="cmdk-input" type="text" placeholder="Search modules, actions, script, stripboard, cast, shots…" />
       <span class="cmdk__hint">ESC</span>
     </div>
     <div class="cmdk__list" id="cmdk-list"></div>
@@ -4460,6 +4508,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     { id: 'storymap',            label: 'Story Map',         group: 'STORY',     parent: 'story',    icon: 'node',    crumb: 'STORY · MAP',           img: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1800&q=80' },
     { id: 'beatboard',           label: 'Beat Board',        group: 'STORY',     parent: 'story',    icon: 'layers',  crumb: 'STORY · OUTLINE',       img: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=1800&q=80' },
     { id: 'storyboard',          label: 'Storyboard',        group: 'STORY',     parent: 'story',    icon: 'camera',  crumb: 'STORY · BOARD',         img: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'alacrity-player',     label: 'Alacrity Player',   group: 'STORY',     parent: 'story',    icon: 'film',    crumb: 'STORY · VR PLAYER',     img: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1800&q=80' },
     { id: 'shotlist',            label: 'Shot List',         group: 'STORY',     parent: 'story',    icon: 'camera',  crumb: 'STORY · SHOTS',         img: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=1800&q=80' },
     { id: 'shot-list',           label: 'Shot List (legacy)', group: 'STORY',    parent: 'story',    icon: 'camera',  crumb: 'STORY · SHOTS',         img: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=1800&q=80' },
 
@@ -4474,6 +4523,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     { id: 'tech',                label: 'Equipment',         group: 'PRE',       parent: 'pre',      icon: 'wrench',  crumb: 'PRE-PROD · EQUIPMENT',  img: 'https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?auto=format&fit=crop&w=1800&q=80' },
     { id: 'shopping',            label: 'Shopping',          group: 'PRE',       parent: 'pre',      icon: 'cart',    crumb: 'PRE-PROD · REQ',        img: 'https://images.unsplash.com/photo-1556742400-b5e9a7adbd4a?auto=format&fit=crop&w=1800&q=80' },
     { id: 'risk',                label: 'Risk Matrix',       group: 'PRE',       parent: 'pre',      icon: 'flag',    crumb: 'PRE-PROD · RISK',       img: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'production-automation', label: 'Automation',      group: 'PRE',       parent: 'pre',      icon: 'bolt',    crumb: 'PRE-PROD · AUTOMATION', img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'preflight',           label: 'Preflight',         group: 'PRE',       parent: 'pre',      icon: 'check',   crumb: 'PRE-PROD · PREFLIGHT',  img: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1800&q=80' },
 
     // ON-SET
     { id: 'onset',               label: 'On-Set Hub',        group: 'SET',       parent: 'set',      icon: 'radio',   crumb: 'SET · HUB',             img: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1800&q=80' },
@@ -4492,7 +4543,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     { id: 'budget',              label: 'Budget',            group: 'BIZ',       parent: 'biz',      icon: 'dollar',  crumb: 'BIZ · BUDGET',          img: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=1800&q=80' },
     { id: 'gantt',               label: 'Timeline',          group: 'BIZ',       parent: 'biz',      icon: 'timeline',crumb: 'BIZ · TIMELINE',        img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1800&q=80' },
     { id: 'milestones',          label: 'Milestones',        group: 'BIZ',       parent: 'biz',      icon: 'check',   crumb: 'BIZ · MILESTONES',      img: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=1800&q=80' },
-    { id: 'documents',           label: 'Documents',         group: 'BIZ',       parent: 'biz',      icon: 'doc',     crumb: 'BIZ · DOCUMENTS',       img: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'documents',           label: 'Documents',         group: 'PRE',       parent: 'pre',      icon: 'doc',     crumb: 'PRE-PROD · DOCUMENTS',  img: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1800&q=80' },
+    { id: 'production-brief',    label: 'Production Brief',  group: 'BIZ',       parent: 'biz',      icon: 'doc',     crumb: 'BIZ · BRIEF',           img: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1800&q=80' },
     { id: 'crm-prod',            label: 'Production CRM',    group: 'BIZ',       parent: 'biz',      icon: 'target',  crumb: 'BIZ · PROD CRM',        img: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1800&q=80' },
     { id: 'crm-biz',             label: 'Business CRM',      group: 'BIZ',       parent: 'biz',      icon: 'target',  crumb: 'BIZ · BIZ CRM',         img: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1800&q=80' },
     { id: 'dialer',              label: 'Dialer',            group: 'BIZ',       parent: 'biz',      icon: 'phone',   crumb: 'BIZ · DIALER',          img: 'https://images.unsplash.com/photo-1565374394096-35dbb58cdfc9?auto=format&fit=crop&w=1800&q=80' },
@@ -4890,7 +4942,9 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       'crm-biz':             'Business development. Clients, vendors, talent reps. Calls · notes · follow-ups.',
       'calendar':            'Studio-wide calendar. Shoots, meetings, holds, travel, post deliveries.',
       'dialer':              'Click-to-dial with call logging. Routes through your softphone.',
-      'integrations':        'n8n · ComfyUI · OpenClaw · Zapier. Map your studio\'s data to every tool it touches.',
+      'integrations':        'Import/export formats and optional webhooks. Connectors you configure run against your data — nothing is faked as “live” without a key.',
+      'alacrity-player':     'Unity VR playback: export the Story Map bundle, wire StreamingAssets paths, and validate the graph before you ship to the player.',
+      'production-brief':    'Sectioned executive PDF: one place to export the full production brief or open individual brief chapters.',
       'risk':                'Every hazard flagged, every mitigation logged. Covered by insurance and by plan.',
       'production-automation': 'Rules, triggers, and batch actions that keep stripboards, exports, and notifications in sync.',
       'locations':           'Scout sheets, release forms, permit state, photos. One record per place.',
@@ -4933,7 +4987,9 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       'tech':               { n: '164', l: 'Tracked assets' },
       'shopping':           { n: '24',  l: 'Active POs' },
       'continuity':         { n: '47',  l: 'Scenes logged' },
-      'documents':          { n: '86',  l: 'Documents live' },
+      'documents':          { n: '86',  l: 'Templates' },
+      'alacrity-player':    { n: 'VR',  l: 'Bundle' },
+      'production-brief': { n: 'PDF', l: 'Sections' },
       'script-editor':      { n: '47',  l: 'Scenes' },
       'script-import':      { n: '↑',   l: 'Pipeline' },
       'storymap':           { n: '12',  l: 'Branches' },
@@ -9761,6 +9817,21 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   //  PRODUCTION BRIEF · cross-module executive PDF (data-coherent)
   // ═══════════════════════════════════════════════════════════════════════
   AH.Brief = {
+    SECTIONS: [
+      { id: 'exec',    label: 'Executive snapshot', group: 'Overview' },
+      { id: 'script',  label: 'Script & narrative', group: 'Story' },
+      { id: 'strip',   label: 'Stripboard', group: 'Schedule' },
+      { id: 'cast',    label: 'Cast & crew', group: 'People' },
+      { id: 'locs',    label: 'Locations', group: 'Places' },
+      { id: 'risk',    label: 'Risk matrix', group: 'Safety' },
+      { id: 'bd',      label: 'Breakdown highlights', group: 'Prep' },
+      { id: 'shots',   label: 'Shot plan', group: 'Camera' },
+      { id: 'gantt',   label: 'Timeline (Gantt)', group: 'Schedule' },
+      { id: 'budget',  label: 'Budget snapshot', group: 'Finance' },
+      { id: 'hot',     label: 'Hot sheet · today', group: 'Ops' },
+      { id: 'auto',    label: 'Automation rules', group: 'System' },
+      { id: 'docs',    label: 'Recent documents', group: 'Paperwork' }
+    ],
     _gather: function () {
       var prod = getActiveProd();
       var pd = AH.Prod && AH.Prod._loadPD ? AH.Prod._loadPD(STATE.activeProdId) : {};
@@ -9782,95 +9853,206 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       var totE = budgetLines.reduce(function (a, r) { return a + (+r.est || 0); }, 0);
       var totA = budgetLines.reduce(function (a, r) { return a + (+r.act || 0); }, 0);
       var hot = (typeof loadHotsheet === 'function') ? loadHotsheet().filter(function (h) { return h.when === 'TODAY'; }) : [];
+      var autoRules = (typeof loadAutoRules === 'function') ? loadAutoRules().filter(function (r) { return r.on; }) : [];
+      var docsLog = (typeof loadDocs === 'function') ? loadDocs().slice(0, 12) : [];
       return {
         prod: prod, pd: pd, sceneCount: sceneLines.length, words: words,
         cast: cast, locs: locs, scs: scs, risks: risks, shots: shots, bd: bd,
         gantt: gantt, smNodes: smNodes, smLinks: smLinks,
-        budgetTotE: totE, budgetTotA: totA, hotToday: hot
+        budgetTotE: totE, budgetTotA: totA, hotToday: hot,
+        autoRules: autoRules, docsLog: docsLog
       };
     },
-    buildHTML: function () {
-      var D = AH.Brief._gather();
-      var prod = D.prod;
-      var pd = D.pd || {};
+    _sectionExec: function (D) {
+      var prod = D.prod; var pd = D.pd || {};
       var logline = (pd.description || prod.description || '').trim();
-      var highRisks = (D.risks || []).filter(function (r) { return (r.lvl || '').toUpperCase() === 'HIGH'; });
-      var stripRows = (D.scs || []).slice(0, 14).map(function (s) {
+      return PDF.section('Executive snapshot', '<div class="pdf-grid2">' +
+        PDF.field('Production', prod.title || '—') +
+        PDF.field('Type / status', (prod.type || pd.type || '—') + ' · ' + (prod.status || pd.status || '—')) +
+        PDF.field('Director', pd.director || prod.director || '—') +
+        PDF.field('Client / studio', pd.client || prod.client || '—') +
+        PDF.field('Shoot start', pd.shootStart || prod.shootStart || '—') +
+        PDF.field('Generated', new Date().toLocaleString()) +
+      '</div>' + (logline ? '<div class="pdf-p" style="margin-top:10px;"><strong>Logline / scope</strong><br/>' + clean(logline) + '</div>' : ''));
+    },
+    _sectionScript: function (D) {
+      return PDF.section('Script & narrative', '<div class="pdf-grid2">' +
+        PDF.field('Scenes (script headings)', String(D.sceneCount)) +
+        PDF.field('Approx. word count', String(D.words)) +
+        PDF.field('Story map nodes', String(D.smNodes)) +
+        PDF.field('Story map edges', String(D.smLinks)) +
+      '</div>');
+    },
+    _sectionStrip: function (D) {
+      var stripRows = (D.scs || []).slice(0, 20).map(function (s) {
         return '<tr><td class="num">' + clean(s.n) + '</td><td>' + clean(s.title) + '</td><td>' + (s.int ? 'INT' : 'EXT') + '</td><td>' + clean(s.loc) + '</td><td class="num">' + clean(s.pages) + '</td><td class="num">' + clean(s.day) + '</td></tr>';
       }).join('');
-      var castRows = (D.cast || []).slice(0, 16).map(function (c) {
+      return PDF.section('Stripboard (shoot order excerpt)', '<table class="pdf-table"><thead><tr><th>#</th><th>Slug</th><th>I/E</th><th>Location</th><th>Pages</th><th>Day</th></tr></thead><tbody>' +
+        (stripRows || '<tr><td colspan="6">No stripboard rows — add scenes in Stripboard.</td></tr>') + '</tbody></table>');
+    },
+    _sectionCast: function (D) {
+      var castRows = (D.cast || []).slice(0, 24).map(function (c) {
         return '<tr><td>' + clean(c.name) + '</td><td>' + clean(c.role || '') + '</td><td>' + clean(c.dept || '') + '</td><td class="num">' + clean(c.phone || '—') + '</td></tr>';
       }).join('');
-      var locRows = (D.locs || []).slice(0, 12).map(function (L) {
+      return PDF.section('Cast & crew (roster excerpt)', '<table class="pdf-table"><thead><tr><th>Name</th><th>Role</th><th>Dept</th><th>Phone</th></tr></thead><tbody>' +
+        (castRows || '<tr><td colspan="4">No cast/crew records.</td></tr>') + '</tbody></table>');
+    },
+    _sectionLocs: function (D) {
+      var locRows = (D.locs || []).slice(0, 18).map(function (L) {
         return '<tr><td>' + clean(L.n || L.name || '—') + '</td><td>' + clean(L.city || '') + '</td><td>' + clean(L.st || L.status || '') + '</td></tr>';
       }).join('');
-      var riskRows = (D.risks || []).slice(0, 10).map(function (r) {
+      return PDF.section('Locations (scout list excerpt)', '<table class="pdf-table"><thead><tr><th>Location</th><th>City / address</th><th>Status</th></tr></thead><tbody>' +
+        (locRows || '<tr><td colspan="3">No locations on file.</td></tr>') + '</tbody></table>');
+    },
+    _sectionRisk: function (D) {
+      var highRisks = (D.risks || []).filter(function (r) { return (r.lvl || '').toUpperCase() === 'HIGH'; });
+      var riskRows = (D.risks || []).slice(0, 14).map(function (r) {
         return '<tr><td class="num">' + clean(r.s) + '</td><td>' + clean(r.t) + '</td><td>' + clean(r.lvl) + '</td><td>' + clean(r.mit) + '</td></tr>';
       }).join('');
-      var bdTop = (D.bd || []).slice(0, 8).map(function (r) {
+      return PDF.section('Risk matrix (top hazards)', '<table class="pdf-table"><thead><tr><th>Scn</th><th>Hazard</th><th>Level</th><th>Mitigation</th></tr></thead><tbody>' +
+        (riskRows || '<tr><td colspan="4">No risk rows.</td></tr>') + '</tbody></table>' +
+        (highRisks.length ? '<div class="pdf-p" style="color:#b91c1c;"><strong>High severity count:</strong> ' + highRisks.length + '</div>' : ''));
+    },
+    _sectionBd: function (D) {
+      var bdTop = (D.bd || []).slice(0, 12).map(function (r) {
         var tags = [];
         ['stunts', 'animals', 'vehicles', 'props', 'sfx'].forEach(function (k) {
           if (r[k] && r[k].length) tags.push(k + ': ' + r[k].slice(0, 4).join(', '));
         });
         return '<tr><td class="num">' + clean(r.scn) + '</td><td style="font-size:9pt;">' + clean(tags.join(' · ') || '—') + '</td></tr>';
       }).join('');
-      var ganttRows = (D.gantt || []).slice(0, 10).map(function (t) {
+      return PDF.section('Breakdown highlights (stunts / animals / props)', '<table class="pdf-table"><thead><tr><th>Scn</th><th>Highlights</th></tr></thead><tbody>' +
+        (bdTop || '<tr><td colspan="2">Run AI Breakdown from the Breakdown module.</td></tr>') + '</tbody></table>');
+    },
+    _sectionShots: function (D) {
+      var rows = (D.shots || []).slice(0, 16).map(function (s) {
+        return '<tr><td class="num">' + clean(s.n) + '</td><td>' + clean(s.kind) + '</td><td class="num">' + clean(s.lens) + '</td><td class="num">' + clean(s.scn) + '</td><td>' + clean(s.desc) + '</td></tr>';
+      }).join('');
+      return PDF.section('Shot plan (first rows)', '<table class="pdf-table"><thead><tr><th>#</th><th>Type</th><th>Lens</th><th>Scene</th><th>Description</th></tr></thead><tbody>' +
+        (rows || '<tr><td colspan="5">No shots in shot list.</td></tr>') + '</tbody></table>');
+    },
+    _sectionGantt: function (D) {
+      var ganttRows = (D.gantt || []).slice(0, 14).map(function (t) {
         return '<tr><td>' + clean(t.name || t.title || 'Task') + '</td><td>' + clean(t.owner || '') + '</td><td class="num">' + clean(t.start || '') + '</td><td class="num">' + clean(t.end || '') + '</td></tr>';
       }).join('');
+      return PDF.section('Timeline tasks (Gantt excerpt)', '<table class="pdf-table"><thead><tr><th>Task</th><th>Owner</th><th>Start</th><th>End</th></tr></thead><tbody>' +
+        (ganttRows || '<tr><td colspan="4">No Gantt tasks.</td></tr>') + '</tbody></table>');
+    },
+    _sectionBudget: function (D) {
+      return PDF.section('Budget snapshot (line items)', '<div class="pdf-grid2">' +
+        PDF.field('Estimated total', D.budgetTotE ? ('$' + D.budgetTotE.toLocaleString()) : '—') +
+        PDF.field('Actuals to date', D.budgetTotA ? ('$' + D.budgetTotA.toLocaleString()) : '—') +
+      '</div>');
+    },
+    _sectionHot: function (D) {
       var hotRows = (D.hotToday || []).map(function (h) {
         return '<tr><td>' + clean(h.dept) + '</td><td>' + clean(h.txt) + '</td><td>' + clean(h.st || '') + '</td></tr>';
       }).join('');
-      return (
-        PDF.header('Production Brief', prod.title || 'Untitled') +
-        PDF.section('Executive snapshot', '<div class="pdf-grid2">' +
-          PDF.field('Production', prod.title || '—') +
-          PDF.field('Type / status', (prod.type || pd.type || '—') + ' · ' + (prod.status || pd.status || '—')) +
-          PDF.field('Director', pd.director || prod.director || '—') +
-          PDF.field('Client / studio', pd.client || prod.client || '—') +
-          PDF.field('Shoot start', pd.shootStart || prod.shootStart || '—') +
-          PDF.field('Generated', new Date().toLocaleString()) +
-        '</div>' +
-        (logline ? '<div class="pdf-p" style="margin-top:10px;"><strong>Logline / scope</strong><br/>' + clean(logline) + '</div>' : '')
-        ) +
-        PDF.section('Script & narrative', '<div class="pdf-grid2">' +
-          PDF.field('Scenes (script headings)', String(D.sceneCount)) +
-          PDF.field('Approx. word count', String(D.words)) +
-          PDF.field('Story map nodes', String(D.smNodes)) +
-          PDF.field('Story map edges', String(D.smLinks)) +
-        '</div>') +
-        PDF.section('Stripboard (next scenes)', '<table class="pdf-table"><thead><tr><th>#</th><th>Slug</th><th>I/E</th><th>Location</th><th>Pages</th><th>Day</th></tr></thead><tbody>' +
-          (stripRows || '<tr><td colspan="6">No stripboard rows — import script or add scenes in Stripboard.</td></tr>') + '</tbody></table>') +
-        PDF.section('Cast & crew (roster excerpt)', '<table class="pdf-table"><thead><tr><th>Name</th><th>Role</th><th>Dept</th><th>Phone</th></tr></thead><tbody>' +
-          (castRows || '<tr><td colspan="4">No cast/crew records.</td></tr>') + '</tbody></table>') +
-        PDF.section('Locations (scout list excerpt)', '<table class="pdf-table"><thead><tr><th>Location</th><th>City / address</th><th>Status</th></tr></thead><tbody>' +
-          (locRows || '<tr><td colspan="3">No locations on file.</td></tr>') + '</tbody></table>') +
-        PDF.section('Risk matrix (top hazards)', '<table class="pdf-table"><thead><tr><th>Scn</th><th>Hazard</th><th>Level</th><th>Mitigation</th></tr></thead><tbody>' +
-          (riskRows || '<tr><td colspan="4">No risk rows.</td></tr>') + '</tbody></table>' +
-          (highRisks.length ? '<div class="pdf-p" style="color:#b91c1c;"><strong>High severity count:</strong> ' + highRisks.length + '</div>' : '')
-        ) +
-        PDF.section('Breakdown highlights (stunts / animals / props)', '<table class="pdf-table"><thead><tr><th>Scn</th><th>Highlights</th></tr></thead><tbody>' +
-          (bdTop || '<tr><td colspan="2">Run AI Breakdown from the Breakdown module.</td></tr>') + '</tbody></table>') +
-        PDF.section('Shot plan (first rows)', '<table class="pdf-table"><thead><tr><th>#</th><th>Type</th><th>Lens</th><th>Scene</th><th>Description</th></tr></thead><tbody>' +
-          ((D.shots || []).slice(0, 12).map(function (s) {
-            return '<tr><td class="num">' + clean(s.n) + '</td><td>' + clean(s.kind) + '</td><td class="num">' + clean(s.lens) + '</td><td class="num">' + clean(s.scn) + '</td><td>' + clean(s.desc) + '</td></tr>';
-          }).join('') || '<tr><td colspan="5">No shots in shot list.</td></tr>') +
-        '</tbody></table>') +
-        PDF.section('Timeline tasks (Gantt excerpt)', '<table class="pdf-table"><thead><tr><th>Task</th><th>Owner</th><th>Start</th><th>End</th></tr></thead><tbody>' +
-          (ganttRows || '<tr><td colspan="4">No Gantt tasks.</td></tr>') + '</tbody></table>') +
-        PDF.section('Budget snapshot (line items)', '<div class="pdf-grid2">' +
-          PDF.field('Estimated total', D.budgetTotE ? ('$' + D.budgetTotE.toLocaleString()) : '—') +
-          PDF.field('Actuals to date', D.budgetTotA ? ('$' + D.budgetTotA.toLocaleString()) : '—') +
-        '</div>') +
-        PDF.section('Hot sheet · today', '<table class="pdf-table"><thead><tr><th>Dept</th><th>Issue</th><th>State</th></tr></thead><tbody>' +
-          (hotRows || '<tr><td colspan="3">No hot items flagged for today.</td></tr>') + '</tbody></table>') +
-        PDF.footer()
-      );
+      return PDF.section('Hot sheet · today', '<table class="pdf-table"><thead><tr><th>Dept</th><th>Issue</th><th>State</th></tr></thead><tbody>' +
+        (hotRows || '<tr><td colspan="3">No hot items flagged for today.</td></tr>') + '</tbody></table>');
     },
-    openPDF: function () {
-      var html = AH.Brief.buildHTML();
+    _sectionAuto: function (D) {
+      var rules = D.autoRules || [];
+      var rows = rules.slice(0, 15).map(function (r) {
+        return '<tr><td>' + clean(r.name || r.id) + '</td><td>' + clean(r.trig || r.trigKey || '') + '</td><td>' + clean(r.act || r.actKey || '') + '</td><td>' + (r.on ? 'ON' : 'OFF') + '</td></tr>';
+      }).join('');
+      return PDF.section('Automation rules (enabled)', '<table class="pdf-table"><thead><tr><th>Rule</th><th>Trigger</th><th>Action</th><th>State</th></tr></thead><tbody>' +
+        (rows || '<tr><td colspan="4">No automation rules enabled — open Automation to add triggers.</td></tr>') + '</tbody></table>');
+    },
+    _sectionDocs: function (D) {
+      var rows = (D.docsLog || []).map(function (x) {
+        return '<tr><td>' + clean(x.title) + '</td><td>' + clean(x.sub || '') + '</td><td>' + clean(x.size || '') + '</td></tr>';
+      }).join('');
+      return PDF.section('Recent generated documents', '<table class="pdf-table"><thead><tr><th>Title</th><th>Detail</th><th>Type</th></tr></thead><tbody>' +
+        (rows || '<tr><td colspan="3">No document log yet — generate from Documents.</td></tr>') + '</tbody></table>');
+    },
+    buildSectionHTML: function (sectionId, D) {
+      D = D || AH.Brief._gather();
+      var fn = {
+        exec: AH.Brief._sectionExec, script: AH.Brief._sectionScript, strip: AH.Brief._sectionStrip,
+        cast: AH.Brief._sectionCast, locs: AH.Brief._sectionLocs, risk: AH.Brief._sectionRisk,
+        bd: AH.Brief._sectionBd, shots: AH.Brief._sectionShots, gantt: AH.Brief._sectionGantt,
+        budget: AH.Brief._sectionBudget, hot: AH.Brief._sectionHot, auto: AH.Brief._sectionAuto, docs: AH.Brief._sectionDocs
+      }[sectionId];
+      return fn ? fn(D) : '';
+    },
+    buildHTML: function (sectionIds) {
+      var D = AH.Brief._gather();
+      var prod = D.prod;
+      var order = sectionIds && sectionIds.length ? sectionIds : AH.Brief.SECTIONS.map(function (s) { return s.id; });
+      var body = order.map(function (id) { return AH.Brief.buildSectionHTML(id, D); }).join('');
+      return PDF.header('Production Brief', prod.title || 'Untitled') + body + PDF.footer();
+    },
+    openPDF: function (sectionIds) {
+      var html = AH.Brief.buildHTML(sectionIds);
       PDF.openDoc(html, 'Production_Brief_' + slugify(prodTitle()));
       AH.Notif.push('Production brief generated · ' + getActiveProd().title);
+    },
+    openSectionPDF: function (sectionId) {
+      var D = AH.Brief._gather();
+      var prod = D.prod;
+      var inner = AH.Brief.buildSectionHTML(sectionId, D);
+      if (!inner) { toast('Unknown brief section', 'warn'); return; }
+      var html = PDF.header('Production Brief · ' + sectionId, prod.title || 'Untitled') + inner + PDF.footer();
+      PDF.openDoc(html, 'Brief_' + sectionId + '_' + slugify(prodTitle()));
+      AH.Notif.push('Brief section exported · ' + sectionId);
     }
+  };
+
+  AH.register('production-brief', function (m) {
+    var chips = AH.Brief.SECTIONS.map(function (s, i) {
+      return '<button type="button" class="docs-chip' + (i === 0 ? ' is-active' : '') + '" data-brief-sec="' + s.id + '">' + clean(s.label) + '</button>';
+    }).join('');
+    var panel = '<div id="brief-sec-panel" class="card" style="min-height:120px;font-size:13px;line-height:1.6;color:var(--fg-75);">Select a section, then export that chapter as its own PDF, or export the full brief.</div>';
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'EXPORT FULL BRIEF',
+        primaryFn: 'AH.Brief.openPDF()',
+        secondary: 'OPEN STRIPBOARD',
+        secondaryFn: "AH.Router.go('schedule')"
+      }) +
+      '<div class="section">' +
+        '<div class="card" style="margin-bottom:12px;">' +
+          '<div class="section__title" style="margin-bottom:8px;">Brief sections</div>' +
+          '<div class="docs-chip-row" id="brief-sec-chips">' + chips + '</div>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">' +
+            '<button class="btn btn--primary" onclick="AH.Brief.openSectionPDF(AH.BriefUI.currentSec)">EXPORT THIS SECTION PDF</button>' +
+            '<button class="btn btn--ghost" onclick="AH.Brief.openPDF()">EXPORT FULL BRIEF</button>' +
+          '</div>' + panel +
+        '</div>' +
+        '<div class="card"><div class="section__title" style="margin-bottom:8px;">Included in full export</div>' +
+          '<ul style="margin:0;padding-left:18px;color:var(--fg-65);font-size:13px;line-height:1.65;">' +
+            AH.Brief.SECTIONS.map(function (s) { return '<li><strong>' + clean(s.label) + '</strong> · ' + clean(s.group) + '</li>'; }).join('') +
+          '</ul></div>' +
+      '</div>'
+    );
+  });
+  AH.BriefUI = { currentSec: 'exec' };
+  AH.hooks['production-brief:mount'] = function () {
+    AH.BriefUI.currentSec = 'exec';
+    AH.BriefUI._renderPanel();
+    $$('#brief-sec-chips .docs-chip').forEach(function (b) {
+      on(b, 'click', function () {
+        $$('#brief-sec-chips .docs-chip').forEach(function (x) { x.classList.remove('is-active'); });
+        b.classList.add('is-active');
+        AH.BriefUI.currentSec = b.getAttribute('data-brief-sec') || 'exec';
+        AH.BriefUI._renderPanel();
+      });
+    });
+  };
+  AH.BriefUI._renderPanel = function () {
+    var el = $('#brief-sec-panel'); if (!el) return;
+    var s = (AH.Brief.SECTIONS || []).find(function (x) { return x.id === AH.BriefUI.currentSec; });
+    el.innerHTML = '<div style="font-family:var(--f-mono);font-size:10px;letter-spacing:0.18em;color:var(--fg-45);text-transform:uppercase;margin-bottom:6px;">' + clean((s && s.group) || '') + '</div>' +
+      '<div style="font-family:var(--f-display);font-size:20px;font-weight:700;margin-bottom:8px;">' + clean((s && s.label) || 'Section') + '</div>' +
+      '<p style="margin:0;">Exports a single PDF with this chapter only (cover + section). Use <strong>Export full brief</strong> for the complete packet.</p>';
+  };
+  AH.BriefUI.setSec = function (id) {
+    AH.BriefUI.currentSec = id;
+    $$('#brief-sec-chips .docs-chip').forEach(function (x) {
+      x.classList.toggle('is-active', x.getAttribute('data-brief-sec') === id);
+    });
+    AH.BriefUI._renderPanel();
   };
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -9890,6 +10072,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     // Schedule & Production
     { id: 'scriptBreakdown',   cat: 'schedule',  title: 'Script Breakdown',     sub: 'Extract scenes + elements + page count', fn: 'AH.Docs.gen("scriptBreakdown")' },
     { id: 'shootingSchedule',  cat: 'schedule',  title: 'Shooting Schedule',    sub: 'Stripboard-derived day-by-day plan',     fn: 'AH.Docs.gen("shootingSchedule")' },
+    { id: 'annotatedScript',   cat: 'schedule',  title: 'Annotated Script',     sub: 'Scene-by-scene annotations in Script Studio (import script first)', fn: "AH.Router.go('script-editor')" },
     { id: 'callSheet',         cat: 'schedule',  title: 'Call Sheet',           sub: 'Crew & cast call times · D1 D2 D3…',     fn: 'AH.Docs.gen("callSheet")' },
     { id: 'dailyReport',       cat: 'schedule',  title: 'Daily Production Rpt', sub: 'DPR · scenes shot, issues, pickup list', fn: 'AH.Docs.gen("dailyReport")' },
 
@@ -9925,18 +10108,99 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     { id: 'indieContractor',   cat: 'compliance', title: 'Independent Contractor', sub: 'IC agreement with 1099 language',   fn: 'AH.Docs.gen("indieContractor")' }
   ];
 
+  AH.Search = {
+    prodIndex: function (q) {
+      q = (q || '').trim().toLowerCase();
+      if (!q || q.length < 2) return [];
+      var out = [];
+      var push = function (label, meta, fn) {
+        var hay = (label + ' ' + meta).toLowerCase();
+        if (hay.indexOf(q) < 0) return;
+        out.push({ label: label, meta: meta, fn: fn });
+      };
+      try {
+        var scs = (typeof loadScenes === 'function') ? loadScenes() : [];
+        (scs || []).forEach(function (s) {
+          push('Stripboard · ' + (s.n || '') + ' ' + (s.title || ''), (s.loc || '') + ' · ' + (s.day || ''), function () { AH.Router.go('schedule'); });
+        });
+      } catch (_) {}
+      try {
+        var cast = (typeof loadCast === 'function') ? loadCast() : [];
+        (cast || []).forEach(function (c) {
+          push('Cast · ' + (c.name || ''), (c.role || '') + ' · ' + (c.dept || ''), function () { AH.Router.go('cast-crew'); });
+        });
+      } catch (_) {}
+      try {
+        var locs = (typeof loadLocs === 'function') ? loadLocs() : [];
+        (locs || []).forEach(function (L) {
+          push('Location · ' + (L.n || L.name || ''), (L.city || '') + ' · ' + (L.st || L.status || ''), function () { AH.Router.go('locations'); });
+        });
+      } catch (_) {}
+      try {
+        var risks = (typeof loadRisk === 'function') ? loadRisk() : [];
+        (risks || []).forEach(function (r) {
+          push('Risk · ' + (r.t || ''), 'Scn ' + (r.s || '') + ' · ' + (r.lvl || ''), function () { AH.Router.go('risk'); });
+        });
+      } catch (_) {}
+      try {
+        var shots = (typeof loadShots === 'function') ? loadShots() : [];
+        (shots || []).forEach(function (s) {
+          push('Shot · ' + (s.n || ''), (s.kind || '') + ' · ' + (s.desc || ''), function () { AH.Router.go('shotlist'); });
+        });
+      } catch (_) {}
+      try {
+        if (typeof StoryMap !== 'undefined' && StoryMap.load) {
+          StoryMap.load();
+          var nodes = (StoryMap.state && StoryMap.state.nodes) || [];
+          nodes.forEach(function (n) {
+            push('Story Map · ' + (n.label || n.id), (n.note || '').slice(0, 80), function () { AH.Router.go('storymap'); });
+          });
+        }
+      } catch (_) {}
+      try {
+        var lines = (AH.Editor && AH.Editor.state && AH.Editor.state.lines) || [];
+        lines.forEach(function (l, i) {
+          if (!l || !l.x) return;
+          if (String(l.x).toLowerCase().indexOf(q) >= 0 || (l.t && l.t.toLowerCase().indexOf(q) >= 0)) {
+            push('Script · line ' + i, (l.t || '') + ' · ' + String(l.x).slice(0, 72), function () { AH.Router.go('script-editor'); setTimeout(function () { if (AH.Editor && AH.Editor.scrollToLine) AH.Editor.scrollToLine(i); }, 200); });
+          }
+        });
+      } catch (_) {}
+      try {
+        (DOC_TEMPLATES || []).forEach(function (t) {
+          if ((t.title + ' ' + t.sub).toLowerCase().indexOf(q) >= 0) {
+            push('Document · ' + t.title, t.sub || '', function () { AH.Router.go('documents'); });
+          }
+        });
+      } catch (_) {}
+      return out.slice(0, 24);
+    }
+  };
+
   AH.register('documents', function (m) {
     var d = loadDocs();
     var byCat = {};
     DOC_TEMPLATES.forEach(function (t) { (byCat[t.cat] = byCat[t.cat] || []).push(t); });
+    var filter = AH.Storage.local.get('ah_docs_filter', 'all');
+    var q = AH.Storage.local.get('ah_docs_q', '');
+    var sort = AH.Storage.local.get('ah_docs_sort', 'default');
     var templatesHTML = DOC_CATEGORIES.map(function (c) {
-      var items = byCat[c.k] || [];
+      var items = (byCat[c.k] || []).slice();
+      if (filter !== 'all' && c.k !== filter) return '';
+      if (q) {
+        var ql = q.toLowerCase();
+        items = items.filter(function (it) { return (it.title + ' ' + it.sub).toLowerCase().indexOf(ql) >= 0; });
+      }
+      if (sort === 'az') items.sort(function (a, b) { return (a.title || '').localeCompare(b.title || ''); });
       if (!items.length) return '';
-      return '<div class="card" style="margin-bottom:10px;">' +
-        '<div class="section__title" style="margin-bottom:10px;">' + c.t + ' <span style="color:var(--fg-45);font-size:11px;">· ' + c.d + '</span></div>' +
-        '<div class="doc-grid">' +
+      return '<div class="card doc-cat-block" data-doc-cat="' + c.k + '" style="margin-bottom:10px;">' +
+        '<div class="section__title" style="margin-bottom:10px;">' + c.t + ' <span style="color:var(--fg-45);font-size:11px;">· ' + c.d + '</span> <span style="color:var(--mint);font-family:var(--f-mono);font-size:10px;">' + items.length + '</span></div>' +
+        '<div class="doc-grid" id="doc-grid-' + c.k + '">' +
           items.map(function (it) {
-            return '<div class="doc-tile" onclick="' + it.fn + '">' +
+            var ann = it.id === 'annotatedScript' && (!AH.Editor || !AH.Editor.state || !AH.Editor.state.lines || !AH.Editor.state.lines.length);
+            var cls = ann ? 'doc-tile is-muted' : 'doc-tile';
+            var fn = ann ? 'toast(\'Import a script in Script Studio first\',\'warn\')' : it.fn;
+            return '<div class="' + cls + '" data-doc-name="' + clean(it.title.toLowerCase()) + '" onclick="' + fn + '">' +
               '<div class="doc-tile__icon">' + ICONS.doc + '</div>' +
               '<div class="doc-tile__body">' +
                 '<div class="doc-tile__title">' + clean(it.title) + '</div>' +
@@ -9948,26 +10212,43 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         '</div>' +
       '</div>';
     }).join('');
+    var chips = [['all','All'],['schedule','Schedule'],['agreements','Agreements'],['legal','Legal'],['compliance','Compliance'],['fin','Financials']].map(function (x) {
+      return '<button type="button" class="docs-chip' + (filter === x[0] ? ' is-active' : '') + '" data-docs-filter="' + x[0] + '">' + x[1] + '</button>';
+    }).join('');
     return (
       AH.Views.renderHero(m, {
-        primary: 'CALL SHEET', primaryFn: 'AH.Docs.gen("callSheet")',
-        secondary: 'SHOOTING SCHEDULE', secondaryFn: 'AH.Docs.gen("shootingSchedule")'
+        primary: 'SHOOT DAY PACK',
+        primaryFn: 'AH.DocsUI.shootDayPack()',
+        secondary: 'PRODUCTION BRIEF',
+        secondaryFn: "AH.Router.go('production-brief')"
       }) +
       '<div class="section">' +
-        '<div class="card" style="margin-bottom:10px;">' +
-          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
-            '<div class="section__title">Quick documents</div>' +
-            '<div style="display:flex;gap:6px;">' +
-              '<button class="btn btn--ghost" onclick="AH.Docs.gen(\'callSheet\')">📞 CALL SHEET</button>' +
-              '<button class="btn btn--ghost" onclick="AH.Docs.gen(\'scriptBreakdown\')">📋 BREAKDOWN</button>' +
-              '<button class="btn btn--ghost" onclick="AH.Docs.gen(\'castAndCrew\')">👥 CAST &amp; CREW</button>' +
-              '<button class="btn btn--ghost" onclick="AH.Docs.gen(\'dailyReport\')">📊 DAILY REPORT</button>' +
-            '</div>' +
+        '<div class="card" style="margin-bottom:12px;">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;">' +
+            '<div><div class="section__title" style="margin-bottom:4px;">Document command</div><div class="section__sub">Generate · sign · archive — same templates as V1</div></div>' +
+            '<div style="text-align:right;"><div style="font-family:var(--f-display);font-size:22px;color:var(--mint);line-height:1;">' + d.length + '</div><div class="section__sub">Generated this device</div></div>' +
+          '</div>' +
+          '<div class="docs-hub-toolbar" style="margin-top:14px;">' +
+            '<input type="search" id="docs-hub-q" placeholder="Search templates…" value="' + clean(q) + '"/>' +
+            '<select id="docs-hub-sort" aria-label="Sort">' +
+              '<option value="default"' + (sort === 'default' ? ' selected' : '') + '>Default order</option>' +
+              '<option value="az"' + (sort === 'az' ? ' selected' : '') + '>A → Z</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="docs-chip-row" id="docs-hub-filters">' + chips + '</div>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:8px;">' +
+            '<button class="btn btn--ghost" onclick="AH.Docs.gen(\'callSheet\')">📞 Call sheet</button>' +
+            '<button class="btn btn--ghost" onclick="AH.Docs.gen(\'dailyReport\')">📊 Daily report</button>' +
+            '<button class="btn btn--ghost" onclick="AH.Docs.gen(\'scriptBreakdown\')">📋 Script breakdown</button>' +
+            '<button class="btn btn--ghost" onclick="AH.Docs.gen(\'castAndCrew\')">👥 Cast &amp; crew</button>' +
+            '<button class="btn btn--ghost" onclick="AH.Docs.gen(\'ndaAgreement\')">🔒 NDA</button>' +
+            '<button class="btn btn--ghost" onclick="AH.Docs.gen(\'safetyReport\')">⛑️ Safety</button>' +
+            '<button class="btn btn--ghost" onclick="AH.Router.go(\'gantt\')">📈 Gantt</button>' +
           '</div>' +
         '</div>' +
-        templatesHTML +
+        '<div id="docs-hub-body">' + templatesHTML + '</div>' +
         '<div class="card" style="margin-top:10px;">' +
-          '<div class="section__title" style="margin-bottom:10px;">My documents · ' + d.length + '</div>' +
+          '<div class="section__title" style="margin-bottom:10px;">Session log · ' + d.length + '</div>' +
           d.map(function (x) {
             return '<div class="doc-row" onclick="AH.Docs.view(\'' + x.id + '\')">' +
               '<div class="doc-row__icon">' + ICONS.doc + '</div>' +
@@ -9980,6 +10261,18 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       '</div>'
     );
   });
+  AH.hooks['documents:mount'] = function () {
+    var qIn = $('#docs-hub-q');
+    if (qIn) on(qIn, 'input', function () { AH.Storage.local.set('ah_docs_q', qIn.value || ''); AH.Router.go('documents'); });
+    var srt = $('#docs-hub-sort');
+    if (srt) on(srt, 'change', function () { AH.Storage.local.set('ah_docs_sort', srt.value || 'default'); AH.Router.go('documents'); });
+    $$('#docs-hub-filters .docs-chip').forEach(function (b) {
+      on(b, 'click', function () {
+        AH.Storage.local.set('ah_docs_filter', b.getAttribute('data-docs-filter') || 'all');
+        AH.Router.go('documents');
+      });
+    });
+  };
   AH.Docs = {
     add: function () {
       AH.Modal.prompt('New document', 'Title', '', function (v) {
@@ -10872,6 +11165,20 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       PDF.openDoc(body, 'IC_Agreement_' + slugify(gv('ic-name') || 'Contractor'));
       AH.Modal.close(); AH.Docs._log('IC Agreement');
     });
+  };
+
+  AH.DocsUI = {
+    shootDayPack: function () {
+      var steps = ['callSheet', 'dailyReport', 'shootingSchedule', 'safetyReport'];
+      var i = 0;
+      function next() {
+        if (i >= steps.length) { toast('Shoot day pack queued — check PDF preview'); return; }
+        try { AH.Docs.gen(steps[i]); } catch (e) { toast('Pack step failed · ' + steps[i], 'error'); }
+        i++;
+        setTimeout(next, 400);
+      }
+      next();
+    }
   };
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -12284,7 +12591,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       'log_stripboard': { label: 'Log stripboard row count' },
       'log_message':    { label: 'Append log message' },
       'notify_hot':     { label: 'Notify if HIGH risk exists' },
-      'export_brief':   { label: 'Queue production brief PDF' }
+      'export_brief':   { label: 'Queue production brief PDF' },
+      'webhooks_ping':  { label: 'POST JSON to integration webhooks' }
     },
     _subs: [],
     init: function () {
@@ -12341,7 +12649,22 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         else { AH.Auto.appendLog('Brief · data changed · open Production brief from hero or run TEST · ' + ev); }
         return;
       }
+      if (act === 'webhooks_ping') {
+        AH.Auto._postWebhooks(ev, payload);
+        return;
+      }
       AH.Auto.appendLog('Unknown action · ' + act);
+    },
+    _postWebhooks: function (ev, payload) {
+      var hooks = loadIntegrations().filter(function (x) { return x && x.key && /^https:\/\//i.test(String(x.key).trim()); });
+      if (!hooks.length) { AH.Auto.appendLog('Webhooks · none configured (Integrations → save URL)'); return; }
+      var body = JSON.stringify({ event: ev, payload: payload || {}, prodId: STATE.activeProdId, prodTitle: (getActiveProd() && getActiveProd().title) || '', ts: Date.now() });
+      hooks.forEach(function (h) {
+        try {
+          fetch(String(h.key).trim(), { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: body });
+        } catch (e) {}
+      });
+      AH.Auto.appendLog('Webhooks · POST · ' + hooks.length + ' · ' + ev);
     },
     testRule: function (id) {
       var r = loadAutoRules().find(function (x) { return x.id === id; });
@@ -12386,6 +12709,11 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       AH.Notif.push('Automation · ran ' + rules.length + ' rules');
       toast('Ran ' + rules.length + ' enabled rules');
       AH.Router.go('production-automation');
+    },
+    clearLog: function () {
+      saveAutoLog([]);
+      AH.Router.go('production-automation');
+      toast('Automation log cleared');
     }
   };
 
@@ -12405,9 +12733,16 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       AH.Views.renderHero(m, {
         primary: 'NEW RULE',
         primaryFn: 'AH.Auto.openBuilder()',
-        secondary: 'RUN ENABLED NOW',
-        secondaryFn: 'AH.Auto.runAll()'
+        secondary: 'INTEGRATIONS',
+        secondaryFn: "AH.Router.go('integrations')"
       }) +
+      '<div class="section"><div class="card" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">' +
+        '<span style="font-family:var(--f-mono);font-size:10px;letter-spacing:0.18em;color:var(--fg-45);text-transform:uppercase;">Presets</span>' +
+        '<button class="btn btn--ghost" onclick="AH.AutoPresets.add(\'script_webhook\')">Script save → webhooks</button>' +
+        '<button class="btn btn--ghost" onclick="AH.AutoPresets.add(\'strip_refresh\')">Stripboard → refresh schedule</button>' +
+        '<button class="btn btn--ghost" onclick="AH.AutoPresets.add(\'risk_brief\')">Risk change → brief PDF</button>' +
+        '<button class="btn btn--ghost" onclick="AH.Auto.runAll()">RUN ALL ENABLED</button>' +
+      '</div></div>' +
       '<div class="section" style="display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,1fr);gap:14px;">' +
         '<div class="card" style="padding:0;overflow:hidden;">' +
           '<div style="padding:14px 16px;border-bottom:1px solid var(--edge);display:flex;justify-content:space-between;align-items:center;">' +
@@ -12429,7 +12764,10 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           '</tbody></table>' +
         '</div>' +
         '<div class="card" style="padding:0;overflow:hidden;max-height:520px;display:flex;flex-direction:column;">' +
-          '<div style="padding:14px 16px;border-bottom:1px solid var(--edge);"><div class="section__title" style="margin:0;">Run log</div><div class="section__sub" style="margin-top:4px;">LAST ' + log.length + ' EVENTS</div></div>' +
+          '<div style="padding:14px 16px;border-bottom:1px solid var(--edge);display:flex;justify-content:space-between;align-items:center;gap:10px;">' +
+            '<div><div class="section__title" style="margin:0;">Run log</div><div class="section__sub" style="margin-top:4px;">LAST ' + log.length + ' EVENTS</div></div>' +
+            '<button class="btn btn--ghost" style="height:30px;padding:0 12px;font-size:10px;" onclick="AH.Auto.clearLog()">CLEAR</button>' +
+          '</div>' +
           '<div style="overflow:auto;padding:10px 14px;font-family:var(--f-mono);font-size:11px;line-height:1.55;color:var(--fg-75);">' +
             (log.length ? log.map(function (e) {
               return '<div style="padding:8px 0;border-bottom:1px solid var(--edge);"><span style="color:var(--mint);">' + clean(e.t) + '</span> · ' + clean(e.msg) + '</div>';
@@ -12445,7 +12783,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
             '<div class="sh-field"><label>Trigger</label><select id="ab-trig">' + trigOpts + '</select></div>' +
             '<div class="sh-field"><label>Action</label><select id="ab-act">' + actOpts + '</select></div>' +
             '<div class="sh-field"><label>Target route (for refresh / go)</label><select id="ab-route">' +
-              ['dashboard','script-editor','schedule','breakdown','breakdowns','shotlist','storymap','beatboard','documents','financials','budget','gantt','locations','cast-crew','risk','production-automation'].map(function (rid) {
+              ['dashboard','script-editor','schedule','breakdown','breakdowns','shotlist','storymap','beatboard','documents','production-brief','financials','budget','gantt','locations','cast-crew','risk','production-automation','integrations','alacrity-player','export','post'].map(function (rid) {
                 return '<option value="' + rid + '">' + clean(rid) + '</option>';
               }).join('') +
             '</select></div>' +
@@ -12459,10 +12797,25 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       '</div>' +
       '<div class="section"><div class="card" style="font-size:13px;color:var(--fg-68);line-height:1.65;">' +
         'Rules subscribe to the <strong>data coherency bus</strong> (<code>AH.Bus</code>). When a trigger fires, enabled actions run immediately — ' +
-        'refreshing open modules, appending to this log, or surfacing notifications. Data is stored per production under <code>ah_auto_*</code> and syncs to Firebase when cloud mode is on.' +
+        'refreshing open modules, appending to this log, surfacing notifications, generating briefs, or <strong>POSTing JSON</strong> to every integration URL you saved under Integrations. Rules live in <code>ah_auto_*</code> per production and sync to Firebase in cloud mode.' +
       '</div></div>'
     );
   });
+  AH.AutoPresets = {
+    add: function (key) {
+      var d = loadAutoRules();
+      if (key === 'script_webhook') {
+        d.unshift({ id: uid('ar'), name: 'Preset · Script save → webhooks', on: true, trigKey: 'script:saved', trig: 'On script save', actKey: 'webhooks_ping', act: 'POST JSON to integration webhooks', params: {} });
+      } else if (key === 'strip_refresh') {
+        d.unshift({ id: uid('ar'), name: 'Preset · Stripboard → refresh schedule', on: true, trigKey: 'schedule:updated', trig: 'On stripboard update', actKey: 'router_refresh', act: 'Refresh Stripboard if open', params: { route: 'schedule' } });
+      } else if (key === 'risk_brief') {
+        d.unshift({ id: uid('ar'), name: 'Preset · Risk change → production brief', on: true, trigKey: 'risk:updated', trig: 'On risk matrix change', actKey: 'export_brief', act: 'Queue production brief PDF', params: {} });
+      }
+      saveAutoRules(d);
+      toast('Preset rule added');
+      AH.Router.go('production-automation');
+    }
+  };
 
   // ══════════════════════════════════════════════════════════════════════════
   //  INTEGRATION HUB
@@ -12471,21 +12824,18 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     var d = AH.Storage.local.get('ah_integrations', null);
     if (!d) {
       d = [
-        { id: 'n8n',      n: 'n8n',           desc: 'Workflow automation',   cls: 'chip--mint', st: 'CONNECTED',   key: 'n8n_webhook',     doc: 'https://docs.n8n.io/' },
-        { id: 'comfy',    n: 'ComfyUI',       desc: 'Image/video generation', cls: 'chip--mint', st: 'CONNECTED',   key: 'comfy_endpoint',  doc: 'https://github.com/comfyanonymous/ComfyUI' },
-        { id: 'openclaw', n: 'OpenClaw',      desc: 'Script analysis',       cls: 'chip--mint', st: 'CONNECTED',   key: 'openclaw_token',  doc: '' },
-        { id: 'alacrity-player', n: 'Alacrity Player', desc: 'Unity VR playback · receives Story Map bundle', cls: 'chip--mint', st: 'CONNECTED', key: '', doc: '' },
-        { id: 'zapier',   n: 'Zapier',        desc: 'CRM triggers',          cls: 'chip--aqua', st: 'READY',       key: 'zapier_hook' },
-        { id: 'slack',    n: 'Slack',         desc: 'Team comms',            cls: 'chip--aqua', st: 'READY',       key: 'slack_webhook' },
-        { id: 'gdrive',   n: 'Google Drive',  desc: 'Cloud files',           cls: 'chip--mint', st: 'CONNECTED' },
-        { id: 'dropbox',  n: 'Dropbox',       desc: 'Vault mirror',          cls: 'chip--lime', st: 'AVAILABLE' },
-        { id: 'asana',    n: 'Asana',         desc: 'Task sync',             cls: 'chip--lime', st: 'AVAILABLE' },
-        { id: 'linear',   n: 'Linear',        desc: 'Issue tracking',        cls: 'chip--lime', st: 'AVAILABLE' },
-        { id: 'resolve',  n: 'DaVinci Resolve', desc: 'NLE bridge (FCPXML / EDL)', cls: 'chip--aqua', st: 'READY' },
-        { id: 'frame',    n: 'Frame.io',      desc: 'Review + approval',     cls: 'chip--aqua', st: 'READY' }
+        { id: 'n8n',      n: 'n8n · Webhook', desc: 'POST JSON payloads to your n8n workflow URL when automation runs.', cls: 'chip--aqua', st: 'NOT CONFIGURED', key: '', route: 'production-automation', doc: 'https://docs.n8n.io/' },
+        { id: 'slack',    n: 'Slack · Incoming webhook', desc: 'Send automation + risk alerts to a channel (paste webhook URL).', cls: 'chip--aqua', st: 'NOT CONFIGURED', key: '', route: 'production-automation', doc: 'https://api.slack.com/messaging/webhooks' },
+        { id: 'zapier',   n: 'Zapier · Catch hook', desc: 'Fire a Zap from automation using a Catch Hook URL.', cls: 'chip--aqua', st: 'NOT CONFIGURED', key: '', route: 'production-automation', doc: 'https://zapier.com/apps/webhook/help' },
+        { id: 'alacrity-player', n: 'Alacrity Player (Unity)', desc: 'VR bundle export from Story Map — open the dedicated module for export + checklist.', cls: 'chip--mint', st: 'READY', key: '', route: 'alacrity-player', doc: '' },
+        { id: 'resolve',  n: 'DaVinci Resolve', desc: 'FCPXML / EDL export from Post Suite (built-in).', cls: 'chip--mint', st: 'READY', key: '', route: 'post', doc: '' },
+        { id: 'gdrive',   n: 'Google Drive', desc: 'Use Cloud Mode + Export to sync productions; no separate Drive API in this build.', cls: 'chip--lime', st: 'CLOUD', key: '', route: 'export', doc: '' }
       ];
       AH.Storage.local.set('ah_integrations', d);
     }
+    // One-time migration: drop legacy rows that claimed live connections without implementation
+    d = d.filter(function (x) { return x && x.id !== 'openclaw' && x.id !== 'comfy' && x.id !== 'dropbox' && x.id !== 'asana' && x.id !== 'linear' && x.id !== 'frame'; });
+    AH.Storage.local.set('ah_integrations', d);
     return d;
   }
   AH.register('integrations', function (m) {
@@ -12505,8 +12855,11 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       { k: 'edl',      label: 'CMX3600 EDL',     ext: '.edl',      in: null,                                  out: 'AH.Post.exportEDL()' }
     ];
     return (
-      AH.Views.renderHero(m, { primary: 'ADD INTEGRATION', primaryFn: "AH.Integrations.add()", secondary: 'MANAGE KEYS', secondaryFn: 'AH.Integrations.keys()' }) +
+      AH.Views.renderHero(m, { primary: 'ADD WEBHOOK', primaryFn: "AH.Integrations.add()", secondary: 'AUTOMATION', secondaryFn: "AH.Router.go('production-automation')" }) +
       '<div class="section">' +
+        '<div class="card" style="margin-bottom:10px;font-size:13px;line-height:1.65;color:var(--fg-70);">' +
+          'Each tile opens a real configuration panel. <strong>Slack / n8n / Zapier</strong> require a URL you paste locally — nothing is marked connected until you test. Format import/export lives below; Alacrity Player has its own module.' +
+        '</div>' +
         '<div class="card" style="margin-bottom:10px;">' +
           '<div class="section__head" style="margin-bottom:14px;"><div><div class="section__title">Format Hub</div><div class="section__sub">IMPORT / EXPORT · BYTE-ACCURATE WITH V1</div></div></div>' +
           '<div class="grid grid--3">' +
@@ -12528,9 +12881,10 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
               return '<div class="card" style="cursor:pointer;" onclick="AH.Integrations.open(\'' + c.id + '\')">' +
                 '<div style="display:flex;justify-content:space-between;align-items:center;">' +
                   '<div class="section__title">' + clean(c.n) + '</div>' +
-                  '<span class="chip ' + c.cls + '">' + c.st + '</span>' +
+                  '<span class="chip ' + c.cls + '">' + clean(c.st) + '</span>' +
                 '</div>' +
                 '<div style="color:var(--fg-60);margin-top:6px;font-size:12.5px;">' + clean(c.desc) + '</div>' +
+                (c.route ? '<div style="margin-top:8px;"><button class="btn btn--ghost" style="height:30px;padding:0 12px;font-size:10px;" onclick="event.stopPropagation();AH.Router.go(\'' + c.route + '\')">OPEN MODULE →</button></div>' : '') +
               '</div>';
             }).join('') +
           '</div>' +
@@ -12540,40 +12894,65 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   });
   AH.Integrations = {
     add: function () {
-      AH.Modal.prompt('Add integration', 'Name · description · webhook URL', 'Custom · description · https://', function (v) {
+      AH.Modal.prompt('Add webhook integration', 'Name · description · https URL', 'Vendor Alerts · Slack-style · https://hooks…', function (v) {
         if (!v) return;
         var p = v.split(/\s*·\s*/); var d = loadIntegrations();
-        d.push({ id: uid('int'), n: p[0] || 'Custom', desc: p[1] || '', cls: 'chip--aqua', st: 'READY', key: p[2] || '' });
+        d.push({ id: uid('int'), n: p[0] || 'Custom', desc: p[1] || '', cls: 'chip--aqua', st: 'NOT CONFIGURED', key: (p[2] || '').trim(), route: 'production-automation', doc: '' });
         AH.Storage.local.set('ah_integrations', d);
-        toast('Integration added · ' + (p[0] || 'Custom'));
+        toast('Webhook added · configure in tile');
         AH.Router.go('integrations');
       });
     },
     open: function (id) {
       var c = loadIntegrations().find(function (x) { return x.id === id; }); if (!c) return;
-      AH.Modal.open(c.n, '<div style="line-height:1.7;font-size:13px;color:var(--fg-80);">' +
-          '<p><strong>' + clean(c.desc) + '</strong></p>' +
-          '<p>Status: <span class="chip ' + c.cls + '" style="margin-left:4px;">' + clean(c.st) + '</span></p>' +
-          (c.key ? '<p style="margin-top:8px;"><code style="font-family:var(--f-mono);font-size:11px;padding:4px 8px;border-radius:6px;background:var(--ink-2);border:1px solid var(--edge);">' + clean(c.key) + '</code></p>' : '') +
-          (c.doc ? '<p style="margin-top:8px;"><a href="' + clean(c.doc) + '" target="_blank" rel="noreferrer" style="color:var(--mint);">Documentation →</a></p>' : '') +
-        '</div>', {
-          size: 'md',
-          footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Close</button>' +
-                  '<button class="btn btn--primary" onclick="AH.Integrations.test(\'' + c.id + '\')">TEST CONNECTION</button>'
-        });
+      if (c.route === 'alacrity-player') { AH.Router.go('alacrity-player'); return; }
+      if (c.route === 'post') { AH.Router.go('post'); return; }
+      if (c.route === 'export') { AH.Router.go('export'); return; }
+      var isHook = ['n8n', 'slack', 'zapier'].indexOf(c.id) >= 0 || /^https:\/\//i.test(String(c.key || ''));
+      var body = '<div style="line-height:1.7;font-size:13px;color:var(--fg-80);">' +
+        '<p><strong>' + clean(c.desc) + '</strong></p>' +
+        '<p>Status: <span class="chip ' + c.cls + '" style="margin-left:4px;">' + clean(c.st) + '</span></p>' +
+        (isHook ? '<div class="sh-field" style="margin-top:12px;"><label>Webhook URL (HTTPS)</label><input id="int-url" type="url" value="' + clean(c.key || '') + '" placeholder="https://…"/></div>' +
+          '<div class="sh-modal__label" style="margin-top:10px;">Test sends a small JSON ping with production id and timestamp. Check your receiver logs.</div>' : '') +
+        (c.doc ? '<p style="margin-top:8px;"><a href="' + clean(c.doc) + '" target="_blank" rel="noreferrer" style="color:var(--mint);">Documentation →</a></p>' : '') +
+      '</div>';
+      AH.Modal.open(c.n, body, {
+        size: 'md',
+        modalId: 'modal-integration',
+        footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Close</button>' +
+          (c.route ? '<button class="btn btn--ghost" onclick="AH.Modal.close();AH.Router.go(\'' + c.route + '\')">OPEN MODULE</button>' : '') +
+          (isHook ? '<button class="btn btn--primary" onclick="AH.Integrations.saveUrl(\'' + c.id + '\')">SAVE URL</button>' +
+            '<button class="btn btn--primary" onclick="AH.Integrations.testHook(\'' + c.id + '\')">SEND TEST</button>' : '')
+      });
     },
-    test: function (id) {
-      var c = loadIntegrations().find(function (x) { return x.id === id; }); if (!c) return;
-      c.st = 'CONNECTED'; c.cls = 'chip--mint';
-      var all = loadIntegrations().map(function (x) { return x.id === id ? c : x; });
+    saveUrl: function (id) {
+      var u = ($('#int-url') && $('#int-url').value || '').trim();
+      if (!/^https:\/\//i.test(u)) { toast('Webhook must be an https:// URL', 'warn'); return; }
+      var all = loadIntegrations().map(function (x) {
+        if (x.id !== id) return x;
+        return Object.assign({}, x, { key: u, st: 'CONFIGURED', cls: 'chip--aqua' });
+      });
       AH.Storage.local.set('ah_integrations', all);
-      AH.Modal.close(); toast(c.n + ' · connection verified');
-      AH.Router.go('integrations');
+      toast('Saved · ' + id);
+      AH.Modal.close(); AH.Router.go('integrations');
+    },
+    testHook: function (id) {
+      var c = loadIntegrations().find(function (x) { return x.id === id; });
+      var u = (c && c.key) || ($('#int-url') && $('#int-url').value) || '';
+      u = String(u).trim();
+      if (!/^https:\/\//i.test(u)) { toast('Save a valid https webhook first', 'warn'); return; }
+      var payload = JSON.stringify({ source: 'alacrity-hub-v2', integrationId: id, prodId: STATE.activeProdId, prodTitle: getActiveProd().title, ts: Date.now() });
+      fetch(u, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: payload }).then(function () {
+        var all = loadIntegrations().map(function (x) { return x.id === id ? Object.assign({}, x, { key: u, st: 'OK · SENT', cls: 'chip--mint' }) : x; });
+        AH.Storage.local.set('ah_integrations', all);
+        toast('Test request sent (no-cors) · verify on receiver');
+        AH.Modal.close(); AH.Router.go('integrations');
+      }).catch(function () { toast('Network error sending test', 'error'); });
     },
     keys: function () {
       var d = loadIntegrations();
-      AH.Modal.open('Integration Keys', '<div style="font-size:12px;line-height:1.7;">' +
-        d.map(function (c) { return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--edge);"><span>' + clean(c.n) + '</span><code style="font-family:var(--f-mono);font-size:10px;color:var(--fg-60);">' + clean(c.key || '—') + '</code></div>'; }).join('') +
+      AH.Modal.open('Integration URLs', '<div style="font-size:12px;line-height:1.7;">' +
+        d.map(function (c) { return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--edge);"><span>' + clean(c.n) + '</span><code style="font-family:var(--f-mono);font-size:10px;color:var(--fg-60);max-width:55%;overflow:hidden;text-overflow:ellipsis;">' + clean(c.key || '—') + '</code></div>'; }).join('') +
       '</div>', { size: 'md', footer: '<button class="btn btn--primary" onclick="AH.Modal.close()">OK</button>' });
     }
   };
@@ -12973,60 +13352,213 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     var d = AH.Storage.local.get(k, null);
     if (!d) {
       d = [
-        { id: uid('fr'), k: 'EST', t: 'Yard 4 wide · dolly R→L', src: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=800&q=80', scene: '01' },
-        { id: uid('fr'), k: 'CU',  t: 'Burner phone on whiteboard', src: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=800&q=80', scene: '02' },
-        { id: uid('fr'), k: 'OTS', t: 'Alex over Mira · handoff', src: 'https://images.unsplash.com/photo-1540329957110-b87b0a2e3e72?auto=format&fit=crop&w=800&q=80', scene: '03' },
-        { id: uid('fr'), k: 'WIDE',t: 'Rooftop · crane up',       src: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80', scene: '04' }
+        { id: uid('fr'), frameNum: 1, shotKind: 'EST', description: 'Yard 4 wide · dolly R→L', sceneNum: '01', imageData: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=800&q=80', shotId: null, shotNumber: null },
+        { id: uid('fr'), frameNum: 2, shotKind: 'CU', description: 'Burner phone on whiteboard', sceneNum: '02', imageData: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=800&q=80', shotId: null, shotNumber: null },
+        { id: uid('fr'), frameNum: 3, shotKind: 'OTS', description: 'Alex over Mira · handoff', sceneNum: '03', imageData: 'https://images.unsplash.com/photo-1540329957110-b87b0a2e3e72?auto=format&fit=crop&w=800&q=80', shotId: null, shotNumber: null },
+        { id: uid('fr'), frameNum: 4, shotKind: 'WIDE', description: 'Rooftop · crane up', sceneNum: '04', imageData: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80', shotId: null, shotNumber: null }
       ];
       AH.Storage.local.set(k, d);
     }
+    d.forEach(function (f, i) {
+      if (!f.id) f.id = uid('fr');
+      if (!f.frameNum) f.frameNum = i + 1;
+      if (f.k && !f.shotKind) f.shotKind = f.k;
+      if (f.t && !f.description) f.description = f.t;
+      if (f.scene && !f.sceneNum) f.sceneNum = f.scene;
+      if (f.src && !f.imageData) f.imageData = f.src;
+    });
     return d;
+  }
+  function saveStoryboard(d) {
+    AH.Storage.local.set('ah_sb_' + STATE.activeProdId, d);
+    AH.syncProductionBlob && AH.syncProductionBlob({ storyboard: d, storyboardUpdatedAt: Date.now() });
   }
   AH.register('storyboard', function (m) {
     var frames = loadStoryboard();
-    return (
-      AH.Views.renderHero(m, { primary: 'NEW FRAME', primaryFn: "AH.Storyboard.add()", secondary: 'EXPORT BOARD', secondaryFn: 'AH.Storyboard.exportPDF()' }) +
-      '<div class="section"><div class="grid grid--3">' +
-        frames.map(function (f) {
-          return '<div class="card" style="padding:0;overflow:hidden;position:relative;" data-fid="' + f.id + '">' +
-            '<div style="aspect-ratio:16/9;background:url(\'' + f.src + '\') center/cover;position:relative;">' +
-              '<span class="chip chip--mint" style="position:absolute;top:12px;left:12px;">' + clean(f.k) + '</span>' +
-              '<button class="btn btn--ghost" style="position:absolute;top:12px;right:12px;height:28px;padding:0 10px;" onclick="AH.Storyboard.del(\'' + f.id + '\')">×</button>' +
-            '</div>' +
-            '<div style="padding:14px 16px;">' +
-              '<div style="font-family:var(--f-display);font-weight:600;font-size:14px;">Scene ' + clean(f.scene) + '</div>' +
-              '<div style="font-size:12px;color:var(--fg-60);">' + clean(f.t) + '</div>' +
-            '</div>' +
+    var shots = (typeof loadShots === 'function') ? loadShots() : [];
+    var linked = frames.filter(function (f) { return f.shotId; }).length;
+    var cards = frames.map(function (f, idx) {
+      var img = f.imageData || f.src || '';
+      var kind = f.shotKind || f.k || 'WS';
+      var desc = f.description || f.t || '';
+      var scn = f.sceneNum || f.scene || '';
+      var sh = loadShots().find(function (s) { return s.id === f.shotId; });
+      var shotLabel = sh ? ('Shot ' + clean(sh.n) + ' — ' + clean((sh.desc || '').slice(0, 40))) : (f.shotNumber ? 'Shot ' + clean(f.shotNumber) : '+ Link to shot list');
+      var linkCls = sh ? 'sb-shot-link' : 'sb-shot-link unlinked';
+      var top = img
+        ? '<div style="position:relative;" ondragover="event.preventDefault()" ondrop="AH.Storyboard.handleDrop(\'' + f.id + '\',event)">' +
+            '<img class="sb-frame-img" src="' + clean(img) + '" alt="" onclick="AH.Storyboard.viewImg(\'' + f.id + '\')"/>' +
+            '<span class="sb-badge">#' + (f.frameNum || idx + 1) + '</span>' +
+            (sh ? '<span class="sb-badge sb-badge--shot">' + clean(sh.n) + '</span>' : '') +
+          '</div>'
+        : '<div class="sb-frame-placeholder" ondragover="event.preventDefault()" ondrop="AH.Storyboard.handleDrop(\'' + f.id + '\',event)" onclick="AH.Storyboard.uploadTo(\'' + f.id + '\')">' +
+            '<div style="font-size:28px;opacity:0.35;">▣</div>' +
+            '<div style="font-family:var(--f-mono);font-size:10px;letter-spacing:0.14em;color:var(--fg-45);text-transform:uppercase;">Drop image · click to upload</div>' +
+            '<span class="sb-badge">#' + (f.frameNum || idx + 1) + '</span>' +
           '</div>';
-        }).join('') +
-      '</div></div>'
+      return '<div class="sb-frame-card" data-frame-idx="' + idx + '" data-fid="' + f.id + '">' + top +
+        '<div class="sb-frame-body">' +
+          '<div class="sb-frame-num">FRAME ' + (f.frameNum || idx + 1) + '</div>' +
+          (scn ? '<div style="font-family:var(--f-mono);font-size:10px;color:var(--fg-50);margin-bottom:6px;">SCENE ' + clean(scn) + ' · ' + clean(kind) + '</div>' : '') +
+          '<div class="sb-frame-desc">' + (desc ? clean(desc) : '<span style="opacity:0.35;font-style:italic;">No description</span>') + '</div>' +
+          '<div class="' + linkCls + '" onclick="AH.Storyboard.linkShot(\'' + f.id + '\')">' + shotLabel + '</div>' +
+          '<div class="sb-actions">' +
+            '<button type="button" class="sb-btn" onclick="AH.Storyboard.uploadTo(\'' + f.id + '\')">' + (img ? 'Replace' : 'Upload') + '</button>' +
+            '<button type="button" class="sb-btn" onclick="AH.Storyboard.pasteImg(\'' + f.id + '\')">Paste</button>' +
+            '<button type="button" class="sb-btn" onclick="AH.Storyboard.editDesc(\'' + f.id + '\')">Edit</button>' +
+            '<button type="button" class="sb-btn" onclick="AH.Storyboard.dupe(\'' + f.id + '\')">Dupe</button>' +
+            (sh ? '<button type="button" class="sb-btn" onclick="AH.Router.go(\'shotlist\')">Shots →</button>' : '') +
+            '<button type="button" class="sb-btn del" onclick="AH.Storyboard.del(\'' + f.id + '\')">Delete</button>' +
+          '</div>' +
+        '</div></div>';
+    }).join('');
+    var empty = frames.length ? '' : '<div class="card" style="text-align:center;padding:48px 20px;color:var(--fg-45);">No frames yet. Add a frame or import from the shot list.</div>';
+    return (
+      AH.Views.renderHero(m, {
+        primary: '+ ADD FRAME',
+        primaryFn: 'AH.Storyboard.addEmpty()',
+        secondary: 'IMPORT FROM SHOTS',
+        secondaryFn: 'AH.Storyboard.importFromShots()',
+        tertiary: 'EXPORT PDF',
+        tertiaryFn: 'AH.Storyboard.exportPDF()'
+      }) +
+      '<div class="section sb-root">' +
+        '<div class="card" style="display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;align-items:center;margin-bottom:12px;">' +
+          '<div style="font-family:var(--f-mono);font-size:11px;color:var(--fg-55);">' +
+            '<span style="color:#fbbf24;font-weight:700;">' + frames.length + '</span> frames · ' +
+            '<span style="color:var(--aqua);font-weight:700;">' + shots.length + '</span> shots · ' +
+            '<span style="color:var(--mint);font-weight:700;">' + linked + '</span> linked' +
+          '</div>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+            '<button class="btn btn--ghost" onclick="AH.Router.go(\'shotlist\')">SHOT LIST</button>' +
+            '<button class="btn btn--ghost" onclick="AH.Storyboard.copyAll()">COPY OUTLINE</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="sb-grid">' + cards + empty +
+          '<div class="sb-add-card" onclick="AH.Storyboard.addEmpty()"><div style="font-size:36px;opacity:0.45;">+</div><div style="font-family:var(--f-mono);font-size:11px;letter-spacing:0.14em;">ADD FRAME</div></div>' +
+        '</div>' +
+      '</div>'
     );
   });
   AH.Storyboard = {
-    add: function () {
-      var inp = document.createElement('input');
-      inp.type = 'file'; inp.accept = 'image/*';
+    _frame: function (id) { var d = loadStoryboard(); return { d: d, f: d.find(function (x) { return x.id === id; }), i: d.findIndex(function (x) { return x.id === id; }) }; },
+    addEmpty: function () {
+      var d = loadStoryboard();
+      var n = d.length + 1;
+      d.push({ id: uid('fr'), frameNum: n, shotKind: 'WS', description: '', sceneNum: '', imageData: '', shotId: null, shotNumber: null });
+      saveStoryboard(d);
+      AH.Router.go('storyboard'); toast('Frame added');
+    },
+    uploadTo: function (id) {
+      var st = AH.Storyboard._frame(id);
+      if (!st.f) return;
+      var inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
       inp.onchange = function () {
-        var f = inp.files[0]; if (!f) return;
+        var file = inp.files[0]; if (!file) return;
         var rd = new FileReader();
         rd.onload = function () {
-          AH.Modal.prompt('Frame details', 'Kind · caption · scene  (e.g.  WS · Dolly in · 03)', 'WS · New frame · 01', function (v) {
-            if (!v) return;
-            var p = v.split(/\s*·\s*/);
-            var d = loadStoryboard();
-            d.unshift({ id: uid('fr'), k: p[0] || 'WS', t: p[1] || 'New frame', scene: p[2] || '01', src: rd.result });
-            AH.Storage.local.set('ah_sb_' + STATE.activeProdId, d);
-            toast('Frame added'); AH.Router.go('storyboard');
-          });
+          st.f.imageData = rd.result; delete st.f.src;
+          saveStoryboard(st.d); AH.Router.go('storyboard');
         };
-        rd.readAsDataURL(f);
+        rd.readAsDataURL(file);
       };
       inp.click();
     },
+    handleDrop: function (id, ev) {
+      ev.preventDefault();
+      var f = ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0];
+      if (!f || !f.type || f.type.indexOf('image') !== 0) return;
+      var st = AH.Storyboard._frame(id); if (!st.f) return;
+      var rd = new FileReader();
+      rd.onload = function () { st.f.imageData = rd.result; saveStoryboard(st.d); AH.Router.go('storyboard'); };
+      rd.readAsDataURL(f);
+    },
+    pasteImg: function (id) {
+      if (!navigator.clipboard || !navigator.clipboard.read) { toast('Paste requires clipboard read permission', 'warn'); return; }
+      navigator.clipboard.read().then(function (items) {
+        for (var i = 0; i < items.length; i++) {
+          for (var j = 0; j < items[i].types.length; j++) {
+            if (items[i].types[j].indexOf('image') === 0) {
+              items[i].getType(items[i].types[j]).then(function (blob) {
+                var st = AH.Storyboard._frame(id); if (!st.f) return;
+                var rd = new FileReader();
+                rd.onload = function () { st.f.imageData = rd.result; saveStoryboard(st.d); AH.Router.go('storyboard'); toast('Image pasted'); };
+                rd.readAsDataURL(blob);
+              });
+              return;
+            }
+          }
+        }
+        toast('No image in clipboard', 'warn');
+      }).catch(function () { toast('Clipboard read blocked', 'warn'); });
+    },
+    editDesc: function (id) {
+      var st = AH.Storyboard._frame(id); if (!st.f) return;
+      AH.Modal.prompt('Frame description', 'Shot kind · notes · scene (e.g. CU · Insert phone · 02)', (st.f.shotKind || 'WS') + ' · ' + (st.f.description || '') + ' · ' + (st.f.sceneNum || ''), function (v) {
+        if (!v) return;
+        var p = v.split(/\s*·\s*/);
+        st.f.shotKind = (p[0] || 'WS').trim();
+        st.f.description = (p[1] || '').trim();
+        st.f.sceneNum = (p[2] || '').trim();
+        saveStoryboard(st.d); AH.Router.go('storyboard');
+      });
+    },
+    linkShot: function (id) {
+      var st = AH.Storyboard._frame(id); if (!st.f) return;
+      var shots = loadShots();
+      if (!shots.length) { toast('Add shots in Shot List first', 'warn'); AH.Router.go('shotlist'); return; }
+      var opts = shots.map(function (s) { return '<option value="' + clean(s.id) + '">' + clean(s.n + ' · ' + (s.desc || '').slice(0, 48)) + '</option>'; }).join('');
+      AH.Modal.open('Link frame to shot', '<div class="sh-field"><label>Shot</label><select id="sb-link-shot">' + opts + '</select></div>', {
+        size: 'sm',
+        footer: '<button class="btn btn--ghost" onclick="AH.Modal.close()">Cancel</button><button class="btn btn--primary" id="sb-link-go">LINK</button>',
+        onMount: function () {
+          $('#sb-link-go').onclick = function () {
+            var sid = $('#sb-link-shot').value;
+            var sh = shots.find(function (x) { return x.id === sid; });
+            st.f.shotId = sid;
+            st.f.shotNumber = sh ? sh.n : null;
+            if (sh && sh.scn && !st.f.sceneNum) st.f.sceneNum = sh.scn;
+            saveStoryboard(st.d); AH.Modal.close(); AH.Router.go('storyboard'); toast('Linked to shot');
+          };
+        }
+      });
+    },
+    dupe: function (id) {
+      var st = AH.Storyboard._frame(id); if (!st.f) return;
+      var copy = JSON.parse(JSON.stringify(st.f));
+      copy.id = uid('fr');
+      copy.frameNum = st.d.length + 1;
+      copy.shotId = null; copy.shotNumber = null;
+      st.d.splice(st.i + 1, 0, copy);
+      saveStoryboard(st.d); AH.Router.go('storyboard');
+    },
     del: function (id) {
       var d = loadStoryboard().filter(function (f) { return f.id !== id; });
-      AH.Storage.local.set('ah_sb_' + STATE.activeProdId, d);
+      saveStoryboard(d);
       AH.Router.go('storyboard'); toast('Frame removed');
+    },
+    importFromShots: function () {
+      var shots = loadShots();
+      if (!shots.length) { toast('No shots to import', 'warn'); return; }
+      var d = shots.map(function (s) {
+        return { id: uid('fr'), frameNum: 0, shotKind: s.kind || 'SHOT', description: s.desc || '', sceneNum: s.scn || '', imageData: '', shotId: s.id, shotNumber: s.n };
+      });
+      var base = loadStoryboard().length ? loadStoryboard() : [];
+      var start = base.length;
+      d.forEach(function (fr, i) { fr.frameNum = start + i + 1; });
+      saveStoryboard(base.concat(d));
+      AH.Router.go('storyboard'); toast('Imported ' + d.length + ' frames from shot list');
+    },
+    viewImg: function (id) {
+      var st = AH.Storyboard._frame(id); if (!st.f || !st.f.imageData) return;
+      window.open(st.f.imageData, '_blank', 'noopener');
+    },
+    copyAll: function () {
+      var d = loadStoryboard();
+      var t = d.map(function (f, i) {
+        return 'F' + (f.frameNum || i + 1) + ' | ' + (f.shotKind || '') + ' | scene ' + (f.sceneNum || '') + ' | ' + (f.description || '');
+      }).join('\n');
+      try { navigator.clipboard.writeText(t); toast('Outline copied'); } catch (_) { toast('Copy failed', 'error'); }
     },
     exportPDF: function () {
       var d = loadStoryboard();
@@ -13034,9 +13566,10 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         '<div class="pdf-section"><div class="pdf-section-title">Frames · ' + d.length + '</div>' +
           '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
             d.map(function (f) {
+              var img = f.imageData || f.src || '';
               return '<div style="border:1px solid #cbd5e1;border-radius:8px;overflow:hidden;">' +
-                '<img src="' + clean(f.src) + '" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;"/>' +
-                '<div style="padding:8px 10px;font-size:9pt;"><strong>' + clean(f.k) + ' · Scene ' + clean(f.scene) + '</strong><br/>' + clean(f.t) + '</div>' +
+                (img ? '<img src="' + clean(img) + '" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;"/>' : '<div style="padding:20px;font-size:10pt;color:#64748b;">No image</div>') +
+                '<div style="padding:8px 10px;font-size:9pt;"><strong>' + clean(f.shotKind || f.k || '') + ' · Scene ' + clean(f.sceneNum || f.scene || '') + '</strong><br/>' + clean(f.description || f.t || '') + '</div>' +
               '</div>';
             }).join('') +
           '</div>' +
@@ -13044,6 +13577,30 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       PDF.openDoc(body, 'Storyboard_' + slugify(getActiveProd().title));
       toast('Storyboard PDF generated');
     }
+  };
+  AH.hooks['storyboard:mount'] = function () {
+    if (window._sbPasteGlobal) return;
+    window._sbPasteGlobal = true;
+    document.addEventListener('paste', function (e) {
+      if (AH.Router.current !== 'storyboard') return;
+      var items = e.clipboardData && e.clipboardData.items;
+      if (!items) return;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') === 0) {
+          var file = items[i].getAsFile(); if (!file) continue;
+          e.preventDefault();
+          var hovered = document.querySelector('.sb-frame-card:hover');
+          var fid = hovered ? hovered.getAttribute('data-fid') : null;
+          var d = loadStoryboard();
+          var target = fid ? d.find(function (x) { return x.id === fid; }) : d[d.length - 1];
+          if (!target) { toast('Add a frame first', 'warn'); return; }
+          var rd = new FileReader();
+          rd.onload = function () { target.imageData = rd.result; saveStoryboard(d); AH.Router.go('storyboard'); toast('Pasted into frame'); };
+          rd.readAsDataURL(file);
+          return;
+        }
+      }
+    });
   };
 
   AH.register('days', function (m) {
@@ -13630,11 +14187,18 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       StoryMap._beforeMutate();
       var s = StoryMap.state;
       var id = 'n' + (++s.nodeCounter);
+      var tid = (s.tracks[0] && s.tracks[0].id) || 't1';
+      var pid = (s.phases[0] && s.phases[0].id) || 'p1';
+      var pi = Math.max(0, s.phases.findIndex(function (p) { return p.id === pid; }));
+      var ti = Math.max(0, s.tracks.findIndex(function (t) { return t.id === tid; }));
+      var ORIGIN_X = 80, ORIGIN_Y = 60, PHASE_W = 280, TRACK_H = 180;
+      var col = s.nodes.filter(function (n) { return n.phaseId === pid && n.trackId === tid; }).length;
       s.nodes.push({
         id: id, label: kind.toUpperCase() + ' · ' + id, note: '',
-        trackId: (s.tracks[0] && s.tracks[0].id) || 't1',
-        phaseId: (s.phases[0] && s.phases[0].id) || 'p1',
-        x: 120 + Math.random() * 600, y: 120 + Math.random() * 300,
+        trackId: tid,
+        phaseId: pid,
+        x: ORIGIN_X + pi * PHASE_W + 30 + (col % 4) * 44,
+        y: ORIGIN_Y + ti * TRACK_H + 24 + Math.floor(col / 4) * 76,
         nodeType: kind, tags: []
       });
       StoryMap.sel = { nodeId: id, linkId: null };
@@ -13643,10 +14207,42 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     addLink: function (srcId, tgtId) {
       StoryMap._beforeMutate();
       var s = StoryMap.state;
+      if (s.links.some(function (l) { return l.source === srcId && l.target === tgtId; })) {
+        toast('Link already exists', 'warn'); return;
+      }
       var id = 'l' + (++s.linkCounter);
       s.links.push({ id: id, source: srcId, target: tgtId, type: 'standard' });
       StoryMap.sel = { nodeId: null, linkId: id };
       StoryMap.dirty(); toast('Edge · ' + srcId + ' → ' + tgtId);
+    },
+    gridSnap: function (step) {
+      step = step || 24;
+      StoryMap._beforeMutate();
+      StoryMap.state.nodes.forEach(function (n) {
+        n.x = Math.round((n.x || 0) / step) * step;
+        n.y = Math.round((n.y || 0) / step) * step;
+      });
+      StoryMap.dirty(); toast('Grid snap · ' + step + 'px');
+    },
+    autoConnectSequential: function () {
+      StoryMap._beforeMutate();
+      var s = StoryMap.state;
+      var groups = {};
+      s.nodes.forEach(function (n) {
+        var k = String(n.phaseId || '') + '|' + String(n.trackId || '');
+        (groups[k] = groups[k] || []).push(n);
+      });
+      var added = 0;
+      Object.keys(groups).forEach(function (k) {
+        var arr = groups[k].slice().sort(function (a, b) { return (a.y - b.y) || (a.x - b.x); });
+        for (var i = 0; i < arr.length - 1; i++) {
+          var a = arr[i], b = arr[i + 1];
+          if (s.links.some(function (l) { return l.source === a.id && l.target === b.id; })) continue;
+          s.links.push({ id: 'l' + (++s.linkCounter), source: a.id, target: b.id, type: 'standard' });
+          added++;
+        }
+      });
+      StoryMap.dirty(); toast(added ? 'Auto-linked · ' + added + ' new edge(s)' : 'No new edges (already linked or single node per row)');
     },
     editNode: function (id) { StoryMap.sel = { nodeId: id, linkId: null }; StoryMap.render(); },
     saveNode: function () {
@@ -14860,6 +15456,52 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     };
   })();
 
+  AH.register('alacrity-player', function (m) {
+    try { StoryMap.load(); } catch (_) {}
+    var s = StoryMap.state || { nodes: [], links: [] };
+    var prod = getActiveProd();
+    var filmId = slugify(prod.title);
+    var startId = s.startNodeId || (s.nodes[0] && s.nodes[0].id) || '';
+    var sceneNodes = (s.nodes || []).filter(function (n) { return ['scene', 'start', 'end'].indexOf(n.nodeType || 'scene') >= 0; });
+    var checklist = [
+      'Export the Alacrity bundle JSON from this page.',
+      'Place scene MP4s under Assets/StreamingAssets/Films/' + filmId + '/ (paths in bundle).',
+      'Import JSON in Unity: Alacrity Player → Import Alacrity Bundle.',
+      'Assign FilmConfig to AlacrityPlayerManager.filmLibrary and press Play.'
+    ];
+    return (
+      AH.Views.renderHero(m, {
+        primary: 'EXPORT VR BUNDLE',
+        primaryFn: 'AH.StoryMap.exportAlacrityBundle()',
+        secondary: 'OPEN STORY MAP',
+        secondaryFn: "AH.Router.go('storymap')"
+      }) +
+      '<div class="section" style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(280px,1fr);gap:14px;">' +
+        '<div class="card">' +
+          '<div class="section__title" style="margin-bottom:10px;">Graph health</div>' +
+          '<div class="pdf-grid2">' +
+            PDF.field('Nodes', String((s.nodes || []).length)) +
+            PDF.field('Edges', String((s.links || []).length)) +
+            PDF.field('Start node', startId || '—') +
+            PDF.field('Scene-type nodes', String(sceneNodes.length)) +
+          '</div>' +
+          '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">' +
+            '<button class="btn btn--primary" onclick="AH.StoryMap.exportAlacrityBundle()">DOWNLOAD BUNDLE JSON</button>' +
+            '<button class="btn btn--ghost" onclick="AH.StoryMap.exportJSON()">STORY MAP JSON</button>' +
+            '<button class="btn btn--ghost" onclick="AH.StoryMapX.simulate()">TEST PLAYTHROUGH</button>' +
+          '</div>' +
+          '<div class="section__sub" style="margin-top:14px;line-height:1.65;">Each <strong>scene</strong> node can set a <code>videoUrl</code> (StreamingAssets path) in Story Map. The bundle lists <code>videoEntries</code> for Unity import.</div>' +
+        '</div>' +
+        '<div class="card">' +
+          '<div class="section__title" style="margin-bottom:10px;">Unity checklist</div>' +
+          '<ol style="margin:0;padding-left:18px;font-size:13px;line-height:1.7;color:var(--fg-72);">' +
+            checklist.map(function (x) { return '<li>' + clean(x) + '</li>'; }).join('') +
+          '</ol>' +
+        '</div>' +
+      '</div>'
+    );
+  });
+
   AH.register('storymap', function (m) {
     StoryMap.load();
     var q = StoryMapX.getQuery();
@@ -14895,6 +15537,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
           '</div>' +
           '<div class="dag-toolbar__group">' +
             '<button class="dag-tbtn" onclick="AH.StoryMap.autoLayout()">AUTO LAYOUT</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.gridSnap(24)" title="Snap all nodes to 24px grid">GRID SNAP</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.autoConnectSequential()" title="Link each node to the next within the same track+phase row">AUTO-LINK ROWS</button>' +
             '<button class="dag-tbtn" onclick="AH.StoryMap.validate()">VALIDATE</button>' +
             '<button class="dag-tbtn" onclick="AH.StoryMapX.analytics()">ANALYTICS</button>' +
             '<button class="dag-tbtn" onclick="AH.StoryMap.syncFromScript()">SYNC ⇄ SCRIPT</button>' +
@@ -15083,6 +15727,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       var ql = (q || '').trim().toLowerCase();
       var items = MODULES.filter(function (m) { return !ql || m.label.toLowerCase().indexOf(ql) !== -1 || m.id.indexOf(ql) !== -1 || m.group.toLowerCase().indexOf(ql) !== -1; });
       var prods = STATE.productions.filter(function (p) { return ql && p.title.toLowerCase().indexOf(ql) !== -1; });
+      var prodHits = AH.Search && AH.Search.prodIndex ? AH.Search.prodIndex(q) : [];
       var actions = [
         { id: 'act:new-prod', label: 'New production', group: 'Actions', icon: 'plus', fn: function () { AH.Prod.newProduction(); } },
         { id: 'act:forms', label: 'Forms & document generators', group: 'Actions', icon: 'doc', fn: function () { AH.V2Forms.openPalette(); } },
@@ -15124,13 +15769,28 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
                   '<span class="cmdk__hint">↵</span></div>';
         });
       }
-      if (!items.length && !prods.length && !actions.length) {
+      if (prodHits.length) {
+        html += '<div class="cmdk__group-label">In this production</div>';
+        prodHits.forEach(function (h, j) {
+          html += '<div class="cmdk__item" data-prod-hit="' + j + '">' + ICONS.location +
+                  '<div><div style="font-family:var(--f-display);font-weight:600;">' + clean(h.label) + '</div><div class="cmdk__item-meta">' + clean(h.meta) + '</div></div>' +
+                  '<span class="cmdk__hint">↵</span></div>';
+        });
+      }
+      if (!items.length && !prods.length && !actions.length && !prodHits.length) {
         html = '<div style="padding:28px;text-align:center;color:var(--fg-45);font-family:var(--f-mono);font-size:12px;letter-spacing:0.18em;text-transform:uppercase;">No results</div>';
       }
       list.innerHTML = html;
       $$('#cmdk-list [data-go]').forEach(function (el) { on(el, 'click', function () { AH.Router.go(el.getAttribute('data-go')); CmdK.close(); }); });
       $$('#cmdk-list [data-goprod]').forEach(function (el) { on(el, 'click', function () { STATE.activeProdId = el.getAttribute('data-goprod'); saveState(); AH.Router.go('dashboard'); CmdK.close(); }); });
       $$('#cmdk-list [data-act]').forEach(function (el) { on(el, 'click', function () { var a = actions.find(function (x) { return x.id === el.getAttribute('data-act'); }); a && a.fn(); CmdK.close(); }); });
+      $$('#cmdk-list [data-prod-hit]').forEach(function (el) {
+        on(el, 'click', function () {
+          var j = +el.getAttribute('data-prod-hit');
+          var h = prodHits[j];
+          if (h && h.fn) { h.fn(); CmdK.close(); }
+        });
+      });
     }
   };
   AH.CmdK = CmdK;
