@@ -1738,6 +1738,42 @@ html[data-theme="light"] .prod-card {
   box-shadow: 0 1px 0 #fff inset, 0 1px 3px rgba(4,26,31,0.04), 0 8px 22px rgba(4,26,31,0.04);
 }
 .prod-card:hover { transform: translateY(-6px); border-color: rgba(23,255,197,0.32); box-shadow: var(--sh-2), var(--sh-mint); }
+.prod-card.is-archived {
+  opacity: 0.78;
+  border-color: rgba(255,122,168,0.28);
+}
+.prod-card.is-archived .prod-card__poster::after {
+  background: linear-gradient(180deg, transparent 35%, rgba(90,20,40,0.55) 100%);
+}
+.prod-lib-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 12px;
+}
+.prod-lib-toolbar input[type="search"],
+.prod-lib-toolbar select {
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--edge);
+  background: var(--glass-2);
+  color: var(--fg);
+  font-family: var(--f-body);
+  font-size: 13px;
+  padding: 0 12px;
+  min-width: 0;
+}
+.prod-lib-toolbar input[type="search"] { flex: 1 1 200px; max-width: 360px; }
+.prod-lib-toolbar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--fg-60);
+  cursor: pointer;
+  user-select: none;
+}
 .prod-card__poster {
   aspect-ratio: 16/9;
   background-size: cover;
@@ -1796,6 +1832,8 @@ html[data-theme="light"] .prod-card {
 .prod-card__btn--cloud:hover { color: #fde68a; border-color: #fbbf24; }
 .prod-card__btn--del { color: var(--rose); border-color: rgba(255,122,168,0.3); }
 .prod-card__btn--del:hover { color: #fff; background: var(--rose); border-color: var(--rose); }
+.prod-card__btn--ghost { color: var(--fg-60); border-color: var(--edge); background: transparent; }
+.prod-card__btn--ghost:hover { color: var(--aqua); border-color: rgba(20,175,223,0.45); }
 .prod-card__body { padding: 18px 20px; }
 .prod-card__title {
   font-family: var(--f-display);
@@ -4968,9 +5006,13 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       ? '<button class="prod-card__btn prod-card__btn--cloud" onclick="event.preventDefault();event.stopPropagation();AH.Prod.uploadToCloud(\'' + p.id + '\')">☁ UPLOAD</button>'
       : '';
     var loadLabel = p.cloudOnly ? '⬇ DOWNLOAD & LOAD' : 'LOAD';
+    var arch = p.archived ? true : false;
+    var archBtn = arch
+      ? '<button class="prod-card__btn prod-card__btn--ghost" onclick="event.preventDefault();event.stopPropagation();AH.Prod.unarchiveProduction(\'' + p.id + '\')" title="Restore to active library">↩ UNARCHIVE</button>'
+      : '<button class="prod-card__btn prod-card__btn--ghost" onclick="event.preventDefault();event.stopPropagation();AH.Prod.archiveProduction(\'' + p.id + '\')" title="Hide from default list">ARCHIVE</button>';
 
     return (
-      '<div class="prod-card" data-prod="' + p.id + '">' +
+      '<div class="prod-card' + (arch ? ' is-archived' : '') + '" data-prod="' + p.id + '">' +
         '<div class="prod-card__poster" style="background-image:url(\'' + p.img + '\')">' +
           (p.status ? '<span class="chip ' + p.chipClass + '">' + p.status + '</span>' : '') +
           '<div class="prod-card__badges">' + storageBadge + '</div>' +
@@ -4985,8 +5027,9 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
             '<div><div class="prod-card__stat-l">Budget</div><div class="prod-card__stat-v">' + clean(p.budget || '—') + '</div></div>' +
           '</div>' +
           '<div class="prod-card__actions">' +
-            '<button class="prod-card__btn prod-card__btn--load" onclick="event.preventDefault();AH.Prod.loadProduction(\'' + p.id + '\')">' + loadLabel + '</button>' +
+            '<button class="prod-card__btn prod-card__btn--load" onclick="event.preventDefault();event.stopPropagation();AH.Prod.loadProduction(\'' + p.id + '\')">' + loadLabel + '</button>' +
             cloudBtn +
+            archBtn +
             '<button class="prod-card__btn prod-card__btn--edit" onclick="event.preventDefault();event.stopPropagation();AH.Prod.editProduction(\'' + p.id + '\')" title="Edit production details">✎ EDIT</button>' +
             '<button class="prod-card__btn prod-card__btn--del" onclick="event.preventDefault();event.stopPropagation();AH.Prod.deleteProduction(\'' + p.id + '\')" title="Delete">🗑</button>' +
           '</div>' +
@@ -7979,34 +8022,95 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   // ══════════════════════════════════════════════════════════════════════════
   //  PRODUCTION LIBRARY
   // ══════════════════════════════════════════════════════════════════════════
+  function prodLibFilterList() {
+    var f = AH.Storage.local.get('ah_prodlib_filter', 'All');
+    var q = (AH.Storage.local.get('ah_prodlib_q', '') || '').toLowerCase().trim();
+    var sort = AH.Storage.local.get('ah_prodlib_sort', 'recent');
+    var showArch = AH.Storage.local.get('ah_prodlib_arch', '0') === '1';
+    var list = STATE.productions.slice();
+    if (!showArch) list = list.filter(function (pp) { return !pp.archived; });
+    if (f !== 'All') {
+      list = list.filter(function (pp) {
+        return pp.status.toLowerCase().indexOf(f.toLowerCase()) !== -1 || pp.status.toLowerCase() === f.toLowerCase() || (f === 'R&D' && pp.status === 'R&D');
+      });
+    }
+    if (q) {
+      list = list.filter(function (pp) {
+        var blob = [pp.title, pp.type, pp.status, pp.client, pp.director, pp.description, pp.id].map(function (x) { return String(x || '').toLowerCase(); }).join(' ');
+        return blob.indexOf(q) >= 0;
+      });
+    }
+    list.sort(function (a, b) {
+      if (sort === 'title') return (a.title || '').localeCompare(b.title || '');
+      if (sort === 'status') return (a.status || '').localeCompare(b.status || '') || (b.lastModified || 0) - (a.lastModified || 0);
+      return (b.lastModified || b.created || 0) - (a.lastModified || a.created || 0);
+    });
+    return { list: list, filter: f, q: q, sort: sort, showArch: showArch };
+  }
+  function prodLibRefreshGrid() {
+    var st = prodLibFilterList();
+    var g = $('#prod-grid'); var c = $('#prod-count');
+    if (g) g.innerHTML = st.list.map(prodCard).join('');
+    if (c) {
+      var suffix = st.filter === 'All' ? 'ALL' : st.filter.toUpperCase();
+      if (st.q) suffix += ' · SEARCH';
+      if (st.showArch) suffix += ' · +ARCHIVED';
+      c.textContent = st.list.length + ' PRODUCTIONS · ' + suffix;
+    }
+  }
   AH.register('production-library', function (m) {
     var filters = ['All','In Prod','Pre-Prod','Wrap','R&D','Bid'];
+    var st = prodLibFilterList();
     return (
       AH.Views.renderHero(m, { primary: 'NEW PRODUCTION', primaryFn: 'AH.Prod.newProduction()' }) +
       '<div class="section">' +
         '<div class="section__head" style="flex-wrap:wrap;">' +
-          '<div><div class="section__title">Library</div><div class="section__sub" id="prod-count">' + STATE.productions.length + ' PRODUCTIONS</div></div>' +
+          '<div><div class="section__title">Library</div><div class="section__sub" id="prod-count">' + st.list.length + ' PRODUCTIONS</div></div>' +
           '<div style="display:flex;gap:8px;flex-wrap:wrap;" id="prod-filters">' +
-            filters.map(function (f, i) { return '<button class="pill' + (i === 0 ? ' is-active' : '') + '" data-filter="' + f + '">' + f + '</button>'; }).join('') +
+            filters.map(function (f, i) { return '<button class="pill' + (f === st.filter ? ' is-active' : '') + '" data-filter="' + f + '">' + f + '</button>'; }).join('') +
           '</div>' +
         '</div>' +
-        '<div class="grid grid--pages" id="prod-grid">' + STATE.productions.map(prodCard).join('') + '</div>' +
+        '<div class="prod-lib-toolbar">' +
+          '<input type="search" id="prod-lib-q" placeholder="Search title, client, director, type…" value="' + clean(st.q) + '" autocomplete="off"/>' +
+          '<select id="prod-lib-sort" aria-label="Sort productions">' +
+            '<option value="recent"' + (st.sort === 'recent' ? ' selected' : '') + '>Sort · Recently updated</option>' +
+            '<option value="title"' + (st.sort === 'title' ? ' selected' : '') + '>Sort · Title A–Z</option>' +
+            '<option value="status"' + (st.sort === 'status' ? ' selected' : '') + '>Sort · Status</option>' +
+          '</select>' +
+          '<label><input type="checkbox" id="prod-lib-arch"' + (st.showArch ? ' checked' : '') + '/> Show archived</label>' +
+        '</div>' +
+        '<div class="grid grid--pages" id="prod-grid">' + st.list.map(prodCard).join('') + '</div>' +
       '</div>'
     );
   });
   AH.hooks['production-library:mount'] = function () {
+    var qIn = $('#prod-lib-q');
+    if (qIn) {
+      on(qIn, 'input', function () {
+        AH.Storage.local.set('ah_prodlib_q', qIn.value || '');
+        prodLibRefreshGrid();
+      });
+    }
+    var srt = $('#prod-lib-sort');
+    if (srt) {
+      on(srt, 'change', function () {
+        AH.Storage.local.set('ah_prodlib_sort', srt.value || 'recent');
+        prodLibRefreshGrid();
+      });
+    }
+    var archCb = $('#prod-lib-arch');
+    if (archCb) {
+      on(archCb, 'change', function () {
+        AH.Storage.local.set('ah_prodlib_arch', archCb.checked ? '1' : '0');
+        prodLibRefreshGrid();
+      });
+    }
     $$('#prod-filters .pill').forEach(function (p) {
       on(p, 'click', function () {
         $$('#prod-filters .pill').forEach(function (pp) { pp.classList.remove('is-active'); });
         p.classList.add('is-active');
-        var f = p.getAttribute('data-filter');
-        var list = f === 'All' ? STATE.productions : STATE.productions.filter(function (pp) { return pp.status.toLowerCase().indexOf(f.toLowerCase()) !== -1 || pp.status.toLowerCase() === f.toLowerCase() || (f === 'R&D' && pp.status === 'R&D'); });
-        $('#prod-grid').innerHTML = list.map(prodCard).join('');
-        $('#prod-count').textContent = list.length + ' PRODUCTIONS · ' + f.toUpperCase();
-        // Rewire [data-prod]
-        $$('#prod-grid [data-prod]').forEach(function (el) {
-          on(el, 'click', function () { STATE.activeProdId = el.getAttribute('data-prod'); saveState(); toast('Active · ' + el.querySelector('.prod-card__title').textContent); AH.Router.go('dashboard'); });
-        });
+        AH.Storage.local.set('ah_prodlib_filter', p.getAttribute('data-filter') || 'All');
+        prodLibRefreshGrid();
       });
     });
   };
@@ -8280,6 +8384,25 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       AH.Router.go('dashboard');
     },
 
+    archiveProduction: function (prodId) {
+      var card = STATE.productions.find(function (p) { return p.id === prodId; });
+      if (!card) return;
+      card.archived = true;
+      card.lastModified = Date.now();
+      saveState();
+      if (typeof prodLibRefreshGrid === 'function') prodLibRefreshGrid();
+      toast('Archived · ' + card.title);
+    },
+    unarchiveProduction: function (prodId) {
+      var card = STATE.productions.find(function (p) { return p.id === prodId; });
+      if (!card) return;
+      card.archived = false;
+      card.lastModified = Date.now();
+      saveState();
+      if (typeof prodLibRefreshGrid === 'function') prodLibRefreshGrid();
+      toast('Restored · ' + card.title);
+    },
+
     deleteProduction: function (prodId) {
       var card = STATE.productions.find(function (p) { return p.id === prodId; });
       if (!card) return;
@@ -8345,6 +8468,11 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
     AH.Storage.local.set('ah_scenes_' + STATE.activeProdId, list);
     AH.syncProductionBlob && AH.syncProductionBlob({ scheduleStrips: list, scheduleUpdatedAt: Date.now() });
     AH.Bus && AH.Bus.emit('schedule:updated', { strips: (list || []).length });
+    if (typeof StoryMap !== 'undefined' && StoryMap.load) {
+      try { StoryMap.load(); } catch (_) {}
+      coherenceSyncBreakdownToStripboard();
+      coherenceApplyStripboardToStoryMap();
+    }
   }
 
   AH.register('schedule', function (m) {
@@ -8662,6 +8790,133 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
   function saveBreakdown(d) {
     AH.Storage.local.set('ah_bdown_' + STATE.activeProdId, d);
     AH.syncProductionBlob && AH.syncProductionBlob({ breakdownRows: d, breakdownUpdatedAt: Date.now() });
+    if (typeof StoryMap !== 'undefined' && StoryMap.load) {
+      coherenceApplyBreakdownLocationsToStoryMap();
+      coherenceSyncBreakdownToStripboard();
+    }
+  }
+
+  function normalizeSceneSlug(s) {
+    if (s == null) return '';
+    return String(s).trim().replace(/\s+/g, ' ');
+  }
+  function coherenceStripSlugFromScriptLine(idx) {
+    var s = AH.Editor && AH.Editor.state;
+    if (!s || !s.lines || typeof idx !== 'number' || !s.lines[idx]) return null;
+    var ln = s.lines[idx];
+    if (ln.t !== 'scene') return null;
+    var head = (ln.x || '').split('\n')[0].trim();
+    var m = head.match(/^(?:INT\.?\/EXT\.?|I\/E|INT|EXT)[^\n]*\s+-\s+(.+)$/i);
+    return normalizeSceneSlug(m ? m[1] : head);
+  }
+  function coherenceApplyNodeSlugToStrip(n) {
+    if (!n || !n.sceneSlug) return;
+    var scs = loadScenes();
+    var st = scs.find(function (x) { return !x.isBreak && normalizeSceneSlug(x.n) === normalizeSceneSlug(n.sceneSlug); });
+    if (!st) return;
+    var head = (n.label || '').toString().split('\n')[0].trim().replace(/^\s*INT\.?\/EXT\.?\s+/i, '');
+    var nt = head.indexOf(' - ') >= 0 ? head.split(/\s*-\s*/).slice(1).join(' - ').trim() : head;
+    if (nt && nt !== st.title) { st.title = nt; saveScenes(scs); }
+  }
+  function coherenceSyncBreakdownToStripboard() {
+    var scs = loadScenes();
+    var bd = loadBreakdown();
+    var byScn = {};
+    bd.forEach(function (r) { byScn[normalizeSceneSlug(r.scn)] = r; });
+    var ch = 0;
+    scs.forEach(function (st) {
+      if (st.isBreak) return;
+      var row = byScn[normalizeSceneSlug(st.n)] || byScn[normalizeSceneSlug(st.title)];
+      if (!row) return;
+      var newLoc = (row.locations && row.locations[0]) ? row.locations[0] : null;
+      if (newLoc && newLoc !== st.loc) { st.loc = newLoc; ch++; }
+    });
+    if (ch) saveScenes(scs);
+    return ch;
+  }
+  function coherenceApplyStripboardToStoryMap() {
+    try { StoryMap.load(); } catch (_) {}
+    var sm = StoryMap.state;
+    if (!sm || !sm.nodes) return 0;
+    var scs = loadScenes();
+    var map = {};
+    scs.forEach(function (st) {
+      if (st.isBreak) return;
+      map[normalizeSceneSlug(st.n)] = st;
+      if (st.title) map[normalizeSceneSlug(st.title)] = st;
+    });
+    var ch = 0;
+    sm.nodes.forEach(function (n) {
+      var st = null;
+      if (n.sceneSlug) st = map[normalizeSceneSlug(n.sceneSlug)];
+      if (!st && typeof n.sceneLineIdx === 'number') {
+        var slugGuess = coherenceStripSlugFromScriptLine(n.sceneLineIdx);
+        if (slugGuess) {
+          if (!n.sceneSlug) { n.sceneSlug = slugGuess; ch++; }
+          st = map[normalizeSceneSlug(n.sceneSlug)] || map[normalizeSceneSlug(slugGuess)];
+        }
+      }
+      if (!st) return;
+      var newLabel = (st.n + ' - ' + st.title).toUpperCase();
+      var head = (n.label || '').toString().split('\n')[0].trim();
+      if (head !== newLabel) { n.label = newLabel; ch++; }
+    });
+    if (ch) StoryMap.dirty();
+    return ch;
+  }
+  function coherenceApplyStoryMapToStripboard() {
+    try { StoryMap.load(); } catch (_) {}
+    var sm = StoryMap.state;
+    if (!sm || !sm.nodes) return 0;
+    var scs = loadScenes();
+    var ch = 0;
+    sm.nodes.forEach(function (n) {
+      var st = null;
+      if (n.sceneSlug) st = scs.find(function (x) { return !x.isBreak && normalizeSceneSlug(x.n) === normalizeSceneSlug(n.sceneSlug); });
+      if (!st && typeof n.sceneLineIdx === 'number') {
+        st = scs.find(function (x) { return !x.isBreak && x.sceneLineIdx === n.sceneLineIdx; });
+      }
+      if (!st) return;
+      var head = (n.label || '').toString().split('\n')[0].trim().replace(/^\s*INT\.?\/EXT\.?\s+/i, '');
+      var nt = head.indexOf(' - ') >= 0 ? head.split(/\s*-\s*/).slice(1).join(' - ').trim() : head;
+      if (nt && nt !== st.title) { st.title = nt; ch++; }
+    });
+    if (ch) saveScenes(scs);
+    return ch;
+  }
+  function coherenceApplyBreakdownLocationsToStoryMap() {
+    try { StoryMap.load(); } catch (_) {}
+    var bd = loadBreakdown();
+    var sm = StoryMap.state;
+    if (!sm || !sm.nodes) return 0;
+    var locBy = {};
+    bd.forEach(function (r) {
+      var loc = (r.locations && r.locations[0]) ? r.locations[0] : '';
+      if (loc) locBy[normalizeSceneSlug(r.scn)] = loc;
+    });
+    var ch = 0;
+    var tag = '\n[LOC] ';
+    sm.nodes.forEach(function (n) {
+      if (n.nodeType === 'fork' || n.nodeType === 'merge') return;
+      var key = n.sceneSlug ? normalizeSceneSlug(n.sceneSlug) : null;
+      var loc = key && locBy[key];
+      if (!loc) return;
+      var note = (n.note || '').toString();
+      var idx = note.indexOf(tag);
+      if (idx >= 0) {
+        var rest = note.slice(idx + tag.length);
+        var end = rest.indexOf('\n');
+        var cur = (end < 0 ? rest : rest.slice(0, end)).trim();
+        if (cur === loc) return;
+        if (end < 0) n.note = note.slice(0, idx) + tag + loc;
+        else n.note = note.slice(0, idx + tag.length) + loc + note.slice(idx + tag.length + end);
+      } else {
+        n.note = note ? note + '\n' + tag + loc : tag + loc;
+      }
+      ch++;
+    });
+    if (ch) StoryMap.dirty();
+    return ch;
   }
 
   AH.register('breakdown', function (m) {
@@ -8673,6 +8928,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       }) +
       '<div class="section" style="margin-top:0;"><div class="card" style="display:flex;gap:8px;flex-wrap:wrap;">' +
         '<button class="btn btn--ghost" onclick="AH.Break.runAI()">⟳ RE-RUN AI BREAKDOWN</button>' +
+        '<button class="btn btn--ghost" onclick="AH.Break.syncLocationsToStripboard()">SYNC LOCATIONS → STRIPBOARD</button>' +
+        '<button class="btn btn--ghost" onclick="AH.Break.pushLocationsToStoryMap()">PUSH LOCATIONS → STORY MAP</button>' +
         '<button class="btn btn--ghost" onclick="AH.Break.exportPDF()">ELEMENTS PDF</button>' +
         '<button class="btn btn--ghost" onclick="AH.Break.exportAnnotatedPDF()">ANNOTATED PDF</button>' +
       '</div></div>' +
@@ -8754,8 +9011,10 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       });
       if (cur) result.push(cur);
       saveBreakdown(result);
+      var nLoc = coherenceSyncBreakdownToStripboard();
+      var nSm = coherenceApplyBreakdownLocationsToStoryMap();
       var totalEls = result.reduce(function (a, r) { return a + Object.keys(r).reduce(function (b, k) { return k === 'scn' ? b : b + (r[k] || []).length; }, 0); }, 0);
-      toast('Breakdown · ' + totalEls + ' elements tagged across ' + result.length + ' scenes');
+      toast('Breakdown · ' + totalEls + ' elements · stripboard ' + nLoc + ' · story map notes ' + nSm);
       AH.Notif.push('Breakdown run · ' + result.length + ' scenes processed · ' + totalEls + ' elements');
       AH.Router.go('breakdown');
     },
@@ -8809,6 +9068,14 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       var body = PDF.header('Annotated Breakdown', getActiveProd().title) + '<div style="font-size:10pt;line-height:1.5;">' + html.join('') + '</div>' + PDF.footer();
       PDF.openDoc(body, 'Annotated_Breakdown_' + slugify(prodTitle()));
       toast('Annotated breakdown PDF generated');
+    },
+    syncLocationsToStripboard: function () {
+      var n = coherenceSyncBreakdownToStripboard();
+      toast(n ? 'Stripboard · updated ' + n + ' location(s) from breakdown' : 'Stripboard already matches breakdown locations', n ? 'success' : 'warn');
+    },
+    pushLocationsToStoryMap: function () {
+      var n = coherenceApplyBreakdownLocationsToStoryMap();
+      toast(n ? 'Story Map · ' + n + ' node note(s) updated with primary location' : 'No matching scene slugs between breakdown and Story Map', n ? 'success' : 'warn');
     }
   };
 
@@ -13399,7 +13666,9 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       n.thumb    = v('ins-thumb') || '';
       var tagsRaw = v('ins-tags') || '';
       n.tags = tagsRaw.split(/\s*,\s*/).filter(Boolean);
-      StoryMap.dirty(); toast('Node saved');
+      StoryMap.dirty();
+      coherenceApplyNodeSlugToStrip(n);
+      toast('Node saved');
     },
     deleteNode: function () {
       var id = StoryMap.sel.nodeId; if (!id) return;
@@ -13643,6 +13912,27 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       toast('Story Map · CSV exported');
     },
 
+    _buildDCAStoryMap: function (sm) {
+      sm = sm || StoryMap.state;
+      var nodes = sm.nodes || [];
+      var links = sm.links || [];
+      var tracks = sm.tracks || [];
+      var phases = sm.phases || [];
+      return {
+        _version: 1,
+        _app: 'DC ALACRITY Story Map',
+        _exported: new Date().toISOString(),
+        nodes: nodes,
+        links: links,
+        tracks: tracks,
+        phases: phases,
+        nodeCounter: nodes.length,
+        linkCounter: links.length,
+        trackCounter: tracks.length,
+        phaseCounter: phases.length,
+        checkpoints: sm.checkpoints || []
+      };
+    },
     // ── Alacrity Player bundle — same schema as V1 (Unity FilmConfig shape)
     exportAlacrityBundle: function () {
       var s = StoryMap.state;
@@ -13658,13 +13948,7 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         directorName:    prod.director || '',
         year:            String(prod.year || new Date().getFullYear()),
         startingNodeId:  s.startNodeId || (s.nodes[0] && s.nodes[0].id) || '',
-        storyMap: {
-          _version: 1, _app: 'DC ALACRITY Story Map', _exported: new Date().toISOString(),
-          nodes: s.nodes, links: s.links, tracks: s.tracks, phases: s.phases,
-          nodeCounter: s.nodeCounter, linkCounter: s.linkCounter,
-          trackCounter: s.trackCounter, phaseCounter: s.phaseCounter,
-          checkpoints: s.checkpoints || []
-        }
+        storyMap: StoryMap._buildDCAStoryMap(s)
       };
       var videoEntries = s.nodes.filter(function (n) { return (n.nodeType || 'scene') === 'scene' || n.nodeType === 'start' || n.nodeType === 'end'; })
         .map(function (n, i) {
@@ -13760,27 +14044,57 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
       inp.click();
     },
 
+    coherencePullStripboard: function () {
+      var n = coherenceApplyStripboardToStoryMap();
+      toast(n ? 'Pulled stripboard into ' + n + ' node label(s)' : 'No stripboard rows matched scene slugs or script lines', n ? 'success' : 'warn');
+    },
+    coherencePushStripboard: function () {
+      var n = coherenceApplyStoryMapToStripboard();
+      toast(n ? 'Pushed titles to ' + n + ' stripboard row(s)' : 'No matching stripboard rows for linked nodes', n ? 'success' : 'warn');
+    },
     // ── Bridge: sync from script scenes ────────────────────────────────────
     syncFromScript: function () {
       if (!AH.Editor || !AH.Editor.state) { toast('Open Script Studio first', 'warn'); return; }
       var s = StoryMap.state;
       var lines = AH.Editor.state.lines || [];
+      var scs = loadScenes();
+      var stripByLine = {};
+      scs.forEach(function (st) {
+        if (st.isBreak || typeof st.sceneLineIdx !== 'number') return;
+        stripByLine[st.sceneLineIdx] = st;
+      });
+      var bd = loadBreakdown();
+      var locByScn = {};
+      bd.forEach(function (r) { if (r.locations && r.locations[0]) locByScn[normalizeSceneSlug(r.scn)] = r.locations[0]; });
       var existing = {};
       s.nodes.forEach(function (n) { if (typeof n.sceneLineIdx === 'number') existing[n.sceneLineIdx] = n; });
       var created = 0;
       lines.forEach(function (l, idx) {
         if (l.t !== 'scene') return;
+        var slugGuess = coherenceStripSlugFromScriptLine(idx);
+        var st = stripByLine[idx];
+        if (st && slugGuess && !st.sceneLineIdx) st.sceneLineIdx = idx;
         if (existing[idx]) {
-          existing[idx].label = (l.x || '').toUpperCase();
+          var nn = existing[idx];
+          nn.label = (l.x || '').toUpperCase();
+          if (slugGuess) nn.sceneSlug = slugGuess;
+          if (st && st.n) nn.sceneSlug = normalizeSceneSlug(st.n);
+          var pk = nn.sceneSlug ? normalizeSceneSlug(nn.sceneSlug) : null;
+          if (pk && locByScn[pk] && (!nn.note || nn.note.indexOf('[LOC]') < 0)) {
+            nn.note = (nn.note ? nn.note + '\n' : '') + '[LOC] ' + locByScn[pk];
+          }
           return;
         }
         var id = 'n' + (++s.nodeCounter);
+        var scSlug = st && st.n ? normalizeSceneSlug(st.n) : slugGuess;
+        var note = '';
+        if (scSlug && locByScn[scSlug]) note = '[LOC] ' + locByScn[scSlug];
         s.nodes.push({
-          id: id, label: (l.x || 'SCENE ' + idx).toUpperCase(), note: '',
+          id: id, label: (l.x || 'SCENE ' + idx).toUpperCase(), note: note,
           trackId: (s.tracks[0] && s.tracks[0].id) || 't1',
           phaseId: (s.phases[0] && s.phases[0].id) || 'p1',
           x: 80 + (s.nodes.length * 220), y: 80,
-          nodeType: 'scene', sceneLineIdx: idx
+          nodeType: 'scene', sceneLineIdx: idx, sceneSlug: scSlug || null
         });
         created++;
       });
@@ -13791,7 +14105,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         }
       }
       StoryMap.dirty();
-      toast('Story Map synced · ' + created + ' new scenes');
+      coherenceApplyStripboardToStoryMap();
+      toast('Story Map synced · ' + created + ' new scenes · stripboard & breakdown linked where possible');
     }
   };
   AH.StoryMap = StoryMap;
@@ -14092,6 +14407,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
         return wb - wa;
       });
       var closed = outs.filter(function (l) { return !StoryMapX._evalCond(l.conditions || [], flags, inv); });
+      var weights = open.map(function (l) { var w = (l.weight != null ? +l.weight : 1) || 0; return Math.max(0, w); });
+      var sumW = weights.reduce(function (a, b) { return a + b; }, 0);
       var nodeTypeCls = (node.nodeType || 'scene');
       var isEnd = !outs.length || node.nodeType === 'end';
       var html =
@@ -14104,14 +14421,17 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
             (node.videoUrl ? '<div class="sh-modal__label">Video · <code>' + clean(node.videoUrl) + '</code></div>' : '') +
             (isEnd
               ? '<div style="padding:16px;border-radius:12px;background:linear-gradient(135deg,rgba(23,255,197,0.18),rgba(20,175,223,0.12));border:1px solid var(--edge-mint);margin-top:12px;"><strong>END REACHED.</strong><br/>Visited ' + visited.length + ' nodes · ' + inv.length + ' inventory items · ' + Object.keys(flags).filter(function (k) { return flags[k]; }).length + ' flags set.</div>'
-              : '<div class="sh-modal__label" style="margin-top:14px;">Available paths</div>' +
+              : '<div class="sh-modal__label" style="margin-top:14px;">Available paths' + (open.length > 1 && sumW > 0 ? ' · relative probability from weights' : '') + '</div>' +
                 '<div style="display:flex;flex-direction:column;gap:8px;">' +
-                open.map(function (l) {
+                open.map(function (l, i) {
                   var tgt = StoryMap.nodeById(l.target) || {};
-                  var w = (l.weight != null ? +l.weight : 1) || 0;
+                  var w = weights[i] != null ? weights[i] : ((l.weight != null ? +l.weight : 1) || 0);
+                  var pct = (open.length > 1 && sumW > 0) ? Math.round((w / sumW) * 1000) / 10 : null;
                   return '<button class="btn btn--primary" onclick="AH.StoryMapX._step(\'' + l.id + '\')" style="justify-content:flex-start;">' +
                     '<span style="flex:1;text-align:left;">' + clean(l.choiceText || l.label || (tgt.label || l.target)) + '</span>' +
-                    '<span style="font-family:var(--f-mono);font-size:10px;letter-spacing:0.14em;color:var(--fg-60);">w=' + w + ' · → ' + clean(l.target) + '</span>' +
+                    '<span style="font-family:var(--f-mono);font-size:10px;letter-spacing:0.14em;color:var(--fg-60);">' +
+                      (pct != null ? pct + '% · ' : '') + 'w=' + w + ' · → ' + clean(l.target) +
+                    '</span>' +
                   '</button>';
                 }).join('') +
                 closed.map(function (l) {
@@ -14578,6 +14898,8 @@ html[data-theme="light"] .dag-canvas { background-image: linear-gradient(rgba(4,
             '<button class="dag-tbtn" onclick="AH.StoryMap.validate()">VALIDATE</button>' +
             '<button class="dag-tbtn" onclick="AH.StoryMapX.analytics()">ANALYTICS</button>' +
             '<button class="dag-tbtn" onclick="AH.StoryMap.syncFromScript()">SYNC ⇄ SCRIPT</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.coherencePullStripboard()" title="Update node labels from stripboard (match scene slug or script line)">← STRIPBOARD</button>' +
+            '<button class="dag-tbtn" onclick="AH.StoryMap.coherencePushStripboard()" title="Push node titles to stripboard slug rows">STRIPBOARD →</button>' +
             '<button class="dag-tbtn" onclick="AH.StoryMapX.editFlags()">FLAGS</button>' +
             '<button class="dag-tbtn" onclick="AH.StoryMap.saveCheckpoint()">CHECKPOINT</button>' +
             '<button class="dag-tbtn" onclick="AH.StoryMap.loadCheckpoint()">RESTORE</button>' +
